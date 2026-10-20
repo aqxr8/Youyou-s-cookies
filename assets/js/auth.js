@@ -1,15 +1,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
+// ⚠️ PASTE YOUR REAL FIREBASE CONFIG HERE
 const firebaseConfig = {
-  apiKey: "AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk",
+  apiKey: "YOUR_API_KEY",
   authDomain: "youyous-cookies.firebaseapp.com",
   projectId: "youyous-cookies",
-  storageBucket: "youyous-cookies.firebasestorage.app",
-  messagingSenderId: "893318787156",
-  appId: "1:893318787156:web:9780bb29b3eb597db97dc1",
-  measurementId: "G-85M038ZLQ2"
+  storageBucket: "youyous-cookies.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -25,31 +25,32 @@ onAuthStateChanged(auth, async (user) => {
   const userIconWrapper = document.getElementById('user-icon-wrapper');
 
   if (user) {
-    // 1. Change the Header Icon to the User's Profile Picture
+    // 1. Change the Header Icon
     if (userIconLink && userIconWrapper) {
       userIconLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
-      
-      // If user has a Google photo, use it. Otherwise, use a default colored circle
       const photoUrl = user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=c1771e&color=fff`;
       userIconWrapper.innerHTML = `<img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
     }
 
-// 2. Load Profile Data if on profile.html
+    // --- 2. PROFILE PAGE LOGIC ---
     if (window.location.pathname.includes('profile.html')) {
+      if (user.email === ADMIN_EMAIL) {
+        window.location.href = "admin.html"; // Admin shouldn't be on profile page
+        return;
+      }
+      
       document.getElementById('profile-email').textContent = user.email;
       const profilePic = document.getElementById('profile-picture');
-      
       profilePic.src = user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=c1771e&color=fff&size=128`;
       profilePic.style.display = "block";
 
-      // Fetch user data from Firestore
+      // Fetch user data
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
         const displayName = userData.username || user.displayName || "Cookie Lover";
         document.getElementById('profile-name').textContent = displayName;
         
-        // Auto-fill the new personal info forms
         const editUsername = document.getElementById('edit-username');
         const editAddress = document.getElementById('edit-address');
         if (editUsername) editUsername.value = displayName;
@@ -76,14 +77,67 @@ onAuthStateChanged(auth, async (user) => {
         });
       }
     }
+
+    // --- 3. ADMIN PAGE LOGIC ---
+    if (window.location.pathname.includes('admin.html')) {
+      if (user.email !== ADMIN_EMAIL) {
+        window.location.href = "profile.html"; 
+        return;
+      }
+
+      // Fetch all users
+      const usersList = document.getElementById('admin-users');
+      if (usersList) {
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        usersList.innerHTML = ""; 
+        if (usersSnapshot.empty) {
+          usersList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">No users registered yet.</p>';
+        } else {
+          usersSnapshot.forEach((doc) => {
+            const data = doc.data();
+            usersList.innerHTML += `
+              <div style="border-bottom: 1px solid rgba(193, 119, 30, 0.2); padding: 12px 0;">
+                <strong style="font-size: 1.1rem; color: var(--brown);">${data.username || 'No Name'}</strong><br>
+                <span style="font-size: 0.9rem; color: var(--brown-soft);">${data.email}</span><br>
+                <span style="font-size: 0.75rem; background: var(--caramel); color: white; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 5px;">Role: ${data.role || 'customer'}</span>
+              </div>
+            `;
+          });
+        }
+      }
+
+      // Fetch all orders
+      const ordersList = document.getElementById('admin-orders');
+      if (ordersList) {
+        const ordersSnapshot = await getDocs(collection(db, "orders"));
+        ordersList.innerHTML = ""; 
+        if (ordersSnapshot.empty) {
+          ordersList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">No orders placed yet.</p>';
+        } else {
+          ordersSnapshot.forEach((doc) => {
+            const data = doc.data();
+            ordersList.innerHTML += `
+              <div style="border-bottom: 1px solid rgba(193, 119, 30, 0.2); padding: 12px 0;">
+                <strong style="color: var(--brown);">Order #${doc.id.slice(-6).toUpperCase()}</strong> 
+                <span style="font-size: 0.85rem; color: var(--brown-soft);">(${data.date || 'Recent'})</span><br>
+                <span style="font-size: 0.9rem;">Status: <b style="color: var(--caramel);">${data.status || 'Processing'}</b></span>
+              </div>
+            `;
+          });
+        }
+      }
+    }
+
   } else {
+    // Not logged in
     if (userIconLink) userIconLink.href = "login.html";
-    if (window.location.pathname.includes('profile.html')) window.location.href = "login.html";
+    if (window.location.pathname.includes('profile.html') || window.location.pathname.includes('admin.html')) {
+      window.location.href = "login.html"; 
+    }
   }
 });
 
-// --- PROFILE PAGE LOGIC (Update Info, Change Password & Logout) ---
-
+// --- PROFILE PAGE SETTINGS ---
 const infoForm = document.getElementById('profile-info-form');
 if (infoForm) {
   infoForm.addEventListener('submit', async (e) => {
@@ -95,15 +149,11 @@ if (infoForm) {
     try {
       const user = auth.currentUser;
       if (user) {
-        // Save new info to Firestore
         await updateDoc(doc(db, "users", user.uid), {
           username: newUsername,
           address: newAddress
         });
-        
-        // Update the display name at the top of the profile instantly
         document.getElementById('profile-name').textContent = newUsername;
-        
         msg.style.display = "block";
         msg.style.color = "#4CAF50";
         msg.textContent = "Profile updated successfully!";
@@ -113,6 +163,27 @@ if (infoForm) {
       msg.style.display = "block";
       msg.style.color = "#d9534f";
       msg.textContent = "Error saving profile.";
+    }
+  });
+}
+
+const passwordForm = document.getElementById('password-form');
+if (passwordForm) {
+  passwordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPassword = document.getElementById('new-password').value;
+    const msg = document.getElementById('password-msg');
+    try {
+      await updatePassword(auth.currentUser, newPassword);
+      msg.style.display = "block";
+      msg.style.color = "#4CAF50";
+      msg.textContent = "Password updated successfully!";
+      passwordForm.reset();
+      setTimeout(() => { msg.style.display = "none"; }, 4000);
+    } catch (error) {
+      msg.style.display = "block";
+      msg.style.color = "#d9534f";
+      msg.textContent = error.message.replace("Firebase: ", "");
     }
   });
 }
@@ -181,6 +252,7 @@ if (googleBtn) {
     }
   });
 }
+
 // --- LOGOUT LOGIC ---
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
