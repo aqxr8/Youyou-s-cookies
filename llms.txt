@@ -1,0 +1,37 @@
+# Youyou Cookies | MADE WITH LOVE
+
+> Youyou Cookies is a 100% online specialty bakery based in Settat, Morocco. Founded and run by Aya, we specialize in handcrafted, small-batch thick cookies baked fresh daily with premium ingredients. We offer free local delivery within Settat.
+
+## Youyou Cookies Pages
+
+- [Home](https://youyouscookies.vercel.app/)
+- [Menu](https://youyouscookies.vercel.app/menu.html)
+- [Reviews & Notes](https://youyouscookies.vercel.app/reviews.html)
+- [Contact Us & Shipping](https://youyouscookies.vercel.app/contact.html)
+
+## Store & Order Information
+
+- **Location:** 100% Online Bakery (Based in Settat, Morocco)
+- **Baking & Support Hours:** Wednesday to Sunday, 11:00 – 19:00 (Closed Monday & Tuesday)
+- **Delivery Hours:** Daily, 15:00 – 20:00 
+- **Contact:** youyouscookies@gmail.com
+- **Instagram:** @youyou_s_cookies
+- **Order Rules:** No minimum order requirement. We exclusively accept Cash on Delivery (COD). Free direct delivery anywhere in Settat.
+
+## Menu Highlights (Prices subject to change based on in-store updates)
+
+- Classic Cookies: 7 DH
+- Extra Chocolate Cookie: 10 DH
+- Oreo Cookie: 12 DH
+- Red Velvet Cookie: 12 DH
+- Kinder Cookie: 13 DH
+- Lotus Cookie: 15 DH
+- Mini Cookies Box (10 pieces): 15 DH
+- Mini Cookies Box (15 pieces - Best Choice): 20 DH
+- Mini Cookies Box (20 pieces): 27 DH
+- Mini Cookies Box (30 pieces): 40 DH
+- Mix & Match Flavours Available
+- Chocolate Sauce Extras (Milk or Dark Chocolate) Available
+
+## Notes
+Seasonal flavors rotate monthly. All cookies are baked in small batches daily and heat-sealed for maximum freshness during transit. Check our Instagram for the daily #CookieOfTheDay and live updates.

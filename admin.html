@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard | Youyou's Cookies</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html"><span class="brand-text"><b>Admin Portal</b></span></a>
+      <button id="logout-btn" class="btn btn-outline" style="padding: 8px 16px;">Logout</button>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <h2>Orders History</h2>
+      <div id="admin-orders" class="notes-grid" style="margin-bottom: 50px;">
+        <p>Loading orders...</p>
+      </div>
+
+      <h2>Registered Users</h2>
+      <div id="admin-users" class="notes-grid">
+        <p>Loading users...</p>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="assets/js/auth.js"></script>
+</body>
+</html>
