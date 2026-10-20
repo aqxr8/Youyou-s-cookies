@@ -2,7 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk",
   authDomain: "youyous-cookies.firebaseapp.com",
@@ -26,7 +25,6 @@ onAuthStateChanged(auth, async (user) => {
   const userIconWrapper = document.getElementById('user-icon-wrapper');
 
   if (user) {
-    // 1. Change the Header Icon
     if (userIconLink && userIconWrapper) {
       userIconLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
       const photoUrl = user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=c1771e&color=fff`;
@@ -36,7 +34,7 @@ onAuthStateChanged(auth, async (user) => {
     // --- 2. PROFILE PAGE LOGIC ---
     if (window.location.pathname.includes('profile.html')) {
       if (user.email === ADMIN_EMAIL) {
-        window.location.href = "admin.html"; // Admin shouldn't be on profile page
+        window.location.href = "admin.html"; 
         return;
       }
       
@@ -45,7 +43,6 @@ onAuthStateChanged(auth, async (user) => {
       profilePic.src = user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=c1771e&color=fff&size=128`;
       profilePic.style.display = "block";
 
-      // Fetch user data
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
@@ -59,18 +56,28 @@ onAuthStateChanged(auth, async (user) => {
       }
 
       // --- SYNC & RENDER BASKET (CART) ---
-      let localCart = JSON.parse(localStorage.getItem('cart')) || [];
-      const userRef = doc(db, "users", user.uid);
+      let rawCartData = localStorage.getItem('youyou_cart') || localStorage.getItem('cart') || '[]';
+      let localCart = JSON.parse(rawCartData);
       
-      // Save local cart to Firebase or restore from Firebase
-      if (localCart.length > 0) {
-        await updateDoc(userRef, { cart: localCart });
-      } else if (userDoc.exists() && userDoc.data().cart) {
-        localCart = userDoc.data().cart;
-        localStorage.setItem('cart', JSON.stringify(localCart));
+      // Fix format if it accidentally saved as an object
+      if (!Array.isArray(localCart)) {
+        localCart = Object.values(localCart);
       }
 
-      // Render the basket on the profile page
+      const userRef = doc(db, "users", user.uid);
+      
+      try {
+        if (localCart.length > 0) {
+          await updateDoc(userRef, { cart: localCart });
+          localStorage.setItem('youyou_cart', JSON.stringify(localCart));
+        } else if (userDoc.exists() && userDoc.data().cart) {
+          localCart = userDoc.data().cart;
+          localStorage.setItem('youyou_cart', JSON.stringify(localCart));
+        }
+      } catch(err) {
+        console.warn("Cart sync notice:", err);
+      }
+
       const basketList = document.getElementById('profile-basket-list');
       if (basketList) {
         if (localCart.length === 0) {
@@ -83,30 +90,29 @@ onAuthStateChanged(auth, async (user) => {
             const itemTotal = (item.price || 0) * (item.quantity || 1);
             total += itemTotal;
             
-            // Smart Image Matcher: Automatically finds the right picture based on the cookie name
-            let imgPath = "assets/images/logo.png"; // Default fallback
-            const nameLow = item.name.toLowerCase();
-            
-            if(nameLow.includes('classic') && !nameLow.includes('brownie')) imgPath = "assets/images/classic-cookie.png";
-            else if(nameLow.includes('brownie')) imgPath = "assets/images/classic-brownie.png";
-            else if(nameLow.includes('monster')) imgPath = "assets/images/monster-cookie.png";
-            else if(nameLow.includes('lemon')) imgPath = "assets/images/lemon-cookie.png";
-            else if(nameLow.includes('kitkat')) imgPath = "assets/images/kitkat-cookie.png";
-            else if(nameLow.includes('extra')) imgPath = "assets/images/extra-chocolate.png";
-            else if(nameLow.includes('oreo')) imgPath = "assets/images/oreo-cookie.png";
-            else if(nameLow.includes('red velvet')) imgPath = "assets/images/red-velvet.png";
-            else if(nameLow.includes('kinder')) imgPath = "assets/images/kinder-cookie.png";
-            else if(nameLow.includes('lotus')) imgPath = "assets/images/lotus-cookie.png";
-            else if(nameLow.includes('mini')) imgPath = "assets/images/mini-box.png";
+            let imgPath = "assets/images/logo.png"; 
+            if (item.name) {
+              const nameLow = item.name.toLowerCase();
+              if(nameLow.includes('classic') && !nameLow.includes('brownie')) imgPath = "assets/images/classic-cookie.png";
+              else if(nameLow.includes('brownie')) imgPath = "assets/images/classic-brownie.png";
+              else if(nameLow.includes('monster')) imgPath = "assets/images/monster-cookie.png";
+              else if(nameLow.includes('lemon')) imgPath = "assets/images/lemon-cookie.png";
+              else if(nameLow.includes('kitkat')) imgPath = "assets/images/kitkat-cookie.png";
+              else if(nameLow.includes('extra')) imgPath = "assets/images/extra-chocolate.png";
+              else if(nameLow.includes('oreo')) imgPath = "assets/images/oreo-cookie.png";
+              else if(nameLow.includes('red velvet')) imgPath = "assets/images/red-velvet.png";
+              else if(nameLow.includes('kinder')) imgPath = "assets/images/kinder-cookie.png";
+              else if(nameLow.includes('lotus')) imgPath = "assets/images/lotus-cookie.png";
+              else if(nameLow.includes('mini')) imgPath = "assets/images/mini-box.png";
+            }
 
-            // Draw the item with the Picture, Name, and Quantity
             basketList.innerHTML += `
               <div style="border-bottom: 1px solid rgba(74,55,40,0.1); padding: 15px 0; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                  <img src="${imgPath}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(193, 119, 30, 0.2);">
+                  <img src="${imgPath}" alt="${item.name || 'Cookie'}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(193, 119, 30, 0.2);">
                   <div>
-                    <strong style="color: var(--brown); font-size: 1.1rem;">${item.name}</strong><br>
-                    <span style="color: var(--brown-soft); font-size: 0.9rem;">Qty: <b>${item.quantity || 1}</b> &nbsp;|&nbsp; ${item.price} DH each</span>
+                    <strong style="color: var(--brown); font-size: 1.1rem;">${item.name || 'Delicious Treat'}</strong><br>
+                    <span style="color: var(--brown-soft); font-size: 0.9rem;">Qty: <b>${item.quantity || 1}</b> &nbsp;|&nbsp; ${item.price || 0} DH each</span>
                   </div>
                 </div>
                 <div style="color: var(--caramel); font-weight: bold; font-size: 1.1rem;">
@@ -134,7 +140,6 @@ onAuthStateChanged(auth, async (user) => {
         return;
       }
 
-      // Fetch all users
       const usersList = document.getElementById('admin-users');
       if (usersList) {
         const usersSnapshot = await getDocs(collection(db, "users"));
@@ -155,7 +160,6 @@ onAuthStateChanged(auth, async (user) => {
         }
       }
 
-      // Fetch all orders with checkboxes
       const ordersList = document.getElementById('admin-orders');
       if (ordersList) {
         const ordersSnapshot = await getDocs(collection(db, "orders"));
@@ -185,7 +189,6 @@ onAuthStateChanged(auth, async (user) => {
             `;
           });
 
-          // Add click listeners to all the checkboxes
           document.querySelectorAll('.status-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', async (e) => {
               const orderId = e.target.getAttribute('data-id');
@@ -193,9 +196,7 @@ onAuthStateChanged(auth, async (user) => {
               const statusText = document.getElementById(`status-text-${orderId}`);
               
               try {
-                await updateDoc(doc(db, "orders", orderId), {
-                  status: newStatus
-                });
+                await updateDoc(doc(db, "orders", orderId), { status: newStatus });
                 statusText.textContent = newStatus;
                 statusText.style.color = newStatus === 'Delivered' ? '#4CAF50' : 'var(--caramel)';
               } catch (error) {
@@ -210,15 +211,13 @@ onAuthStateChanged(auth, async (user) => {
     }
 
   } else {
-    // Not logged in
     if (userIconLink) userIconLink.href = "login.html";
     if (window.location.pathname.includes('profile.html') || window.location.pathname.includes('admin.html')) {
       window.location.href = "login.html"; 
     }
   }
-}); // <-- THIS MISSING PARENTHESIS WAS CAUSING THE ERROR!
+});
 
-// --- PROFILE PAGE SETTINGS ---
 const infoForm = document.getElementById('profile-info-form');
 if (infoForm) {
   infoForm.addEventListener('submit', async (e) => {
@@ -269,7 +268,6 @@ if (passwordForm) {
   });
 }
 
-// --- LOGIN / SIGNUP LOGIC ---
 function routeUser(user) {
   if (user.email === ADMIN_EMAIL) {
     window.location.href = "admin.html";
@@ -334,7 +332,6 @@ if (googleBtn) {
   });
 }
 
-// --- LOGOUT LOGIC ---
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
   logoutBtn.addEventListener('click', () => {
