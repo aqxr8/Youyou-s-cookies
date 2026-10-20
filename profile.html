@@ -13,14 +13,38 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="index.html">
+        <video class="brand-logo logo-light" autoplay loop muted playsinline>
+          <source src="assets/videos/logo-light.mp4" type="video/mp4">
+          <img src="assets/images/logo.png" alt="Youyou Cookies">
+        </video>
+
+        <video class="brand-logo logo-dark" autoplay loop muted playsinline>
+          <source src="assets/videos/logo-dark.mp4" type="video/mp4">
+          <img src="assets/images/logo1.png" alt="Youyou Cookies">
+        </video>
+        
         <span class="brand-text">
           <b>Youyou's Cookies</b>
           <span>MADE WITH LOVE</span>
         </span>
       </a>
+      <div class="status-pill" data-status-pill role="status">
+        <span class="status-dot"></span>
+        <span class="status-text">Closed</span>
+      </div>
       
+      <!-- Mobile Toggle Group -->
       <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
-        <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; transition: 0.2s;">
+        <button class="nav-toggle" aria-label="Toggle Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <!-- Main Navigation with User Icon Moved Inside -->
+      <nav class="main-nav" style="display: flex; align-items: center;">
+        <button class="nav-close" aria-label="Close Menu">&times;</button>
+        
+        <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; margin-right: 15px; transition: 0.2s;">
           <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
               <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
@@ -28,13 +52,7 @@
             </svg>
           </div>
         </a>
-        <button class="nav-toggle" aria-label="Toggle Menu">
-          <span></span><span></span><span></span>
-        </button>
-      </div>
 
-      <nav class="main-nav">
-        <button class="nav-close" aria-label="Close Menu">&times;</button>
         <a href="index.html"><span class="nav-icon"></span> Home</a>
         <a href="menu.html"><span class="nav-icon"></span> Menu</a>
         <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
@@ -43,6 +61,8 @@
           <span class="moon-icon" style="display:none;">🌙</span>
           <span class="sun-icon">☀️</span>
         </button>
+        
+        <div class="nav-decor">Baked fresh in Settat</div>
       </nav>
     </div>
   </header>
