@@ -58,24 +58,49 @@ onAuthStateChanged(auth, async (user) => {
         if (editAddress) editAddress.value = userData.address || "";
       }
 
-      // Fetch Orders
-      const q = query(collection(db, "orders"), where("userId", "==", user.uid));
-      const querySnapshot = await getDocs(q);
-      const ordersList = document.getElementById('order-history-list');
+      // --- SYNC & RENDER BASKET (CART) ---
+      let localCart = JSON.parse(localStorage.getItem('cart')) || [];
+      const userRef = doc(db, "users", user.uid);
       
-      if (querySnapshot.empty) {
-        ordersList.innerHTML = '<p style="color: var(--brown-soft); font-size: 0.95rem; font-style: italic;">No orders found yet.</p>';
-      } else {
-        ordersList.innerHTML = "";
-        querySnapshot.forEach((doc) => {
-          const order = doc.data();
-          ordersList.innerHTML += `
-            <div style="border-bottom: 1px solid rgba(74,55,40,0.1); padding: 10px 0;">
-              <strong>Order #${doc.id.slice(-6).toUpperCase()}</strong> - ${order.date || 'Recent'}<br>
-              <span style="color: var(--caramel);">${order.status || 'Processing'}</span>
+      // Save local cart to Firebase or restore from Firebase
+      if (localCart.length > 0) {
+        await updateDoc(userRef, { cart: localCart });
+      } else if (userDoc.exists() && userDoc.data().cart) {
+        localCart = userDoc.data().cart;
+        localStorage.setItem('cart', JSON.stringify(localCart));
+      }
+
+      // Render the basket on the profile page
+      const basketList = document.getElementById('profile-basket-list');
+      if (basketList) {
+        if (localCart.length === 0) {
+          basketList.innerHTML = '<p style="color: var(--brown-soft); font-size: 0.95rem; font-style: italic;">Your basket is currently empty.</p>';
+        } else {
+          basketList.innerHTML = "";
+          let total = 0;
+          localCart.forEach((item) => {
+            const itemTotal = (item.price || 0) * (item.quantity || 1);
+            total += itemTotal;
+            basketList.innerHTML += `
+              <div style="border-bottom: 1px solid rgba(74,55,40,0.1); padding: 12px 0; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong style="color: var(--brown); font-size: 1.1rem;">${item.name}</strong><br>
+                  <span style="color: var(--brown-soft); font-size: 0.9rem;">Qty: ${item.quantity || 1}</span>
+                </div>
+                <div style="color: var(--caramel); font-weight: bold;">
+                  ${itemTotal} DH
+                </div>
+              </div>
+            `;
+          });
+          basketList.innerHTML += `
+            <div style="padding-top: 15px; text-align: right; font-size: 1.2rem;">
+              <strong>Total: <span style="color: var(--caramel);">${total} DH</span></strong>
+              <br>
+              <button onclick="document.getElementById('cart-panel').style.display='block'" class="btn btn-dark" style="margin-top: 15px; padding: 10px 20px;">Open Checkout</button>
             </div>
           `;
-        });
+        }
       }
     }
 
@@ -107,7 +132,7 @@ onAuthStateChanged(auth, async (user) => {
         }
       }
 
-      // Fetch all orders
+      // Fetch all orders with checkboxes
       const ordersList = document.getElementById('admin-orders');
       if (ordersList) {
         const ordersSnapshot = await getDocs(collection(db, "orders"));
@@ -115,15 +140,47 @@ onAuthStateChanged(auth, async (user) => {
         if (ordersSnapshot.empty) {
           ordersList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">No orders placed yet.</p>';
         } else {
-          ordersSnapshot.forEach((doc) => {
-            const data = doc.data();
+          ordersSnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const orderId = docSnap.id;
+            const isDelivered = data.status === 'Delivered';
+            
             ordersList.innerHTML += `
-              <div style="border-bottom: 1px solid rgba(193, 119, 30, 0.2); padding: 12px 0;">
-                <strong style="color: var(--brown);">Order #${doc.id.slice(-6).toUpperCase()}</strong> 
-                <span style="font-size: 0.85rem; color: var(--brown-soft);">(${data.date || 'Recent'})</span><br>
-                <span style="font-size: 0.9rem;">Status: <b style="color: var(--caramel);">${data.status || 'Processing'}</b></span>
+              <div style="border-bottom: 1px solid rgba(193, 119, 30, 0.2); padding: 12px 0; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong style="color: var(--brown);">Order #${orderId.slice(-6).toUpperCase()}</strong> 
+                  <span style="font-size: 0.85rem; color: var(--brown-soft);">(${data.date || 'Recent'})</span><br>
+                  <span style="font-size: 0.9rem;">Status: <b id="status-text-${orderId}" style="color: ${isDelivered ? '#4CAF50' : 'var(--caramel)'};">${data.status || 'Processing'}</b></span>
+                </div>
+                <div>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; color: var(--brown);">
+                    <input type="checkbox" class="status-checkbox" data-id="${orderId}" ${isDelivered ? 'checked' : ''} style="transform: scale(1.3); accent-color: var(--caramel); cursor: pointer;">
+                    Delivered
+                  </label>
+                </div>
               </div>
             `;
+          });
+
+          // Add click listeners to all the checkboxes
+          document.querySelectorAll('.status-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', async (e) => {
+              const orderId = e.target.getAttribute('data-id');
+              const newStatus = e.target.checked ? 'Delivered' : 'Processing';
+              const statusText = document.getElementById(`status-text-${orderId}`);
+              
+              try {
+                await updateDoc(doc(db, "orders", orderId), {
+                  status: newStatus
+                });
+                statusText.textContent = newStatus;
+                statusText.style.color = newStatus === 'Delivered' ? '#4CAF50' : 'var(--caramel)';
+              } catch (error) {
+                console.error("Error updating order:", error);
+                e.target.checked = !e.target.checked; 
+                alert("Failed to update the order status.");
+              }
+            });
           });
         }
       }
@@ -265,58 +322,3 @@ if (logoutBtn) {
     });
   });
 }
-// Fetch all orders
-      const ordersList = document.getElementById('admin-orders');
-      if (ordersList) {
-        const ordersSnapshot = await getDocs(collection(db, "orders"));
-        ordersList.innerHTML = ""; 
-        if (ordersSnapshot.empty) {
-          ordersList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">No orders placed yet.</p>';
-        } else {
-          ordersSnapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const orderId = docSnap.id;
-            const isDelivered = data.status === 'Delivered';
-            
-            ordersList.innerHTML += `
-              <div style="border-bottom: 1px solid rgba(193, 119, 30, 0.2); padding: 12px 0; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                  <strong style="color: var(--brown);">Order #${orderId.slice(-6).toUpperCase()}</strong> 
-                  <span style="font-size: 0.85rem; color: var(--brown-soft);">(${data.date || 'Recent'})</span><br>
-                  <span style="font-size: 0.9rem;">Status: <b id="status-text-${orderId}" style="color: ${isDelivered ? '#4CAF50' : 'var(--caramel)'};">${data.status || 'Processing'}</b></span>
-                </div>
-                <div>
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; color: var(--brown);">
-                    <input type="checkbox" class="status-checkbox" data-id="${orderId}" ${isDelivered ? 'checked' : ''} style="transform: scale(1.3); accent-color: var(--caramel); cursor: pointer;">
-                    Delivered
-                  </label>
-                </div>
-              </div>
-            `;
-          });
-
-          // Add click listeners to all the checkboxes
-          document.querySelectorAll('.status-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', async (e) => {
-              const orderId = e.target.getAttribute('data-id');
-              const newStatus = e.target.checked ? 'Delivered' : 'Processing';
-              const statusText = document.getElementById(`status-text-${orderId}`);
-              
-              try {
-                // Update the order in the database
-                await updateDoc(doc(db, "orders", orderId), {
-                  status: newStatus
-                });
-                
-                // Update the text and color on the screen instantly
-                statusText.textContent = newStatus;
-                statusText.style.color = newStatus === 'Delivered' ? '#4CAF50' : 'var(--caramel)';
-              } catch (error) {
-                console.error("Error updating order:", error);
-                e.target.checked = !e.target.checked; // Revert checkbox if the database update fails
-                alert("Failed to update the order status.");
-              }
-            });
-          });
-        }
-      }
