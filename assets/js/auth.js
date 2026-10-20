@@ -56,22 +56,22 @@ onAuthStateChanged(auth, async (user) => {
       }
 
       // --- SYNC & RENDER BASKET (CART) ---
-      let rawCartData = localStorage.getItem('youyou_cart') || localStorage.getItem('cart') || '[]';
-      let localCart = JSON.parse(rawCartData);
-      
-      // Fix format if it accidentally saved as an object
-      if (!Array.isArray(localCart)) {
-        localCart = Object.values(localCart);
-      }
-
+      let rawCartString = localStorage.getItem('youyou_cart');
+      let localCart = [];
       const userRef = doc(db, "users", user.uid);
-      
+
       try {
-        if (localCart.length > 0) {
+        if (rawCartString !== null) {
+          // If local cart exists (even if it's '[]' because you just checked out), push it to Firebase to clear the database too!
+          localCart = JSON.parse(rawCartString);
+          if (!Array.isArray(localCart)) localCart = Object.values(localCart);
+          
           await updateDoc(userRef, { cart: localCart });
-          localStorage.setItem('youyou_cart', JSON.stringify(localCart));
-        } else if (userDoc.exists() && userDoc.data().cart) {
-          localCart = userDoc.data().cart;
+        } else {
+          // If local cart is totally missing (like logging in on a brand new phone), pull from Firebase
+          if (userDoc.exists() && userDoc.data().cart) {
+            localCart = userDoc.data().cart;
+          }
           localStorage.setItem('youyou_cart', JSON.stringify(localCart));
         }
       } catch(err) {
