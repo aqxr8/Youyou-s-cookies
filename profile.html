@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/images/logo.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>My Profile | Youyou's Cookies</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Standard Site Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-text">
+          <b>Youyou's Cookies</b>
+          <span>MADE WITH LOVE</span>
+        </span>
+      </a>
+      
+      <!-- Dynamic User Icon & Mobile Toggle -->
+      <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
+        <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; transition: 0.2s;">
+          <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+              <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+            </svg>
+          </div>
+        </a>
+        <button class="nav-toggle" aria-label="Toggle Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <nav class="main-nav">
+        <button class="nav-close" aria-label="Close Menu">&times;</button>
+        <a href="index.html"><span class="nav-icon"></span> Home</a>
+        <a href="menu.html"><span class="nav-icon"></span> Menu</a>
+        <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
+        <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Dark Mode">
+          <span class="moon-icon" style="display:none;">🌙</span>
+          <span class="sun-icon">☀️</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Profile Hero Banner -->
+    <section class="hero menu-hero" style="background-image: url('assets/images/cover2.jpg'); min-height: 45vh;">
+      <div class="hero-inner" style="text-align: center; color: white;">
+        <span class="hero-tag">YOUR ACCOUNT</span>
+        <h1>My Profile</h1>
+        <div class="en">Manage Your Sweet Details</div>
+      </div>
+    </section>
+
+    <!-- Profile Content Section -->
+    <section class="section bg-cream">
+      <div class="container" style="max-width: 700px;">
+        
+        <!-- Profile Info Card -->
+        <div class="auth-card reveal" style="max-width: 100%; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding: 30px;">
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <img id="profile-picture" src="" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--caramel); display: none;">
+            <div>
+              <h2 id="profile-name" style="margin: 0; font-size: 1.8rem; font-family: 'Cormorant Garamond', serif;">Loading...</h2>
+              <p id="profile-email" style="color: var(--brown-soft); margin: 5px 0 0 0; font-size: 0.95rem;"></p>
+            </div>
+          </div>
+          <button id="logout-btn" class="btn btn-outline" style="padding: 8px 20px; border-color: #d9534f; color: #d9534f;">Log Out</button>
+        </div>
+
+        <!-- Order History Card -->
+        <div class="auth-card reveal" style="max-width: 100%; margin-bottom: 30px; padding: 30px; text-align: left;">
+          <h3 style="color: var(--brown); margin-bottom: 20px; font-family: 'Cormorant Garamond', serif; border-bottom: 1px solid rgba(74,55,40,0.1); padding-bottom: 10px;">Order History</h3>
+          <div id="order-history-list">
+            <p style="color: var(--brown-soft); font-size: 0.95rem; font-style: italic;">No orders found yet. (Orders placed via WhatsApp will appear here soon!)</p>
+          </div>
+        </div>
+
+        <!-- Settings Card -->
+        <div class="auth-card reveal" style="max-width: 100%; padding: 30px; text-align: left;">
+          <h3 style="color: var(--brown); margin-bottom: 20px; font-family: 'Cormorant Garamond', serif;">Account Settings</h3>
+          <form id="password-form" style="display: flex; flex-direction: column; gap: 15px;">
+            <div>
+              <label for="new-password" style="display: block; font-size: 0.9rem; color: var(--brown-soft); margin-bottom: 8px;">Change Password</label>
+              <input type="password" id="new-password" class="auth-input" placeholder="Enter new password" required style="margin-bottom: 0;">
+            </div>
+            <button type="submit" class="btn btn-dark" style="width: 100%; padding: 12px; border-radius: 8px;">Update Password</button>
+          </form>
+          <p id="password-msg" style="margin-top: 15px; font-size: 0.9rem; display: none; text-align: center;"></p>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Standard Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <b>Youyou's Cookies</b>
+          <div class="en">MADE WITH LOVE</div>
+          <p>Small-batch, handcrafted cookies baked with premium ingredients. Follow our sweet journey online!</p>
+        </div>
+        <div>
+          <h3 class="footer-title">Order Information</h3>
+          <ul>
+            <li><b>100% Online Bakery</b></li>
+            <li>Shipping All Settat</li>
+            <li>Payment: Cash on Delivery</li>
+            <li>Baking Days: All week</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/features.js"></script>
+  <script type="module" src="assets/js/auth.js"></script>
+</body>
+</html>

@@ -1,31 +1,123 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/images/logo.png">
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Admin Dashboard | Youyou's Cookies</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+
+  <!-- Admin Site Header -->
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="index.html"><span class="brand-text"><b>Admin Portal</b></span></a>
-      <button id="logout-btn" class="btn btn-outline" style="padding: 8px 16px;">Logout</button>
+      <a class="brand" href="index.html">
+        <span class="brand-text">
+          <b>Admin Portal</b>
+          <span style="color: #d9534f;">AUTHORIZED ACCESS ONLY</span>
+        </span>
+      </a>
+      
+      <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
+        <button id="logout-btn" class="btn btn-outline" style="padding: 6px 14px; font-size: 0.85rem; border-color: #d9534f; color: #d9534f;">Log Out</button>
+        <button class="nav-toggle" aria-label="Toggle Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <nav class="main-nav">
+        <button class="nav-close" aria-label="Close Menu">&times;</button>
+        <a href="index.html"><span class="nav-icon"></span> Back to Website</a>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Dark Mode">
+          <span class="moon-icon" style="display:none;">🌙</span>
+          <span class="sun-icon">☀️</span>
+        </button>
+      </nav>
     </div>
   </header>
 
-  <main class="section">
-    <div class="container">
-      <h2>Orders History</h2>
-      <div id="admin-orders" class="notes-grid" style="margin-bottom: 50px;">
-        <p>Loading orders...</p>
+  <main>
+    <!-- Admin Hero Banner -->
+    <section class="hero menu-hero" style="background-image: url('assets/images/cover3.jpg'); min-height: 40vh; background-position: center bottom;">
+      <div class="hero-inner" style="text-align: center; color: white;">
+        <span class="hero-tag" style="background: rgba(217, 83, 79, 0.2); border-color: #d9534f; color: #ffcccc;">MANAGEMENT</span>
+        <h1>Dashboard</h1>
+        <div class="en">Store Overview</div>
       </div>
+    </section>
 
-      <h2>Registered Users</h2>
-      <div id="admin-users" class="notes-grid">
-        <p>Loading users...</p>
+    <section class="section bg-cream">
+      <div class="container">
+        
+        <div class="section-head reveal">
+          <span class="en">System Data</span>
+          <h2>Store Activity</h2>
+          <div class="divider"></div>
+        </div>
+
+        <!-- Dashboard Grid Layout -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+          
+          <!-- Orders Column -->
+          <div class="auth-card reveal" style="max-width: 100%; padding: 25px; text-align: left;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid rgba(193, 119, 30, 0.2); padding-bottom: 15px;">
+              <h3 style="color: var(--brown); font-family: 'Cormorant Garamond', serif; margin: 0; font-size: 1.6rem;">Orders History</h3>
+              <span style="font-size: 1.5rem;">📦</span>
+            </div>
+            <div id="admin-orders" class="admin-list-container" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+              <p style="color: var(--brown-soft); font-style: italic;">Loading orders...</p>
+            </div>
+          </div>
+
+          <!-- Users Column -->
+          <div class="auth-card reveal" style="max-width: 100%; padding: 25px; text-align: left;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid rgba(193, 119, 30, 0.2); padding-bottom: 15px;">
+              <h3 style="color: var(--brown); font-family: 'Cormorant Garamond', serif; margin: 0; font-size: 1.6rem;">Registered Users</h3>
+              <span style="font-size: 1.5rem;">👥</span>
+            </div>
+            <div id="admin-users" class="admin-list-container" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+              <p style="color: var(--brown-soft); font-style: italic;">Loading users...</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Standard Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <b>Youyou's Cookies</b>
+          <div class="en">ADMIN PORTAL</div>
+          <p>Secure system access.</p>
+        </div>
       </div>
     </div>
-  </main>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/features.js"></script>
   <script type="module" src="assets/js/auth.js"></script>
+  
+  <!-- Inline styles specifically for the admin scrollable lists -->
+  <style>
+    .admin-list-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    .admin-list-container::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.05); 
+      border-radius: 4px;
+    }
+    .admin-list-container::-webkit-scrollbar-thumb {
+      background: var(--caramel); 
+      border-radius: 4px;
+    }
+  </style>
 </body>
 </html>

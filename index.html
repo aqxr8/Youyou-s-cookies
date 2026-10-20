@@ -72,11 +72,13 @@
       
       <!-- New User Icon & Mobile Toggle Group -->
       <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
-        <a href="login.html" aria-label="User Account" style="color: inherit; display: flex; align-items: center; transition: 0.2s;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
-            <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
-          </svg>
+        <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; transition: 0.2s;">
+          <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+              <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+            </svg>
+          </div>
         </a>
         <button class="nav-toggle" aria-label="Toggle Menu">
           <span></span><span></span><span></span>
@@ -244,34 +246,34 @@
       </div>
     </div>
   </main>
-  
+
   <footer class="site-footer">
-      <div class="container">
-        <div class="footer-grid">
-          <div class="footer-brand">
-            <b>Youyou's Cookies</b>
-            <div class="en">MADE WITH LOVE</div>
-            <p>Small-batch, handcrafted cookies baked with premium ingredients. Follow our sweet journey online!</p>
-          </div>
-          <div>
-            <h3 class="footer-title">Order Information</h3>
-            <ul>
-              <li><b>100% Online Bakery</b></li>
-              <li>Shipping All Settat</li>
-              <li>Payment: Cash on Delivery</li>
-              <li>Baking Days: All week</li>
-            </ul>
-          </div>
-          <div>
-            <h3 class="footer-title">Contact & Follow Us</h3>
-            <ul>
-              <li><a href="tel:+212789233029">📞 +212789233029</a></li>
-              <li><a href="https://www.instagram.com/youyou_s_cookies/?__pwa=1" target="_blank" rel="noopener">Instagram · @youyou_s_cookies</a></li>
-              <li><a href="https://www.tiktok.com/@youyous.cookies" target="_blank" rel="noopener">TikTok · @youyous.cookies</a></li>
-              <li><a href="mailto:youyouscookies@gmail.com">Email · youyouscookies@gmail.com</a></li>
-            </ul>
-          </div>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <b>Youyou's Cookies</b>
+          <div class="en">MADE WITH LOVE</div>
+          <p>Small-batch, handcrafted cookies baked with premium ingredients. Follow our sweet journey online!</p>
         </div>
+        <div>
+          <h3 class="footer-title">Order Information</h3>
+          <ul>
+            <li><b>100% Online Bakery</b></li>
+            <li>Shipping All Settat</li>
+            <li>Payment: Cash on Delivery</li>
+            <li>Baking Days: All week</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="footer-title">Contact & Follow Us</h3>
+          <ul>
+            <li><a href="tel:+212789233029">📞 +212789233029</a></li>
+            <li><a href="https://www.instagram.com/youyou_s_cookies/?__pwa=1" target="_blank" rel="noopener">Instagram · @youyou_s_cookies</a></li>
+            <li><a href="https://www.tiktok.com/@youyous.cookies" target="_blank" rel="noopener">TikTok · @youyous.cookies</a></li>
+            <li><a href="mailto:youyouscookies@gmail.com">Email · youyouscookies@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
         <div class="footer-bottom">
             <span>© <span class="year-now">2026</span> Youyou's Cookies. Made with love.</span>
             <br>
@@ -279,10 +281,11 @@
               Website developed by <a href="https://www.instagram.com/aqxr8.1/" target="_blank" rel="noopener" style="text-decoration: underline; color: inherit;">MOTQRINE Mohamed</a>
             </span>
         </div>
-      </div>
-    </footer>
+    </div>
+  </footer>
 
   <script src="assets/js/main.js"></script>
   <script src="assets/js/features.js"></script>
+  <script type="module" src="assets/js/auth.js"></script>
 </body>
 </html>
