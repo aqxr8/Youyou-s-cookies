@@ -58,7 +58,7 @@ onAuthStateChanged(auth, async (user) => {
         if (editAddress) editAddress.value = userData.address || "";
       }
 
-      // --- SYNC & RENDER BASKET (CART) ---
+// --- SYNC & RENDER BASKET (CART) ---
       let localCart = JSON.parse(localStorage.getItem('cart')) || [];
       const userRef = doc(db, "users", user.uid);
       
@@ -74,35 +74,57 @@ onAuthStateChanged(auth, async (user) => {
       const basketList = document.getElementById('profile-basket-list');
       if (basketList) {
         if (localCart.length === 0) {
-          basketList.innerHTML = '<p style="color: var(--brown-soft); font-size: 0.95rem; font-style: italic;">Your basket is currently empty.</p>';
+          basketList.innerHTML = '<p style="color: var(--brown-soft); font-size: 0.95rem; font-style: italic;">Your basket is currently empty. Go to the menu to add some sweet treats!</p>';
         } else {
           basketList.innerHTML = "";
           let total = 0;
+          
           localCart.forEach((item) => {
             const itemTotal = (item.price || 0) * (item.quantity || 1);
             total += itemTotal;
+            
+            // Smart Image Matcher: Automatically finds the right picture based on the cookie name
+            let imgPath = "assets/images/logo.png"; // Default fallback
+            const nameLow = item.name.toLowerCase();
+            
+            if(nameLow.includes('classic') && !nameLow.includes('brownie')) imgPath = "assets/images/classic-cookie.png";
+            else if(nameLow.includes('brownie')) imgPath = "assets/images/classic-brownie.png";
+            else if(nameLow.includes('monster')) imgPath = "assets/images/monster-cookie.png";
+            else if(nameLow.includes('lemon')) imgPath = "assets/images/lemon-cookie.png";
+            else if(nameLow.includes('kitkat')) imgPath = "assets/images/kitkat-cookie.png";
+            else if(nameLow.includes('extra')) imgPath = "assets/images/extra-chocolate.png";
+            else if(nameLow.includes('oreo')) imgPath = "assets/images/oreo-cookie.png";
+            else if(nameLow.includes('red velvet')) imgPath = "assets/images/red-velvet.png";
+            else if(nameLow.includes('kinder')) imgPath = "assets/images/kinder-cookie.png";
+            else if(nameLow.includes('lotus')) imgPath = "assets/images/lotus-cookie.png";
+            else if(nameLow.includes('mini')) imgPath = "assets/images/mini-box.png";
+
+            // Draw the item with the Picture, Name, and Quantity
             basketList.innerHTML += `
-              <div style="border-bottom: 1px solid rgba(74,55,40,0.1); padding: 12px 0; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                  <strong style="color: var(--brown); font-size: 1.1rem;">${item.name}</strong><br>
-                  <span style="color: var(--brown-soft); font-size: 0.9rem;">Qty: ${item.quantity || 1}</span>
+              <div style="border-bottom: 1px solid rgba(74,55,40,0.1); padding: 15px 0; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                  <img src="${imgPath}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(193, 119, 30, 0.2);">
+                  <div>
+                    <strong style="color: var(--brown); font-size: 1.1rem;">${item.name}</strong><br>
+                    <span style="color: var(--brown-soft); font-size: 0.9rem;">Qty: <b>${item.quantity || 1}</b> &nbsp;|&nbsp; ${item.price} DH each</span>
+                  </div>
                 </div>
-                <div style="color: var(--caramel); font-weight: bold;">
+                <div style="color: var(--caramel); font-weight: bold; font-size: 1.1rem;">
                   ${itemTotal} DH
                 </div>
               </div>
             `;
           });
+          
           basketList.innerHTML += `
-            <div style="padding-top: 15px; text-align: right; font-size: 1.2rem;">
-              <strong>Total: <span style="color: var(--caramel);">${total} DH</span></strong>
+            <div style="padding-top: 20px; text-align: right; font-size: 1.2rem;">
+              <strong>Total: <span style="color: var(--caramel); font-size: 1.4rem;">${total} DH</span></strong>
               <br>
-              <button onclick="document.getElementById('cart-panel').style.display='block'" class="btn btn-dark" style="margin-top: 15px; padding: 10px 20px;">Open Checkout</button>
+              <button onclick="document.getElementById('cart-panel').style.display='block'" class="btn btn-dark" style="margin-top: 15px; padding: 12px 24px; font-size: 1rem;">View Box & Checkout</button>
             </div>
           `;
         }
       }
-    }
 
     // --- 3. ADMIN PAGE LOGIC ---
     if (window.location.pathname.includes('admin.html')) {
