@@ -10,7 +10,6 @@
 </head>
 <body>
 
-  <!-- Standard Site Header -->
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="index.html">
@@ -20,7 +19,6 @@
         </span>
       </a>
       
-      <!-- Dynamic User Icon & Mobile Toggle -->
       <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
         <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; transition: 0.2s;">
           <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
@@ -50,7 +48,6 @@
   </header>
 
   <main>
-    <!-- Profile Hero Banner -->
     <section class="hero menu-hero" style="background-image: url('assets/images/cover2.jpg'); min-height: 45vh;">
       <div class="hero-inner" style="text-align: center; color: white;">
         <span class="hero-tag">YOUR ACCOUNT</span>
@@ -59,11 +56,10 @@
       </div>
     </section>
 
-    <!-- Profile Content Section -->
     <section class="section bg-cream">
       <div class="container" style="max-width: 700px;">
         
-        <!-- Profile Info Card -->
+        <!-- Profile Header -->
         <div class="auth-card reveal" style="max-width: 100%; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding: 30px;">
           <div style="display: flex; align-items: center; gap: 20px;">
             <img id="profile-picture" src="" alt="Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--caramel); display: none;">
@@ -75,23 +71,40 @@
           <button id="logout-btn" class="btn btn-outline" style="padding: 8px 20px; border-color: #d9534f; color: #d9534f;">Log Out</button>
         </div>
 
+        <!-- Personal Information Card -->
+        <div class="auth-card reveal" style="max-width: 100%; margin-bottom: 30px; padding: 30px; text-align: left;">
+          <h3 style="color: var(--brown); margin-bottom: 20px; font-family: 'Cormorant Garamond', serif; border-bottom: 1px solid rgba(74,55,40,0.1); padding-bottom: 10px;">Personal Information</h3>
+          <form id="profile-info-form" style="display: flex; flex-direction: column; gap: 15px;">
+            <div>
+              <label for="edit-username" style="display: block; font-size: 0.9rem; color: var(--brown-soft); margin-bottom: 8px;">Display Name</label>
+              <input type="text" id="edit-username" class="auth-input" placeholder="Your Name" required style="margin-bottom: 0;">
+            </div>
+            <div>
+              <label for="edit-address" style="display: block; font-size: 0.9rem; color: var(--brown-soft); margin-bottom: 8px;">Default Delivery Address</label>
+              <textarea id="edit-address" class="auth-input" placeholder="Enter your full address in Settat..." rows="3" style="margin-bottom: 0; resize: vertical; padding: 12px; border: 1px solid rgba(193, 119, 30, 0.3); border-radius: 8px; width: 100%; background: transparent; color: inherit; font-family: inherit;"></textarea>
+            </div>
+            <button type="submit" class="btn btn-dark" style="width: 100%; padding: 12px; border-radius: 8px;">Save Changes</button>
+          </form>
+          <p id="info-msg" style="margin-top: 15px; font-size: 0.9rem; display: none; text-align: center;"></p>
+        </div>
+
         <!-- Order History Card -->
         <div class="auth-card reveal" style="max-width: 100%; margin-bottom: 30px; padding: 30px; text-align: left;">
           <h3 style="color: var(--brown); margin-bottom: 20px; font-family: 'Cormorant Garamond', serif; border-bottom: 1px solid rgba(74,55,40,0.1); padding-bottom: 10px;">Order History</h3>
           <div id="order-history-list">
-            <p style="color: var(--brown-soft); font-size: 0.95rem; font-style: italic;">No orders found yet. (Orders placed via WhatsApp will appear here soon!)</p>
+            <p style="color: var(--brown-soft); font-size: 0.95rem; font-style: italic;">Loading orders...</p>
           </div>
         </div>
 
-        <!-- Settings Card -->
+        <!-- Security Card -->
         <div class="auth-card reveal" style="max-width: 100%; padding: 30px; text-align: left;">
-          <h3 style="color: var(--brown); margin-bottom: 20px; font-family: 'Cormorant Garamond', serif;">Account Settings</h3>
+          <h3 style="color: var(--brown); margin-bottom: 20px; font-family: 'Cormorant Garamond', serif; border-bottom: 1px solid rgba(74,55,40,0.1); padding-bottom: 10px;">Security</h3>
           <form id="password-form" style="display: flex; flex-direction: column; gap: 15px;">
             <div>
               <label for="new-password" style="display: block; font-size: 0.9rem; color: var(--brown-soft); margin-bottom: 8px;">Change Password</label>
               <input type="password" id="new-password" class="auth-input" placeholder="Enter new password" required style="margin-bottom: 0;">
             </div>
-            <button type="submit" class="btn btn-dark" style="width: 100%; padding: 12px; border-radius: 8px;">Update Password</button>
+            <button type="submit" class="btn btn-outline" style="width: 100%; padding: 12px; border-radius: 8px;">Update Password</button>
           </form>
           <p id="password-msg" style="margin-top: 15px; font-size: 0.9rem; display: none; text-align: center;"></p>
         </div>
@@ -100,23 +113,12 @@
     </section>
   </main>
 
-  <!-- Standard Site Footer -->
   <footer class="site-footer">
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
           <b>Youyou's Cookies</b>
           <div class="en">MADE WITH LOVE</div>
-          <p>Small-batch, handcrafted cookies baked with premium ingredients. Follow our sweet journey online!</p>
-        </div>
-        <div>
-          <h3 class="footer-title">Order Information</h3>
-          <ul>
-            <li><b>100% Online Bakery</b></li>
-            <li>Shipping All Settat</li>
-            <li>Payment: Cash on Delivery</li>
-            <li>Baking Days: All week</li>
-          </ul>
         </div>
       </div>
     </div>

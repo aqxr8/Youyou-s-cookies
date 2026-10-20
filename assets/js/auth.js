@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk",
@@ -35,7 +34,7 @@ onAuthStateChanged(auth, async (user) => {
       userIconWrapper.innerHTML = `<img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
     }
 
-    // 2. Load Profile Data if on profile.html
+// 2. Load Profile Data if on profile.html
     if (window.location.pathname.includes('profile.html')) {
       document.getElementById('profile-email').textContent = user.email;
       const profilePic = document.getElementById('profile-picture');
@@ -43,12 +42,18 @@ onAuthStateChanged(auth, async (user) => {
       profilePic.src = user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=c1771e&color=fff&size=128`;
       profilePic.style.display = "block";
 
-      // Fetch username from Firestore
+      // Fetch user data from Firestore
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
-        document.getElementById('profile-name').textContent = userDoc.data().username || "Cookie Lover";
-      } else {
-        document.getElementById('profile-name').textContent = user.displayName || "Cookie Lover";
+        const userData = userDoc.data();
+        const displayName = userData.username || user.displayName || "Cookie Lover";
+        document.getElementById('profile-name').textContent = displayName;
+        
+        // Auto-fill the new personal info forms
+        const editUsername = document.getElementById('edit-username');
+        const editAddress = document.getElementById('edit-address');
+        if (editUsername) editUsername.value = displayName;
+        if (editAddress) editAddress.value = userData.address || "";
       }
 
       // Fetch Orders
@@ -56,8 +61,10 @@ onAuthStateChanged(auth, async (user) => {
       const querySnapshot = await getDocs(q);
       const ordersList = document.getElementById('order-history-list');
       
-      if (!querySnapshot.empty) {
-        ordersList.innerHTML = ""; // Clear placeholder
+      if (querySnapshot.empty) {
+        ordersList.innerHTML = '<p style="color: var(--brown-soft); font-size: 0.95rem; font-style: italic;">No orders found yet.</p>';
+      } else {
+        ordersList.innerHTML = "";
         querySnapshot.forEach((doc) => {
           const order = doc.data();
           ordersList.innerHTML += `
@@ -70,40 +77,43 @@ onAuthStateChanged(auth, async (user) => {
       }
     }
   } else {
-    // Not logged in: keep default SVG and point to login
     if (userIconLink) userIconLink.href = "login.html";
-    if (window.location.pathname.includes('profile.html')) {
-      window.location.href = "login.html"; // Kick out if trying to view profile logged out
-    }
+    if (window.location.pathname.includes('profile.html')) window.location.href = "login.html";
   }
 });
 
-// --- PROFILE PAGE LOGIC (Change Password & Logout) ---
-const passwordForm = document.getElementById('password-form');
-if (passwordForm) {
-  passwordForm.addEventListener('submit', async (e) => {
+// --- PROFILE PAGE LOGIC (Update Info, Change Password & Logout) ---
+
+const infoForm = document.getElementById('profile-info-form');
+if (infoForm) {
+  infoForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const newPassword = document.getElementById('new-password').value;
-    const msg = document.getElementById('password-msg');
+    const newUsername = document.getElementById('edit-username').value;
+    const newAddress = document.getElementById('edit-address').value;
+    const msg = document.getElementById('info-msg');
     
     try {
-      await updatePassword(auth.currentUser, newPassword);
-      msg.style.display = "block";
-      msg.style.color = "#4CAF50";
-      msg.textContent = "Password updated successfully!";
-      passwordForm.reset();
+      const user = auth.currentUser;
+      if (user) {
+        // Save new info to Firestore
+        await updateDoc(doc(db, "users", user.uid), {
+          username: newUsername,
+          address: newAddress
+        });
+        
+        // Update the display name at the top of the profile instantly
+        document.getElementById('profile-name').textContent = newUsername;
+        
+        msg.style.display = "block";
+        msg.style.color = "#4CAF50";
+        msg.textContent = "Profile updated successfully!";
+        setTimeout(() => { msg.style.display = "none"; }, 4000);
+      }
     } catch (error) {
       msg.style.display = "block";
       msg.style.color = "#d9534f";
-      msg.textContent = error.message.replace("Firebase: ", "");
+      msg.textContent = "Error saving profile.";
     }
-  });
-}
-
-const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', () => {
-    signOut(auth).then(() => window.location.href = "index.html");
   });
 }
 
