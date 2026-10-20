@@ -265,3 +265,58 @@ if (logoutBtn) {
     });
   });
 }
+// Fetch all orders
+      const ordersList = document.getElementById('admin-orders');
+      if (ordersList) {
+        const ordersSnapshot = await getDocs(collection(db, "orders"));
+        ordersList.innerHTML = ""; 
+        if (ordersSnapshot.empty) {
+          ordersList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">No orders placed yet.</p>';
+        } else {
+          ordersSnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const orderId = docSnap.id;
+            const isDelivered = data.status === 'Delivered';
+            
+            ordersList.innerHTML += `
+              <div style="border-bottom: 1px solid rgba(193, 119, 30, 0.2); padding: 12px 0; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong style="color: var(--brown);">Order #${orderId.slice(-6).toUpperCase()}</strong> 
+                  <span style="font-size: 0.85rem; color: var(--brown-soft);">(${data.date || 'Recent'})</span><br>
+                  <span style="font-size: 0.9rem;">Status: <b id="status-text-${orderId}" style="color: ${isDelivered ? '#4CAF50' : 'var(--caramel)'};">${data.status || 'Processing'}</b></span>
+                </div>
+                <div>
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; color: var(--brown);">
+                    <input type="checkbox" class="status-checkbox" data-id="${orderId}" ${isDelivered ? 'checked' : ''} style="transform: scale(1.3); accent-color: var(--caramel); cursor: pointer;">
+                    Delivered
+                  </label>
+                </div>
+              </div>
+            `;
+          });
+
+          // Add click listeners to all the checkboxes
+          document.querySelectorAll('.status-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', async (e) => {
+              const orderId = e.target.getAttribute('data-id');
+              const newStatus = e.target.checked ? 'Delivered' : 'Processing';
+              const statusText = document.getElementById(`status-text-${orderId}`);
+              
+              try {
+                // Update the order in the database
+                await updateDoc(doc(db, "orders", orderId), {
+                  status: newStatus
+                });
+                
+                // Update the text and color on the screen instantly
+                statusText.textContent = newStatus;
+                statusText.style.color = newStatus === 'Delivered' ? '#4CAF50' : 'var(--caramel)';
+              } catch (error) {
+                console.error("Error updating order:", error);
+                e.target.checked = !e.target.checked; // Revert checkbox if the database update fails
+                alert("Failed to update the order status.");
+              }
+            });
+          });
+        }
+      }
