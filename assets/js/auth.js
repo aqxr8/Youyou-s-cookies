@@ -2,14 +2,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// ⚠️ PASTE YOUR FIREBASE CONFIG HERE
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk",
   authDomain: "youyous-cookies.firebaseapp.com",
   projectId: "youyous-cookies",
-  storageBucket: "youyous-cookies.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  storageBucket: "youyous-cookies.firebasestorage.app",
+  messagingSenderId: "893318787156",
+  appId: "1:893318787156:web:9780bb29b3eb597db97dc1",
+  measurementId: "G-85M038ZLQ2"
 };
 
 const app = initializeApp(firebaseConfig);
