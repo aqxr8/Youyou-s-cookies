@@ -58,7 +58,7 @@ onAuthStateChanged(auth, async (user) => {
         if (editAddress) editAddress.value = userData.address || "";
       }
 
-// --- SYNC & RENDER BASKET (CART) ---
+      // --- SYNC & RENDER BASKET (CART) ---
       let localCart = JSON.parse(localStorage.getItem('cart')) || [];
       const userRef = doc(db, "users", user.uid);
       
@@ -125,6 +125,7 @@ onAuthStateChanged(auth, async (user) => {
           `;
         }
       }
+    }
 
     // --- 3. ADMIN PAGE LOGIC ---
     if (window.location.pathname.includes('admin.html')) {
@@ -215,7 +216,7 @@ onAuthStateChanged(auth, async (user) => {
       window.location.href = "login.html"; 
     }
   }
-});
+}); // <-- THIS MISSING PARENTHESIS WAS CAUSING THE ERROR!
 
 // --- PROFILE PAGE SETTINGS ---
 const infoForm = document.getElementById('profile-info-form');
