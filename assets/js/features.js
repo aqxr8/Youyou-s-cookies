@@ -10,18 +10,73 @@ document.addEventListener("DOMContentLoaded", () => {
 function initHeroCarousel() {
   const slides = document.querySelectorAll('.hero-slide');
   const dots = document.querySelectorAll('.hero-dots button');
+  const hero = document.querySelector('.hero-carousel');
+  
+  if (!hero || slides.length === 0) return;
 
-  if (slides.length === 0 || dots.length === 0) return;
+  let currentSlide = 0;
+  let slideInterval;
+  const intervalTime = 4000;
 
-  dots.forEach(dot => {
-    dot.addEventListener('click', function() {
-      const index = parseInt(this.getAttribute('data-index'));
-      slides.forEach(slide => slide.classList.remove('active'));
-      dots.forEach(d => d.classList.remove('active'));
-      slides[index].classList.add('active');
-      this.classList.add('active');
+  function goToSlide(index) {
+    slides[currentSlide].classList.remove('active');
+    if (dots[currentSlide]) dots[currentSlide].classList.remove('active');
+    
+    currentSlide = (index + slides.length) % slides.length; 
+    
+    slides[currentSlide].classList.add('active');
+    if (dots[currentSlide]) dots[currentSlide].classList.add('active');
+  }
+
+  function nextSlide() { goToSlide(currentSlide + 1); }
+  function prevSlide() { goToSlide(currentSlide - 1); }
+
+  function startSlide() {
+    slideInterval = setInterval(nextSlide, intervalTime);
+  }
+
+  function resetSlide() {
+    clearInterval(slideInterval);
+    startSlide();
+  }
+
+  dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+      goToSlide(index);
+      resetSlide();
     });
   });
+
+  let startX = 0;
+  let endX = 0;
+
+  hero.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+  }, { passive: true });
+
+  hero.addEventListener('touchmove', (e) => {
+    endX = e.touches[0].clientX;
+  }, { passive: true });
+
+  hero.addEventListener('touchend', () => {
+    if (startX === 0 || endX === 0) return;
+    
+    const diffX = startX - endX;
+    
+    if (Math.abs(diffX) > 50) {
+      if (diffX > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+      resetSlide();
+    }
+    
+    startX = 0;
+    endX = 0;
+  });
+
+  startSlide();
 }
 
 // --- 2. COOKIE QUIZ FUNCTION (FAIR TIE-BREAKER FIXED) ---
@@ -108,7 +163,6 @@ function initQuiz() {
   };
 
   const showResult = () => {
-    // Fair tie breaker: find all highest scoring keys and pick randomly among top scores
     const maxScore = Math.max(...Object.values(score));
     const topFlavors = Object.keys(score).filter(flavor => score[flavor] === maxScore);
     const pick = topFlavors[Math.floor(Math.random() * topFlavors.length)];
@@ -220,7 +274,6 @@ function initCart() {
   const addressInput = document.getElementById('cart-address');
   const locateBtn = document.getElementById('locate-me-btn');
 
-  // SVG Click Bug Fix: Use event delegation with .closest('.add-to-cart')
   document.addEventListener('click', (e) => {
     const button = e.target.closest('.add-to-cart');
     if (!button) return;
@@ -353,7 +406,6 @@ function initCart() {
     checkoutBtn.addEventListener('click', () => {
       if (cart.length === 0) return;
       
-      // Smart Baking Schedule Logic with Settat, Morocco Timezone
       const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
       const currentHour = moroccoTime.getHours();
       let timeNote = "";

@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     onScroll();
   }
 
-// 2. Mobile Navigation Toggle
+  // 2. Mobile Navigation Toggle
   if (navToggle && mainNav) {
     navToggle.addEventListener("click", () => {
       mainNav.classList.add("open");
@@ -63,7 +63,7 @@ function initOpenStatus() {
   const text = pill.querySelector(".status-text");
   
   // Standardize time to Morocco
-  const moroccoTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Casablanca"}));
+  const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
   const currentHour = moroccoTime.getHours();
   const mins = currentHour * 60 + moroccoTime.getMinutes();
 
@@ -71,7 +71,7 @@ function initOpenStatus() {
   const closingTime = "20:00";
 
   // Delivery Hours: 15:00 - 20:00
-  if (mins >= 15 * 60 && mins < 20 * 60 ) {
+  if (mins >= 15 * 60 && mins < 20 * 60) {
     open = true;
   }
 
@@ -142,78 +142,6 @@ navLinks.forEach(link => {
   if (link.getAttribute("href") === currentPath) {
     link.classList.add("active");
   }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  const slides = document.querySelectorAll('.hero-slide');
-  const dots = document.querySelectorAll('.hero-dots button');
-  const hero = document.querySelector('.hero-carousel');
-  
-  if (!hero || slides.length === 0) return;
-
-  let currentSlide = 0;
-  let slideInterval;
-  const intervalTime = 4000;
-
-  function goToSlide(index) {
-    slides[currentSlide].classList.remove('active');
-    dots[currentSlide].classList.remove('active');
-    
-    currentSlide = (index + slides.length) % slides.length; 
-    
-    slides[currentSlide].classList.add('active');
-    dots[currentSlide].classList.add('active');
-  }
-
-  function nextSlide() { goToSlide(currentSlide + 1); }
-  function prevSlide() { goToSlide(currentSlide - 1); }
-
-  function startSlide() {
-    slideInterval = setInterval(nextSlide, intervalTime);
-  }
-
-  function resetSlide() {
-    clearInterval(slideInterval);
-    startSlide();
-  }
-
-  dots.forEach((dot, index) => {
-    dot.addEventListener('click', () => {
-      goToSlide(index);
-      resetSlide();
-    });
-  });
-
-  let startX = 0;
-  let endX = 0;
-
-  hero.addEventListener('touchstart', (e) => {
-    startX = e.touches[0].clientX;
-  }, { passive: true });
-
-  hero.addEventListener('touchmove', (e) => {
-    endX = e.touches[0].clientX;
-  }, { passive: true });
-
-  hero.addEventListener('touchend', () => {
-    if (startX === 0 || endX === 0) return;
-    
-    const diffX = startX - endX;
-    
-    if (Math.abs(diffX) > 50) {
-      if (diffX > 0) {
-        nextSlide();
-      } else {
-        prevSlide();
-      }
-      resetSlide();
-    }
-    
-    startX = 0;
-    endX = 0;
-  });
-
-  startSlide();
 });
 
 // 9. Google Translate Widget Initialization

@@ -1,139 +1,103 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-  <link rel="icon" type="image/png" sizes="48x48" href="assets/images/logo.png">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Admin Dashboard | Youyou's Cookies</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | YouYou's Cookies</title>
   <link rel="stylesheet" href="assets/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600&display=swap" rel="stylesheet">
 </head>
-<body>
+<body style="background: var(--cream-light);">
 
-  <!-- Admin Site Header -->
+  <!-- Header -->
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="index.html">
-        <span class="brand-text">
-          <b>Admin Portal</b>
-          <span style="color: #d9534f;">AUTHORIZED ACCESS ONLY</span>
-        </span>
+      <a href="index.html" class="brand">
+        <img src="assets/images/logo.png" alt="YouYou's Cookies" class="brand-logo">
+        <div class="brand-text">
+          <b>ADMIN CONTROL PANEL</b>
+          <span>YOUYOU'S COOKIES</span>
+        </div>
       </a>
-      
-      <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
-        <button id="logout-btn" class="btn btn-outline" style="padding: 6px 14px; font-size: 0.85rem; border-color: #d9534f; color: #d9534f;">Log Out</button>
-        <button class="nav-toggle" aria-label="Toggle Menu">
-          <span></span><span></span><span></span>
-        </button>
-      </div>
-
-      <nav class="main-nav" style="display: flex; align-items: center;">
-        <button class="nav-close" aria-label="Close Menu">&times;</button>
-        
-        <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; margin-right: 15px; transition: 0.2s;">
-          <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
-              <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
-            </svg>
-          </div>
-        </a>
-
-        <a href="#" onclick="document.getElementById('cart-panel').style.display='block'; return false;" id="nav-cart-icon" aria-label="Open Cart" style="color: inherit; display: flex; align-items: center; margin-right: 20px; position: relative; transition: 0.2s;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-          </svg>
-        </a>
-
-        <a href="index.html"><span class="nav-icon"></span> Back to Website</a>
-        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Dark Mode">
-          <span class="moon-icon" style="display:none;">🌙</span>
-          <span class="sun-icon">☀️</span>
-        </button>
-      </nav>
+      <button id="logout-btn" class="btn btn-dark" style="padding: 8px 18px; font-size: 0.85rem;">Log Out</button>
     </div>
   </header>
 
-  <main>
-    <!-- Admin Hero Banner -->
-    <section class="hero menu-hero" style="background-image: url('assets/images/cover3.jpg'); min-height: 40vh; background-position: center bottom;">
-      <div class="hero-inner" style="text-align: center; color: white;">
-        <span class="hero-tag" style="background: rgba(217, 83, 79, 0.2); border-color: #d9534f; color: #ffcccc;">MANAGEMENT</span>
-        <h1>Dashboard</h1>
-        <div class="en">Store Overview</div>
+  <main class="section container" style="max-width: 1100px; padding-top: 30px;">
+    
+    <!-- Analytics KPI Cards -->
+    <div class="admin-kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Revenue</div>
+        <div id="stat-total-revenue" class="kpi-value">0 DH</div>
+        <div class="kpi-sub">Lifetime orders</div>
       </div>
-    </section>
-
-    <section class="section bg-cream">
-      <div class="container">
-        
-        <div class="section-head reveal">
-          <span class="en">System Data</span>
-          <h2>Store Activity</h2>
-          <div class="divider"></div>
-        </div>
-
-        <!-- Dashboard Grid Layout -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
-          
-          <!-- Orders Column -->
-          <div class="auth-card reveal" style="max-width: 100%; padding: 25px; text-align: left;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid rgba(193, 119, 30, 0.2); padding-bottom: 15px;">
-              <h3 style="color: var(--brown); font-family: 'Cormorant Garamond', serif; margin: 0; font-size: 1.6rem;">Orders History</h3>
-              <span style="font-size: 1.5rem;">📦</span>
-            </div>
-            <div id="admin-orders" class="admin-list-container" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
-              <p style="color: var(--brown-soft); font-style: italic;">Loading orders...</p>
-            </div>
-          </div>
-
-          <!-- Users Column -->
-          <div class="auth-card reveal" style="max-width: 100%; padding: 25px; text-align: left;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid rgba(193, 119, 30, 0.2); padding-bottom: 15px;">
-              <h3 style="color: var(--brown); font-family: 'Cormorant Garamond', serif; margin: 0; font-size: 1.6rem;">Registered Users</h3>
-              <span style="font-size: 1.5rem;">👥</span>
-            </div>
-            <div id="admin-users" class="admin-list-container" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
-              <p style="color: var(--brown-soft); font-style: italic;">Loading users...</p>
-            </div>
-          </div>
-
-        </div>
-
+      <div class="kpi-card">
+        <div class="kpi-label">Total Orders</div>
+        <div id="stat-total-orders" class="kpi-value">0</div>
+        <div class="kpi-sub">Submitted online</div>
       </div>
-    </section>
-  </main>
-
-  <!-- Standard Site Footer -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <b>Youyou's Cookies</b>
-          <div class="en">ADMIN PORTAL</div>
-          <p>Secure system access.</p>
-        </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Pending Delivery</div>
+        <div id="stat-pending-orders" class="kpi-value" style="color: var(--caramel);">0</div>
+        <div class="kpi-sub">Needs fulfillment</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Registered Users</div>
+        <div id="stat-total-users" class="kpi-value">0</div>
+        <div class="kpi-sub">Customer accounts</div>
       </div>
     </div>
-  </footer>
 
-  <script src="assets/js/main.js"></script>
-  <script src="assets/js/features.js"></script>
+    <!-- Admin Content Grid -->
+    <div class="admin-main-grid">
+      
+      <!-- Orders Section -->
+      <div class="profile-section-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+          <h3 class="profile-card-title" style="margin: 0;">Orders Management</h3>
+          
+          <!-- Status Filter Tabs -->
+          <div class="admin-filter-tabs">
+            <button class="filter-btn active" onclick="filterAdminOrders('all')">All</button>
+            <button class="filter-btn" onclick="filterAdminOrders('Processing')">Pending</button>
+            <button class="filter-btn" onclick="filterAdminOrders('Delivered')">Delivered</button>
+          </div>
+        </div>
+
+        <div id="admin-orders">
+          <p style="color: var(--brown-soft); font-style: italic;">Loading live orders...</p>
+        </div>
+      </div>
+
+      <!-- Registered Users Section -->
+      <div class="profile-section-card">
+        <h3 class="profile-card-title">Customer Directory</h3>
+        <div id="admin-users">
+          <p style="color: var(--brown-soft); font-style: italic;">Loading users...</p>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    function filterAdminOrders(status) {
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const cards = document.querySelectorAll('.admin-order-card');
+      cards.forEach(card => {
+        if (status === 'all' || card.getAttribute('data-status') === status) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+
   <script type="module" src="assets/js/auth.js"></script>
-  
-  <!-- Inline styles specifically for the admin scrollable lists -->
-  <style>
-    .admin-list-container::-webkit-scrollbar {
-      width: 6px;
-    }
-    .admin-list-container::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.05); 
-      border-radius: 4px;
-    }
-    .admin-list-container::-webkit-scrollbar-thumb {
-      background: var(--caramel); 
-      border-radius: 4px;
-    }
-  </style>
 </body>
 </html>
