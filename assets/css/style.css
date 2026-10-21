@@ -2335,3 +2335,59 @@ body {
   margin-top: 15px;
   font-size: 0.85rem;
 }
+/* =========================================
+   HEADER FIXES (LOGO SHAPE & MOBILE LAYOUT)
+   ========================================= */
+
+/* 1. Fix the Logo and Brand Name Shape (Desktop & Mobile) */
+.site-header .brand, 
+.site-header .logo-container,
+.site-header .brand-text,
+.site-header h1 {
+    flex-shrink: 0 !important; /* Prevents the text from squishing */
+    white-space: nowrap !important; /* Forces the text to stay on its intended line */
+}
+
+/* Ensure the actual logo image doesn't distort or stretch */
+.site-header img {
+    object-fit: contain !important;
+}
+
+/* 2. Mobile Layout: User Profile on the Left, Cart on the Right */
+@media (max-width: 850px) {
+    .site-header {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
+
+    /* Force User Icon to the far left */
+    #user-icon-link, 
+    #user-icon-wrapper {
+        order: -1 !important; /* Moves it to the very start of the line */
+        margin-right: auto !important;
+        display: block !important;
+    }
+
+    /* Force Cart Icon to the far right */
+    .cart-toggle, 
+    button[onclick*="cart-panel"], 
+    .cart-btn {
+        order: 99 !important; /* Moves it to the very end of the line */
+        margin-left: auto !important;
+        display: block !important;
+    }
+    
+    /* Keep the Brand Name centered nicely between them */
+    .site-header .brand, 
+    .site-header .logo-container {
+        order: 1 !important;
+        margin: 0 auto !important;
+        text-align: center !important;
+        width: 100% !important; /* Pushes the logo to its own line below the icons if screen is very small, or leave unset to keep on same line */
+        margin-top: 10px !important;
+    }
+}
