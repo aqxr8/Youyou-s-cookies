@@ -2336,57 +2336,51 @@ body {
   font-size: 0.85rem;
 }
 /* =========================================
-   HEADER FIXES (LOGO SHAPE & MOBILE LAYOUT)
+   MOBILE HEADER FIXES (HAMBURGER, USER, CART)
    ========================================= */
 
-/* 1. Fix the Logo and Brand Name Shape so it never squishes */
-.site-header .brand, 
-.site-header .logo-container,
-.site-header .brand-text,
-.site-header h1 {
-    flex-shrink: 0 !important; 
-    white-space: nowrap !important; 
-}
-
-/* 2. Perfect Mobile Top Bar Layout */
 @media (max-width: 850px) {
+    /* 1. Ensure the header allows wrapping so we can stack elements */
     .site-header {
-        position: relative !important;
         display: flex !important;
-        justify-content: center !important; /* Centers your logo perfectly */
+        flex-wrap: wrap !important;
         align-items: center !important;
-        min-height: 70px !important; /* Ensures the header is tall enough */
     }
 
-    /* Keep the 3-line menu on the far left */
+    /* 2. Keep the hamburger menu (three lines) on the right of the top row */
     .nav-toggle {
-        position: absolute !important;
-        left: 15px !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        margin: 0 !important;
-    }
-
-    /* Put the User Profile icon on the left, right next to the menu */
-    #user-icon-link,
-    #user-icon-wrapper {
-        position: absolute !important;
-        left: 65px !important; /* Gives space for the 3 lines */
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        margin: 0 !important;
+        order: 1 !important;
+        margin-left: auto !important; /* Pushes it to the far right */
         display: block !important;
     }
 
-    /* Put the Basket / Cart icon on the far right */
+    /* 3. Keep your Brand Logo normal in the top row */
+    .site-header .brand, 
+    .site-header .logo-container {
+        order: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* 4. Create a dedicated full-width line for the User Icon and Basket */
+    #user-icon-wrapper,
+    #user-icon-link {
+        order: 3 !important; /* Moves below the logo/hamburger */
+        margin-right: auto !important; /* Pushes to the far left */
+        margin-top: 15px !important;
+    }
+
     .cart-toggle, 
     button[onclick*="cart-panel"], 
     .cart-btn {
-        position: absolute !important;
-        right: 15px !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        margin: 0 !important;
-        display: block !important;
+        order: 4 !important; /* Stays on the same line as the user icon */
+        margin-left: auto !important; /* Pushes to the far right */
+        margin-top: 15px !important;
+    }
+
+    /* Invisible spacer to force the User and Cart onto their own new line */
+    .site-header::after {
+        content: "";
+        width: 100%;
+        order: 2 !important; /* Sits between the Logo/Hamburger row and the User/Cart row */
     }
 }
