@@ -2656,3 +2656,150 @@ body {
   background: var(--white);
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+/* =========================================
+   THEME SUPPORT & UPGRADED BOX / ADMIN STYLES
+   ========================================= */
+
+/* Dark Mode Overrides for Profile & Admin Pages */
+[data-theme="dark"] .profile-hero-card,
+[data-theme="dark"] .profile-section-card,
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .admin-order-card,
+[data-theme="dark"] .order-history-card,
+[data-theme="dark"] .cart-panel-modern,
+[data-theme="dark"] .confirm-modal-content {
+  background: var(--white) !important;
+  color: var(--brown) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .profile-card-title,
+[data-theme="dark"] .cart-header,
+[data-theme="dark"] .confirm-modal-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+  color: var(--brown) !important;
+}
+
+[data-theme="dark"] .form-group label,
+[data-theme="dark"] .admin-order-card strong,
+[data-theme="dark"] .kpi-label {
+  color: var(--brown) !important;
+}
+
+[data-theme="dark"] .admin-filter-tabs {
+  background: var(--cream) !important;
+}
+
+[data-theme="dark"] .filter-btn {
+  color: var(--brown-soft) !important;
+}
+
+[data-theme="dark"] .filter-btn.active {
+  background: var(--white) !important;
+  color: var(--caramel) !important;
+}
+
+[data-theme="dark"] .cart-footer {
+  background: var(--cream) !important;
+}
+
+/* Upgraded Floating Box / Cart Panel Styling */
+.cart-panel-modern {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  background: #FFF9ED;
+  padding: 0;
+  border-radius: 20px;
+  box-shadow: 0 15px 45px rgba(0,0,0,0.2);
+  width: 350px;
+  max-width: 90vw;
+  display: none;
+  z-index: 1000;
+  color: #38220F;
+  overflow: hidden;
+  border: 1px solid #efe5d5;
+  animation: slideUpBox 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes slideUpBox {
+  from { transform: translateY(40px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px dashed #efe5d5;
+}
+
+.cart-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.cart-items-list {
+  list-style: none;
+  padding: 10px 20px;
+  margin: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.cart-items-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed rgba(74, 55, 40, 0.1);
+  font-size: 0.95rem;
+}
+
+/* Confirmation Modal Styling */
+.confirm-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 2500;
+  place-items: center;
+  padding: 20px;
+}
+
+.confirm-modal-content {
+  background: #FFF9ED;
+  width: 100%;
+  max-width: 450px;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  position: relative;
+  animation: modalPop 0.3s ease-out forwards;
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.confirm-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed rgba(74, 55, 40, 0.15);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+.confirm-order-summary {
+  background: rgba(193, 119, 30, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 18px;
+  font-size: 0.9rem;
+}

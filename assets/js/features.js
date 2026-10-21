@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
   init3DHoverEffect(); 
 });
 
-// --- 1. HERO SLIDER FUNCTION ---
 function initHeroCarousel() {
   const slides = document.querySelectorAll('.hero-slide');
   const dots = document.querySelectorAll('.hero-dots button');
@@ -64,11 +63,8 @@ function initHeroCarousel() {
     const diffX = startX - endX;
     
     if (Math.abs(diffX) > 50) {
-      if (diffX > 0) {
-        nextSlide();
-      } else {
-        prevSlide();
-      }
+      if (diffX > 0) nextSlide();
+      else prevSlide();
       resetSlide();
     }
     
@@ -79,7 +75,6 @@ function initHeroCarousel() {
   startSlide();
 }
 
-// --- 2. COOKIE QUIZ FUNCTION (FAIR TIE-BREAKER FIXED) ---
 function initQuiz() {
   const root = document.getElementById("quiz");
   if (!root) return;
@@ -191,7 +186,6 @@ function initQuiz() {
   showView(startView);
 }
 
-// --- 3. REVIEWS & NOTES WALL FUNCTION ---
 function initNotesWall() {
   const form = document.getElementById("note-form");
   const grid = document.getElementById("notes-grid");
@@ -249,7 +243,7 @@ function initNotesWall() {
   }
 }
 
-// --- 4. STICKY CART FUNCTION (SVG CLICK BUG FIXED + MOROCCO TIMEZONE) ---
+// --- STICKY CART & FIRESTORE CHECKOUT MECHANIC ---
 function initCart() {
   let rawCart = JSON.parse(localStorage.getItem('youyou_cart')) || [];
   let cart = [];
@@ -274,6 +268,15 @@ function initCart() {
   const addressInput = document.getElementById('cart-address');
   const locateBtn = document.getElementById('locate-me-btn');
 
+  // Confirmation Modal Elements
+  const confirmModal = document.getElementById('checkout-confirm-modal');
+  const confirmList = document.getElementById('confirm-items-summary');
+  const confirmTotal = document.getElementById('confirm-total-price');
+  const confirmPhoneInput = document.getElementById('confirm-phone-input');
+  const confirmAddressInput = document.getElementById('confirm-address-input');
+  const confirmSubmitBtn = document.getElementById('confirm-submit-order');
+  const confirmCloseBtn = document.getElementById('close-confirm-modal');
+
   document.addEventListener('click', (e) => {
     const button = e.target.closest('.add-to-cart');
     if (!button) return;
@@ -289,13 +292,8 @@ function initCart() {
       cart.push({ name, price, quantity: 1 });
     }
     
-    if (window.va) {
-      window.va('track', 'AddToCart', { flavor: name, price: price });
-    }
-    
     saveCart();
 
-    // TOAST NOTIFICATION
     const toast = document.createElement('div');
     toast.textContent = `Added ${name} to your box!`;
     toast.style.cssText = `
@@ -373,84 +371,115 @@ function initCart() {
   if (locateBtn && addressInput) {
     locateBtn.addEventListener('click', () => {
       if ("geolocation" in navigator) {
-        locateBtn.innerHTML = "⏳ Finding location...";
-        
+        locateBtn.innerHTML = "⏳ Locating...";
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            const mapsLink = `https://maps.google.com/?q=${lat},${lng}`;
-            
-            if (addressInput.value.trim() !== "") {
-               addressInput.value = addressInput.value.trim() + "\nLocation Pin: " + mapsLink;
-            } else {
-               addressInput.value = "Location Pin: " + mapsLink;
-            }
-            
+            const mapsLink = `https://maps.google.com/?q=${position.coords.latitude},${position.coords.longitude}`;
+            addressInput.value = (addressInput.value.trim() ? addressInput.value.trim() + "\n" : "") + "Pin: " + mapsLink;
             locateBtn.innerHTML = "✅ Location Added!";
-            setTimeout(() => { locateBtn.innerHTML = "📍 Use My Current Location"; }, 3000);
+            setTimeout(() => { locateBtn.innerHTML = "📍 Use My Location"; }, 3000);
           },
-          (error) => {
-            alert("Could not get location. Please ensure location services are enabled on your device, or simply type your address manually.");
-            locateBtn.innerHTML = "📍 Use My Current Location";
-          },
-          { enableHighAccuracy: true, timeout: 10000 }
+          () => {
+            alert("Could not retrieve location.");
+            locateBtn.innerHTML = "📍 Use My Location";
+          }
         );
-      } else {
-        alert("Geolocation is not supported by your browser.");
       }
     });
   }
 
+  // CHECKOUT CONFIRMATION POPUP MECHANIC
   if (checkoutBtn) {
     checkoutBtn.addEventListener('click', () => {
       if (cart.length === 0) return;
-      
-      const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
-      const currentHour = moroccoTime.getHours();
-      let timeNote = "";
-      
-      if (currentHour >= 20) {
-        timeNote = "🚨 *[PRE-ORDER FOR TOMORROW]*\n";
-      } else if (currentHour < 15) {
-        timeNote = "⏳ *[PRE-ORDER FOR TODAY'S BATCH (15:00 - 20:00)]*\n";
-      }
 
-      let message = `Hi Youyou's Cookies!\n${timeNote}I would like to order:\n\n`;
-      let total = 0;
-      
-      cart.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        message += `- ${item.quantity}x ${item.name} (${itemTotal} DH)\n`;
-        total += itemTotal;
-      });
-      
-      message += `\nTotal: ${total} DH\nPayment: Cash on Delivery in Settat.`;
-      
-      const address = addressInput && addressInput.value.trim() !== "" ? addressInput.value.trim() : "[Customer will provide]";
-      message += `\n\nDelivery Address:\n${address}`;
-      
-      if (window.va) {
-        window.va('track', 'WhatsAppCheckout', { cartTotal: total, itemCount: cart.length });
-      }
+      if (confirmModal) {
+        let summaryText = "";
+        let total = 0;
+        cart.forEach(item => {
+          const itemTotal = item.price * item.quantity;
+          summaryText += `• ${item.quantity}x ${item.name} (${itemTotal} DH)\n`;
+          total += itemTotal;
+        });
 
-      const phone = "212789233029"; 
-      const encodedMessage = encodeURIComponent(message);
-      window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
-      
-      cart = [];
-      saveCart();
-      if (addressInput) addressInput.value = ""; 
+        if (confirmList) confirmList.textContent = summaryText;
+        if (confirmTotal) confirmTotal.textContent = `${total} DH`;
+        if (confirmAddressInput && addressInput) confirmAddressInput.value = addressInput.value;
+
+        confirmModal.style.display = 'grid';
+      } else {
+        processFinalCheckout();
+      }
     });
+  }
+
+  if (confirmCloseBtn) {
+    confirmCloseBtn.addEventListener('click', () => {
+      confirmModal.style.display = 'none';
+    });
+  }
+
+  if (confirmSubmitBtn) {
+    confirmSubmitBtn.addEventListener('click', async () => {
+      const phone = confirmPhoneInput ? confirmPhoneInput.value.trim() : "";
+      const address = confirmAddressInput ? confirmAddressInput.value.trim() : "";
+
+      if (!phone) {
+        alert("Please enter a contact phone number so we can fulfill your order.");
+        return;
+      }
+
+      confirmSubmitBtn.disabled = true;
+      confirmSubmitBtn.textContent = "Processing Order...";
+
+      await processFinalCheckout(phone, address);
+
+      confirmSubmitBtn.disabled = false;
+      confirmSubmitBtn.textContent = "Confirm & Send via WhatsApp";
+      confirmModal.style.display = 'none';
+    });
+  }
+
+  async function processFinalCheckout(phone = "", address = "") {
+    let total = 0;
+    cart.forEach(i => total += (i.price * i.quantity));
+
+    // 1. Save to Firebase Firestore
+    if (window.saveOrderToFirestore) {
+      await window.saveOrderToFirestore({
+        customerName: window.currentUserObj ? (window.currentUserObj.displayName || window.currentUserObj.email) : "Guest",
+        phone: phone,
+        address: address || (addressInput ? addressInput.value : "Settat"),
+        items: cart,
+        totalAmount: total
+      });
+    }
+
+    // 2. Generate WhatsApp Message
+    const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
+    const currentHour = moroccoTime.getHours();
+    let timeNote = currentHour >= 20 ? "🚨 *[PRE-ORDER FOR TOMORROW]*\n" : (currentHour < 15 ? "⏳ *[PRE-ORDER FOR TODAY (15:00 - 20:00)]*\n" : "");
+
+    let message = `Hi YouYou's Cookies!\n${timeNote}New Order Confirmation:\n\n`;
+    cart.forEach(item => {
+      message += `- ${item.quantity}x ${item.name} (${item.price * item.quantity} DH)\n`;
+    });
+    
+    message += `\nTotal: ${total} DH\nPhone: ${phone}\nAddress: ${address || "Settat"}`;
+    
+    const targetPhone = "212789233029"; 
+    window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, '_blank');
+
+    cart = [];
+    saveCart();
+    if (addressInput) addressInput.value = "";
   }
 
   updateCartUI();
 }
 
-// --- 5. INTERACTIVE 3D HOVER EFFECT ---
 function init3DHoverEffect() {
   const cards = document.querySelectorAll('.new-menu-card, .product-card');
-  
   if (window.innerWidth <= 900) return;
 
   cards.forEach(card => {
@@ -459,11 +488,8 @@ function init3DHoverEffect() {
       const x = e.clientX - rect.left; 
       const y = e.clientY - rect.top;
       
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      
-      const rotateX = ((y - centerY) / centerY) * -12;
-      const rotateY = ((x - centerX) / centerX) * 12;
+      const rotateX = ((y - (rect.height / 2)) / (rect.height / 2)) * -12;
+      const rotateY = ((x - (rect.width / 2)) / (rect.width / 2)) * 12;
       
       card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`;
       card.style.transition = 'none'; 
@@ -476,10 +502,6 @@ function init3DHoverEffect() {
       card.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.5s ease';
       card.style.zIndex = '1';
       card.style.boxShadow = '';
-    });
-    
-    card.addEventListener('mouseenter', () => {
-      card.style.transition = 'none'; 
     });
   });
 }

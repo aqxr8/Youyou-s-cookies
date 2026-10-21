@@ -19,7 +19,9 @@ import {
   query, 
   where, 
   getDocs, 
-  updateDoc 
+  updateDoc,
+  addDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -38,9 +40,36 @@ const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 const ADMIN_EMAIL = "youyouscookies@gmail.com";
+window.currentUserObj = null;
 
-// --- GLOBAL AUTH STATE observer ---
+// --- GLOBAL SAVE ORDER METHOD FOR FIRESTORE ---
+window.saveOrderToFirestore = async function(orderData) {
+  try {
+    const user = auth.currentUser;
+    const finalData = {
+      userId: user ? user.uid : "guest",
+      userEmail: user ? user.email : "Guest",
+      customerName: orderData.customerName || (user ? user.displayName : "Guest"),
+      phone: orderData.phone || "",
+      address: orderData.address || "Settat",
+      items: orderData.items || [],
+      totalAmount: orderData.totalAmount || 0,
+      status: "Processing",
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      createdAt: serverTimestamp()
+    };
+
+    const docRef = await addDoc(collection(db, "orders"), finalData);
+    return docRef.id;
+  } catch (error) {
+    console.error("Firestore Order Saving Error:", error);
+    return null;
+  }
+};
+
+// --- GLOBAL AUTH STATE OBSERVER ---
 onAuthStateChanged(auth, async (user) => {
+  window.currentUserObj = user;
   const userIconLink = document.getElementById('user-icon-link');
   const userIconWrapper = document.getElementById('user-icon-wrapper');
 
@@ -66,10 +95,10 @@ onAuthStateChanged(auth, async (user) => {
         }
       }
     } catch (e) {
-      console.warn("Could not fetch user data:", e);
+      console.warn("Could not fetch user profile:", e);
     }
 
-    // --- PROFILE PAGE LOGIC ---
+    // PROFILE PAGE
     if (window.location.pathname.includes('profile.html')) {
       if (user.email === ADMIN_EMAIL) {
         window.location.href = "admin.html"; 
@@ -99,14 +128,11 @@ onAuthStateChanged(auth, async (user) => {
         if (editPhone) editPhone.value = userData.phone || "";
       }
 
-      // Sync & Render Cart
       syncAndRenderProfileCart(user, db, userData, userDocExists);
-
-      // Load Customer Order History
       loadCustomerOrderHistory(user, db);
     }
 
-    // --- ADMIN PAGE LOGIC ---
+    // ADMIN PAGE
     if (window.location.pathname.includes('admin.html')) {
       if (user.email !== ADMIN_EMAIL) {
         window.location.href = "profile.html"; 
@@ -123,7 +149,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// --- HELPER: Sync and Render Cart in Profile ---
+// Sync Profile Cart
 async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   let rawCartString = localStorage.getItem('youyou_cart');
   let localCart = [];
@@ -176,12 +202,22 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   basketList.innerHTML += `
     <div style="padding-top: 20px; text-align: right;">
       <p style="font-size: 1.2rem; margin-bottom: 12px;">Total: <strong style="color: var(--caramel); font-size: 1.4rem;">${total} DH</strong></p>
-      <button onclick="document.getElementById('cart-panel').style.display='block'" class="btn btn-dark">Open Box & Checkout</button>
+      <button onclick="window.openBoxModal()" class="btn btn-dark">Open Box & Checkout</button>
     </div>
   `;
 }
 
-// --- HELPER: Load Customer Order History ---
+// Global Helper to trigger box panel
+window.openBoxModal = function() {
+  const panel = document.getElementById('cart-panel');
+  if (panel) {
+    panel.style.display = 'block';
+  } else {
+    window.location.href = "index.html#menu";
+  }
+};
+
+// Customer Order History Loader
 async function loadCustomerOrderHistory(user, db) {
   const historyContainer = document.getElementById('profile-order-history');
   if (!historyContainer) return;
@@ -207,7 +243,7 @@ async function loadCustomerOrderHistory(user, db) {
         <div class="order-history-card">
           <div class="order-history-header">
             <div>
-              <strong>Order #${docSnap.id.slice(-6).toUpperCase()}</strong>
+              <strong style="color: var(--brown);">Order #${docSnap.id.slice(-6).toUpperCase()}</strong>
               <div style="font-size: 0.8rem; color: var(--brown-soft);">${data.date || 'Recent Order'}</div>
             </div>
             <span class="status-pill-badge ${isDelivered ? 'delivered' : 'processing'}">
@@ -229,12 +265,11 @@ async function loadCustomerOrderHistory(user, db) {
   }
 }
 
-// --- HELPER: Admin Dashboard Initialization ---
+// Admin Dashboard Loader
 async function initAdminDashboard(db) {
   const usersList = document.getElementById('admin-users');
   const ordersList = document.getElementById('admin-orders');
 
-  // Stats Counters
   const statRevenue = document.getElementById('stat-total-revenue');
   const statOrders = document.getElementById('stat-total-orders');
   const statPending = document.getElementById('stat-pending-orders');
@@ -318,11 +353,11 @@ async function initAdminDashboard(db) {
             </span>
           </div>
 
-          <div style="margin: 10px 0; font-size: 0.9rem; line-height: 1.5;">
+          <div style="margin: 10px 0; font-size: 0.9rem; line-height: 1.5; color: var(--brown-soft);">
             <strong>Items:</strong> ${itemsSummary}<br>
             <strong>Customer:</strong> ${data.customerName || data.userEmail || 'Guest'}<br>
             <strong>Phone:</strong> ${data.phone || 'N/A'}<br>
-            <strong>Address:</strong> ${data.address || 'Cash on Delivery / Local pickup'}
+            <strong>Address:</strong> ${data.address || 'Settat'}
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(74,55,40,0.15);">
@@ -333,7 +368,7 @@ async function initAdminDashboard(db) {
               ${data.phone ? `<a href="https://wa.me/${data.phone.replace(/[^0-9]/g, '')}" target="_blank" class="btn-whatsapp-sm">WhatsApp</a>` : ''}
               <label class="delivery-toggle-label">
                 <input type="checkbox" class="status-checkbox" data-id="${orderId}" ${isDelivered ? 'checked' : ''}>
-                <span>Mark Delivered</span>
+                <span>Delivered</span>
               </label>
             </div>
           </div>
@@ -342,7 +377,6 @@ async function initAdminDashboard(db) {
         ordersList.appendChild(orderCard);
       });
 
-      // Handle Checkbox Changes
       document.querySelectorAll('.status-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', async (e) => {
           const orderId = e.target.getAttribute('data-id');
@@ -370,7 +404,7 @@ async function initAdminDashboard(db) {
   }
 }
 
-// --- FORGOT PASSWORD HANDLER ---
+// Password Reset Form
 const forgotPasswordForm = document.getElementById('forgot-password-form');
 if (forgotPasswordForm) {
   forgotPasswordForm.addEventListener('submit', async (e) => {
@@ -392,7 +426,7 @@ if (forgotPasswordForm) {
   });
 }
 
-// --- PROFILE FORM UPDATES ---
+// Profile Info Form
 const infoForm = document.getElementById('profile-info-form');
 if (infoForm) {
   infoForm.addEventListener('submit', async (e) => {
@@ -427,6 +461,7 @@ if (infoForm) {
   });
 }
 
+// Password Form
 const passwordForm = document.getElementById('password-form');
 if (passwordForm) {
   passwordForm.addEventListener('submit', async (e) => {
@@ -456,7 +491,7 @@ function routeUser(user) {
   }
 }
 
-// Auth forms (Login, Signup, Google, Logout)
+// Login
 const loginForm = document.getElementById('auth-form');
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
@@ -476,6 +511,7 @@ if (loginForm) {
   });
 }
 
+// Signup
 const signupForm = document.getElementById('auth-form-signup');
 if (signupForm) {
   signupForm.addEventListener('submit', async (e) => {
@@ -502,6 +538,7 @@ if (signupForm) {
   });
 }
 
+// Google Sign In
 const googleBtn = document.getElementById('google-btn');
 if (googleBtn) {
   googleBtn.addEventListener('click', async () => {
@@ -528,6 +565,7 @@ if (googleBtn) {
   });
 }
 
+// Logout
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
   logoutBtn.addEventListener('click', () => {

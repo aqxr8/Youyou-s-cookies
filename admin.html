@@ -19,7 +19,14 @@
           <span>YOUYOU'S COOKIES</span>
         </div>
       </a>
-      <button id="logout-btn" class="btn btn-dark" style="padding: 8px 18px; font-size: 0.85rem;">Log Out</button>
+
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+          <span class="moon-icon">🌙</span>
+          <span class="sun-icon" style="display: none;">☀️</span>
+        </button>
+        <button id="logout-btn" class="btn btn-dark" style="padding: 8px 18px; font-size: 0.85rem;">Log Out</button>
+      </div>
     </div>
   </header>
 
@@ -43,21 +50,20 @@
         <div class="kpi-sub">Needs fulfillment</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Total Registered Users</div>
+        <div class="kpi-label">Total Users</div>
         <div id="stat-total-users" class="kpi-value">0</div>
         <div class="kpi-sub">Customer accounts</div>
       </div>
     </div>
 
-    <!-- Admin Content Grid -->
+    <!-- Admin Main Content Grid -->
     <div class="admin-main-grid">
       
-      <!-- Orders Section -->
+      <!-- Orders List -->
       <div class="profile-section-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
           <h3 class="profile-card-title" style="margin: 0;">Orders Management</h3>
           
-          <!-- Status Filter Tabs -->
           <div class="admin-filter-tabs">
             <button class="filter-btn active" onclick="filterAdminOrders('all')">All</button>
             <button class="filter-btn" onclick="filterAdminOrders('Processing')">Pending</button>
@@ -70,7 +76,7 @@
         </div>
       </div>
 
-      <!-- Registered Users Section -->
+      <!-- Users List -->
       <div class="profile-section-card">
         <h3 class="profile-card-title">Customer Directory</h3>
         <div id="admin-users">
@@ -98,6 +104,7 @@
     }
   </script>
 
+  <script src="assets/js/main.js"></script>
   <script type="module" src="assets/js/auth.js"></script>
 </body>
 </html>
