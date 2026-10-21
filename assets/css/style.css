@@ -2335,52 +2335,23 @@ body {
   margin-top: 15px;
   font-size: 0.85rem;
 }
-/* =========================================
-   MOBILE HEADER FIXES (HAMBURGER, USER, CART)
-   ========================================= */
-
 @media (max-width: 850px) {
-    /* 1. Ensure the header allows wrapping so we can stack elements */
-    .site-header {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        align-items: center !important;
-    }
-
-    /* 2. Keep the hamburger menu (three lines) on the right of the top row */
-    .nav-toggle {
-        order: 1 !important;
-        margin-left: auto !important; /* Pushes it to the far right */
-        display: block !important;
-    }
-
-    /* 3. Keep your Brand Logo normal in the top row */
-    .site-header .brand, 
-    .site-header .logo-container {
-        order: 0 !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* 4. Create a dedicated full-width line for the User Icon and Basket */
-    #user-icon-wrapper,
-    #user-icon-link {
-        order: 3 !important; /* Moves below the logo/hamburger */
-        margin-right: auto !important; /* Pushes to the far left */
-        margin-top: 15px !important;
-    }
-
-    .cart-toggle, 
-    button[onclick*="cart-panel"], 
-    .cart-btn {
-        order: 4 !important; /* Stays on the same line as the user icon */
-        margin-left: auto !important; /* Pushes to the far right */
-        margin-top: 15px !important;
-    }
-
-    /* Invisible spacer to force the User and Cart onto their own new line */
-    .site-header::after {
-        content: "";
+    /* Target the container holding your icons inside the pulled menu */
+    .main-nav .icon-wrapper-class, 
+    .main-nav { 
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
         width: 100%;
-        order: 2 !important; /* Sits between the Logo/Hamburger row and the User/Cart row */
+        padding: 10px 20px;
+    }
+
+    /* Make sure they stay inline */
+    #user-icon-wrapper, 
+    #user-icon-link, 
+    .cart-toggle {
+        display: inline-block !important;
+        margin: 0 !important;
     }
 }
