@@ -262,7 +262,7 @@ window.openBoxModal = function() {
   if (panel) {
     panel.style.display = 'block';
   } else {
-    window.location.href = "index.html#menu";
+    window.location.href = "menu.html";
   }
 };
 

@@ -2,26 +2,100 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Create Account | Youyou's Cookies</title>
-  <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/png" sizes="48x48" href="assets/images/logo.png">
+  <link rel="apple-touch-icon" href="assets/images/logo1.png">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .glass-card {
+      background: rgba(253, 251, 247, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+    [data-theme="dark"] .glass-card {
+      background: rgba(26, 20, 18, 0.85);
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+    }
+    .auth-header-icon {
+      font-size: 2.5rem;
+      margin-bottom: 5px;
+      display: inline-block;
+    }
+  </style>
 </head>
 <body>
-  <!-- Minimal Header -->
-  <div class="login-header">
-    <a href="index.html" class="login-back-btn">← Back to Shop</a>
-    <span class="login-brand">Youyou's Cookies</span>
-  </div>
 
-  <main class="login-wrapper">
-    <div class="auth-card">
+  <!-- Full Main Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">
+        <video class="brand-logo logo-light" autoplay loop muted playsinline>
+          <source src="assets/videos/logo-light.mp4" type="video/mp4">
+          <img src="assets/images/logo.png" alt="Youyou Cookies">
+        </video>
+        <video class="brand-logo logo-dark" autoplay loop muted playsinline>
+          <source src="assets/videos/logo-dark.mp4" type="video/mp4">
+          <img src="assets/images/logo1.png" alt="Youyou Cookies">
+        </video>
+        <span class="brand-text">
+          <b>Youyou's Cookies</b>
+          <span>MADE WITH LOVE</span>
+        </span>
+      </a>
+      <div class="status-pill" data-status-pill role="status">
+        <span class="status-dot"></span>
+        <span class="status-text">Closed</span>
+      </div>
+      
+      <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
+        <button class="nav-toggle" aria-label="Toggle Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <nav class="main-nav" style="display: flex; align-items: center;">
+        <button class="nav-close" aria-label="Close Menu">&times;</button>
+        
+        <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; margin-right: 15px; transition: 0.2s;">
+          <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+              <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+            </svg>
+          </div>
+        </a>
+
+        <a href="#" onclick="window.openBoxModal(); return false;" id="nav-cart-icon" aria-label="Open Cart" style="color: inherit; display: flex; align-items: center; margin-right: 20px; position: relative; transition: 0.2s;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+          </svg>
+        </a>
+
+        <a href="index.html"><span class="nav-icon"></span> Home</a>
+        <a href="menu.html"><span class="nav-icon"></span> Menu</a>
+        <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
+        <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Dark Mode">
+          <span class="moon-icon" style="display:none;">🌙</span>
+          <span class="sun-icon">☀️</span>
+        </button>
+        <div class="nav-decor">Baked fresh in Settat</div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="login-wrapper" style="min-height: calc(100vh - 72px);">
+    <div class="auth-card glass-card reveal">
+      <span class="auth-header-icon">✨</span>
       <h2 id="auth-title">Create Account</h2>
       <p id="auth-subtitle" class="auth-subtitle">Join our sweet community.</p>
       
-      <!-- Google Button -->
       <button id="google-btn" class="btn-google">
         <svg width="22" height="22" viewBox="0 0 48 48">
           <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20c11 0 20-9 20-20 0-1.3-.2-2.6-.4-3.9z"/>
@@ -34,11 +108,10 @@
 
       <div class="divider-text">Or register with email</div>
 
-      <!-- Email Form (Username is now visible by default) -->
       <form id="auth-form-signup">
-        <input type="text" id="username" class="auth-input" placeholder="Your Full Name" required aria-label="Your name">
-        <input type="email" id="email" class="auth-input" placeholder="Email Address" required autocomplete="email" aria-label="Email address">
-        <input type="password" id="password" class="auth-input" placeholder="Create Password" required autocomplete="new-password" aria-label="Password" minlength="6">
+        <input type="text" id="username" class="auth-input" placeholder="Your Full Name" required>
+        <input type="email" id="email" class="auth-input" placeholder="Email Address" required>
+        <input type="password" id="password" class="auth-input" placeholder="Create Password" required>
         <button type="submit" id="submit-btn" class="btn-auth">Sign Up</button>
       </form>
       
@@ -51,6 +124,65 @@
     </div>
   </main>
 
+  <!-- Standard Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <b>Youyou's Cookies</b>
+          <div class="en">MADE WITH LOVE</div>
+          <p>Small-batch, handcrafted cookies baked with premium ingredients. Follow our sweet journey online!</p>
+        </div>
+        <div>
+          <h3 class="footer-title">Order Information</h3>
+          <ul>
+            <li><b>100% Online Bakery</b></li>
+            <li>Shipping All Settat</li>
+            <li>Payment: Cash on Delivery</li>
+            <li>Baking Days: All week</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="footer-title">Contact & Follow Us</h3>
+          <ul>
+            <li><a href="tel:+212789233029">📞 +212789233029</a></li>
+            <li><a href="https://www.instagram.com/youyou_s_cookies/?__pwa=1" target="_blank" rel="noopener">Instagram · @youyou_s_cookies</a></li>
+            <li><a href="https://www.tiktok.com/@youyous.cookies" target="_blank" rel="noopener">TikTok · @youyous.cookies</a></li>
+            <li><a href="mailto:youyouscookies@gmail.com">Email · youyouscookies@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span class="year-now">2026</span> Youyou's Cookies. Made with love.</span><br>
+        <span style="font-size: 0.85em; opacity: 0.7; margin-top: 8px; display: inline-block;">
+          Website developed by <a href="https://www.instagram.com/aqxr8.1/" target="_blank" rel="noopener" style="text-decoration: underline; color: inherit;">MOTQRINE Mohamed</a>
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Floating Cart Drawer Overlay & Panel -->
+  <div id="cart-overlay" class="cart-overlay"></div>
+  <div id="cart-panel" class="cart-drawer">
+    <div class="cart-header">
+      <h3>Your Sweet Box 🍪</h3>
+      <button onclick="window.closeCart()" class="close-cart">&times;</button>
+    </div>
+    <div class="cart-body">
+      <ul id="cart-items" class="cart-items-list"></ul>
+    </div>
+    <div class="cart-footer" id="cart-footer">
+      <div class="cart-total-row">
+        <span>Total:</span>
+        <span><strong style="color: var(--caramel);"><span id="cart-total">0</span> DH</strong></span>
+      </div>
+      <button id="checkout-btn" class="btn btn-whatsapp" style="width: 100%;">Open Box & Checkout</button>
+      <button id="clear-cart-btn" class="text-btn" style="width:100%; margin-top:15px; text-align:center; display:block;">Clear All Items</button>
+    </div>
+  </div>
+
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/features.js"></script>
   <script type="module" src="assets/js/auth.js"></script>
 </body>
 </html>

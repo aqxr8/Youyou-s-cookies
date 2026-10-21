@@ -103,19 +103,23 @@
 
   </main>
 
-  <!-- Floating Cart Box Modal -->
-  <div id="cart-panel" class="cart-panel-modern">
+  <!-- UPGRADED FLOATING CART DRAWER OVERLAY & PANEL -->
+  <div id="cart-overlay" class="cart-overlay"></div>
+  <div id="cart-panel" class="cart-drawer">
     <div class="cart-header">
-      <h3>🍪 Your Cookie Box</h3>
-      <button onclick="document.getElementById('cart-panel').style.display='none'" class="close-cart">&times;</button>
+      <h3>Your Sweet Box 🍪</h3>
+      <button onclick="window.closeCart()" class="close-cart">&times;</button>
     </div>
-    <ul id="cart-items" class="cart-items-list"></ul>
-    <div class="cart-footer">
+    <div class="cart-body">
+      <ul id="cart-items" class="cart-items-list"></ul>
+    </div>
+    <div class="cart-footer" id="cart-footer">
       <div class="cart-total-row">
         <span>Total:</span>
-        <span><b id="cart-total">0</b> DH</span>
+        <span><strong style="color: var(--caramel);"><span id="cart-total">0</span> DH</strong></span>
       </div>
-      <button id="checkout-btn" class="btn-whatsapp">Checkout & Confirm</button>
+      <button id="checkout-btn" class="btn btn-whatsapp" style="width: 100%;">Open Box & Checkout</button>
+      <button id="clear-cart-btn" class="btn btn-outline" style="width: 100%; margin-top: 10px; font-size: 0.9rem; padding: 10px; color: var(--brown); border-color: rgba(74,55,40,0.3); background: transparent; transition: 0.2s;">🗑️ Empty Box</button>
     </div>
   </div>
 

@@ -4,22 +4,158 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>404 - Page Not Found | Youyou's Cookies</title>
-  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/images/logo.png">
+  <link rel="apple-touch-icon" href="assets/images/logo1.png">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .error-wrapper {
+      min-height: calc(100vh - 72px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .cookie-illustration {
+      font-size: 5rem;
+      display: inline-block;
+      animation: floatCookie 3s ease-in-out infinite;
+      margin-bottom: -15px;
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
+    }
+    .error-code {
+      font-size: clamp(6rem, 15vw, 10rem);
+      color: var(--caramel);
+      margin-bottom: 0;
+      line-height: 1;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      text-shadow: 4px 4px 0px rgba(193, 119, 30, 0.15);
+    }
+    .error-title {
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      margin-top: 15px;
+      color: var(--brown);
+    }
+    @keyframes floatCookie {
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50% { transform: translateY(-20px) rotate(10deg); }
+    }
+  </style>
 </head>
 <body>
+
+  <!-- Full Main Header -->
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="index.html"><span class="brand-text"><b>Youyou's Cookies</b></span></a>
+      <a class="brand" href="index.html">
+        <video class="brand-logo logo-light" autoplay loop muted playsinline>
+          <source src="assets/videos/logo-light.mp4" type="video/mp4">
+          <img src="assets/images/logo.png" alt="Youyou Cookies">
+        </video>
+        <video class="brand-logo logo-dark" autoplay loop muted playsinline>
+          <source src="assets/videos/logo-dark.mp4" type="video/mp4">
+          <img src="assets/images/logo1.png" alt="Youyou Cookies">
+        </video>
+        <span class="brand-text">
+          <b>Youyou's Cookies</b>
+          <span>MADE WITH LOVE</span>
+        </span>
+      </a>
+      <div class="status-pill" data-status-pill role="status">
+        <span class="status-dot"></span>
+        <span class="status-text">Closed</span>
+      </div>
+      
+      <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
+        <button class="nav-toggle" aria-label="Toggle Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <nav class="main-nav" style="display: flex; align-items: center;">
+        <button class="nav-close" aria-label="Close Menu">&times;</button>
+        
+        <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; margin-right: 15px; transition: 0.2s;">
+          <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+              <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+            </svg>
+          </div>
+        </a>
+
+        <a href="#" onclick="window.location.href='index.html#menu'; return false;" id="nav-cart-icon" aria-label="Open Cart" style="color: inherit; display: flex; align-items: center; margin-right: 20px; position: relative; transition: 0.2s;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+          </svg>
+        </a>
+
+        <a href="index.html"><span class="nav-icon"></span> Home</a>
+        <a href="menu.html"><span class="nav-icon"></span> Menu</a>
+        <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
+        <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Dark Mode">
+          <span class="moon-icon" style="display:none;">🌙</span>
+          <span class="sun-icon">☀️</span>
+        </button>
+        <div class="nav-decor">Baked fresh in Settat</div>
+      </nav>
     </div>
   </header>
-  <main style="min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center;">
+
+  <main class="error-wrapper">
     <div class="container">
-      <h1 style="font-size: 6rem; color: var(--caramel); margin-bottom: 10px;">404</h1>
-      <h2>Oops! Someone took a bite out of this page.</h2>
-      <p style="color: var(--brown-soft); margin: 20px 0 30px;">The page you are looking for doesn't exist or has been moved.</p>
-      <a href="index.html" class="btn btn-dark">Return to Home</a>
+      <div class="cookie-illustration">🍪</div>
+      <h1 class="error-code">404</h1>
+      <h2 class="error-title">Oops! Someone took a bite out of this page.</h2>
+      <p style="color: var(--brown-soft); margin: 20px auto 35px; max-width: 500px; font-size: 1.1rem;">
+        The page you are looking for has been eaten, moved, or doesn't exist anymore. Let's get you back to the fresh batches.
+      </p>
+      <a href="index.html" class="btn btn-dark" style="padding: 16px 40px; font-size: 1.1rem;">Return to Shop</a>
     </div>
   </main>
+
+  <!-- Standard Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <b>Youyou's Cookies</b>
+          <div class="en">MADE WITH LOVE</div>
+          <p>Small-batch, handcrafted cookies baked with premium ingredients. Follow our sweet journey online!</p>
+        </div>
+        <div>
+          <h3 class="footer-title">Order Information</h3>
+          <ul>
+            <li><b>100% Online Bakery</b></li>
+            <li>Shipping All Settat</li>
+            <li>Payment: Cash on Delivery</li>
+            <li>Baking Days: All week</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="footer-title">Contact & Follow Us</h3>
+          <ul>
+            <li><a href="tel:+212789233029">📞 +212789233029</a></li>
+            <li><a href="https://www.instagram.com/youyou_s_cookies/?__pwa=1" target="_blank" rel="noopener">Instagram · @youyou_s_cookies</a></li>
+            <li><a href="https://www.tiktok.com/@youyous.cookies" target="_blank" rel="noopener">TikTok · @youyous.cookies</a></li>
+            <li><a href="mailto:youyouscookies@gmail.com">Email · youyouscookies@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span class="year-now">2026</span> Youyou's Cookies. Made with love.</span><br>
+        <span style="font-size: 0.85em; opacity: 0.7; margin-top: 8px; display: inline-block;">
+          Website developed by <a href="https://www.instagram.com/aqxr8.1/" target="_blank" rel="noopener" style="text-decoration: underline; color: inherit;">MOTQRINE Mohamed</a>
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/features.js"></script>
+  <script type="module" src="assets/js/auth.js"></script>
 </body>
 </html>
