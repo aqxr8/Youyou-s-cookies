@@ -1,25 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/css" href="https://www.xml-sitemaps.com/css/sitemap.css"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-
-  <url>
-       <loc>https://youyouscookies.vercel.app/</loc>
-       <lastmod>2026-09-04T11:02:07+00:00</lastmod>
-       <priority>1.0000</priority>
-  </url>
-  <url>
-       <loc>https://youyouscookies.vercel.app/menu</loc>
-       <lastmod>2026-09-04T11:02:07+00:00</lastmod>
-       <priority>0.6400</priority>
-  </url>
-  <url>
-       <loc>https://youyouscookies.vercel.app/reviews</loc>
-       <lastmod>2026-09-04T11:02:07+00:00</lastmod>
-       <priority>0.6400</priority>
-  </url>
-  <url>
-       <loc>https://youyouscookies.vercel.app/contact</loc>
-       <lastmod>2026-09-04T11:02:07+00:00</lastmod>
-       <priority>0.6400</priority>
-  </url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://youyouscookies.vercel.app/</loc><lastmod>2026-10-21</lastmod><priority>1.0</priority></url>
+  <url><loc>https://youyouscookies.vercel.app/menu.html</loc><lastmod>2026-10-21</lastmod><priority>0.9</priority></url>
+  <url><loc>https://youyouscookies.vercel.app/reviews.html</loc><lastmod>2026-10-21</lastmod><priority>0.6</priority></url>
+  <url><loc>https://youyouscookies.vercel.app/contact.html</loc><lastmod>2026-10-21</lastmod><priority>0.7</priority></url>
 </urlset>

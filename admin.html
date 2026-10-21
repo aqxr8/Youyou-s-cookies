@@ -1,10 +1,10 @@
-<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | YouYou's Cookies</title>
+  <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="assets/css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600&display=swap" rel="stylesheet">
 </head>
@@ -66,9 +66,9 @@
           <h3 class="profile-card-title" style="margin: 0;">Orders Management</h3>
           
           <div class="admin-filter-tabs">
-            <button class="filter-btn active" onclick="filterAdminOrders('all')">All</button>
-            <button class="filter-btn" onclick="filterAdminOrders('Processing')">Pending</button>
-            <button class="filter-btn" onclick="filterAdminOrders('Delivered')">Delivered</button>
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="Processing">Pending</button>
+            <button class="filter-btn" data-filter="Delivered">Delivered</button>
           </div>
         </div>
 
@@ -90,133 +90,20 @@
   </main>
 
   <script>
-    function filterAdminOrders(status) {
-      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-
-      const cards = document.querySelectorAll('.admin-order-card');
-      cards.forEach(card => {
-        if (status === 'all' || card.getAttribute('data-status') === status) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
+    // Order filter tabs (cards are added later by auth.js, so look them up on every click)
+    document.querySelectorAll('.filter-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var status = btn.getAttribute('data-filter');
+        document.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        document.querySelectorAll('.admin-order-card').forEach(function (card) {
+          card.style.display = (status === 'all' || card.getAttribute('data-status') === status) ? '' : 'none';
+        });
       });
-    }
+    });
   </script>
 
   <script src="assets/js/main.js"></script>
   <script type="module" src="assets/js/auth.js"></script>
 </body>
-=======
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard | YouYou's Cookies</title>
-  <link rel="stylesheet" href="assets/css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600&display=swap" rel="stylesheet">
-</head>
-<body style="background: var(--cream-light);">
-
-  <!-- Header -->
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="index.html" class="brand">
-        <img src="assets/images/logo.png" alt="YouYou's Cookies" class="brand-logo">
-        <div class="brand-text">
-          <b>ADMIN CONTROL PANEL</b>
-          <span>YOUYOU'S COOKIES</span>
-        </div>
-      </a>
-
-      <div style="display: flex; align-items: center; gap: 15px;">
-        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
-          <span class="moon-icon">🌙</span>
-          <span class="sun-icon" style="display: none;">☀️</span>
-        </button>
-        <button id="logout-btn" class="btn btn-dark" style="padding: 8px 18px; font-size: 0.85rem;">Log Out</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="section container" style="max-width: 1100px; padding-top: 30px;">
-    
-    <!-- Analytics KPI Cards -->
-    <div class="admin-kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Total Revenue</div>
-        <div id="stat-total-revenue" class="kpi-value">0 DH</div>
-        <div class="kpi-sub">Lifetime orders</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Total Orders</div>
-        <div id="stat-total-orders" class="kpi-value">0</div>
-        <div class="kpi-sub">Submitted online</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Pending Delivery</div>
-        <div id="stat-pending-orders" class="kpi-value" style="color: var(--caramel);">0</div>
-        <div class="kpi-sub">Needs fulfillment</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Total Users</div>
-        <div id="stat-total-users" class="kpi-value">0</div>
-        <div class="kpi-sub">Customer accounts</div>
-      </div>
-    </div>
-
-    <!-- Admin Main Content Grid -->
-    <div class="admin-main-grid">
-      
-      <!-- Orders List -->
-      <div class="profile-section-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-          <h3 class="profile-card-title" style="margin: 0;">Orders Management</h3>
-          
-          <div class="admin-filter-tabs">
-            <button class="filter-btn active" onclick="filterAdminOrders('all')">All</button>
-            <button class="filter-btn" onclick="filterAdminOrders('Processing')">Pending</button>
-            <button class="filter-btn" onclick="filterAdminOrders('Delivered')">Delivered</button>
-          </div>
-        </div>
-
-        <div id="admin-orders">
-          <p style="color: var(--brown-soft); font-style: italic;">Loading live orders...</p>
-        </div>
-      </div>
-
-      <!-- Users List -->
-      <div class="profile-section-card">
-        <h3 class="profile-card-title">Customer Directory</h3>
-        <div id="admin-users">
-          <p style="color: var(--brown-soft); font-style: italic;">Loading users...</p>
-        </div>
-      </div>
-
-    </div>
-
-  </main>
-
-  <script>
-    function filterAdminOrders(status) {
-      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-
-      const cards = document.querySelectorAll('.admin-order-card');
-      cards.forEach(card => {
-        if (status === 'all' || card.getAttribute('data-status') === status) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    }
-  </script>
-
-  <script src="assets/js/main.js"></script>
-  <script type="module" src="assets/js/auth.js"></script>
-</body>
->>>>>>> origin/main
 </html>

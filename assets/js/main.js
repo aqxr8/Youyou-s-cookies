@@ -1,35 +1,94 @@
+/* =========================================================
+   Youyou's Cookies - main.js
+   Shared helpers + header / nav / theme / status pill
+   (hero carousel lives in features.js)
+   ========================================================= */
+
+// Delivery window in Morocco time (24h). Change here and everything updates.
+window.YOUYOU_HOURS = { open: 15, close: 20 };
+
+// Current time in Morocco, independent of the visitor's device timezone.
+// (Uses Intl parts - parsing toLocaleString() output is unreliable on Safari.)
+window.getMoroccoTime = function () {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Africa/Casablanca",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }).formatToParts(new Date());
+    const hour = parseInt(parts.find((p) => p.type === "hour").value, 10) % 24;
+    const minute = parseInt(parts.find((p) => p.type === "minute").value, 10);
+    return { hour, minute };
+  } catch (e) {
+    const d = new Date();
+    return { hour: d.getHours(), minute: d.getMinutes() };
+  }
+};
+
+// localStorage can throw (private mode / blocked storage) - never crash on it.
+window.safeStorage = {
+  get(key) { try { return localStorage.getItem(key); } catch (e) { return null; } },
+  set(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* ignore */ } }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. Header Scroll Effect
+  initHeader();
+  initMobileNav();
+  initReveal();
+  initYear();
+  initOpenStatus();
+  setInterval(initOpenStatus, 60 * 1000);
+  initFaq();
+  initTheme();
+  initActiveLink();
+  loadBrandLogos();
+});
+
+// 1. Header scroll effect
+function initHeader() {
   const header = document.querySelector(".site-header");
+  if (!header) return;
+  const onScroll = () => header.classList.toggle("scrolled", window.scrollY > 10);
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+}
+
+// 2. Mobile navigation
+function initMobileNav() {
   const navToggle = document.querySelector(".nav-toggle");
   const mainNav = document.querySelector(".main-nav");
+  if (!navToggle || !mainNav) return;
 
-  if (header) {
-    const onScroll = () => header.classList.toggle("scrolled", window.scrollY > 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-  }
+  const close = () => {
+    mainNav.classList.remove("open");
+    navToggle.setAttribute("aria-expanded", "false");
+  };
 
-  // 2. Mobile Navigation Toggle
-  if (navToggle && mainNav) {
-    navToggle.addEventListener("click", () => {
-      mainNav.classList.add("open");
-    });
-    
-    mainNav.addEventListener("click", (e) => {
-      if (e.target.tagName === "A" || e.target.classList.contains("nav-close")) {
-        mainNav.classList.remove("open");
-      }
-    });
+  navToggle.setAttribute("aria-expanded", "false");
+  navToggle.addEventListener("click", () => {
+    mainNav.classList.add("open");
+    navToggle.setAttribute("aria-expanded", "true");
+  });
 
-    document.addEventListener("click", (e) => {
-      if (mainNav.classList.contains("open") && !mainNav.contains(e.target) && !navToggle.contains(e.target)) {
-        mainNav.classList.remove("open");
-      }
-    });
-  }
+  mainNav.addEventListener("click", (e) => {
+    if (e.target.closest("a") || e.target.classList.contains("nav-close")) close();
+  });
 
-  // 3. Scroll Reveal Animation
+  document.addEventListener("click", (e) => {
+    if (mainNav.classList.contains("open") && !mainNav.contains(e.target) && !navToggle.contains(e.target)) close();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && mainNav.classList.contains("open")) {
+      close();
+      navToggle.focus();
+    }
+  });
+}
+
+// 3. Scroll reveal
+function initReveal() {
   const revealEls = document.querySelectorAll(".reveal");
   if (revealEls.length && "IntersectionObserver" in window) {
     const io = new IntersectionObserver(
@@ -47,113 +106,100 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     revealEls.forEach((el) => el.classList.add("visible"));
   }
+}
 
-  // 4. Auto-Update Copyright Year
+// 4. Copyright year
+function initYear() {
   const yearEl = document.querySelector(".year-now");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
+}
 
-  // 5. Initialize the Open/Closed Status Pill
-  initOpenStatus();
-});
-
+// 5. Open / Closed status pill (Morocco time)
 function initOpenStatus() {
   const pill = document.querySelector("[data-status-pill]");
   if (!pill) return;
-
   const text = pill.querySelector(".status-text");
-  
-  // Standardize time to Morocco
-  const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
-  const currentHour = moroccoTime.getHours();
-  const mins = currentHour * 60 + moroccoTime.getMinutes();
 
-  let open = false;
-  const closingTime = "20:00";
+  const { open: openH, close: closeH } = window.YOUYOU_HOURS;
+  const { hour, minute } = window.getMoroccoTime();
+  const mins = hour * 60 + minute;
+  const isOpen = mins >= openH * 60 && mins < closeH * 60;
 
-  // Delivery Hours: 15:00 - 20:00
-  if (mins >= 15 * 60 && mins < 20 * 60) {
-    open = true;
-  }
+  const fmt = (h) => (h % 12 || 12) + ":00 " + (h < 12 ? "AM" : "PM");
 
-  pill.classList.toggle("is-open", open);
-  text.textContent = open ? "Taking Orders" : "Closed";
-  
-  pill.setAttribute("aria-label", open ? "We are currently taking orders until " + closingTime : "We are currently closed");
-  pill.title = open ? "Open until " + closingTime : "Opens at 3:00 PM all week";
+  pill.classList.toggle("is-open", isOpen);
+  if (text) text.textContent = isOpen ? "Taking Orders" : "Closed";
+  pill.setAttribute(
+    "aria-label",
+    isOpen ? "We are currently taking orders until " + fmt(closeH) : "We are currently closed"
+  );
+  pill.title = isOpen
+    ? "Open until " + fmt(closeH) + " (Morocco time)"
+    : "Opens at " + fmt(openH) + " (Morocco time)";
 }
 
-// 6. FAQ Accordion Toggle
-const faqQuestions = document.querySelectorAll(".faq-q");
-
-if (faqQuestions.length > 0) {
-  faqQuestions.forEach(button => {
+// 6. FAQ accordion
+function initFaq() {
+  document.querySelectorAll(".faq-q").forEach((button) => {
     button.addEventListener("click", () => {
-      const faqItem = button.closest(".faq-item");
-      faqItem.classList.toggle("open");
-      
-      const isExpanded = button.getAttribute("aria-expanded") === "true";
-      button.setAttribute("aria-expanded", !isExpanded);
+      const item = button.closest(".faq-item");
+      if (!item) return;
+      const nowOpen = item.classList.toggle("open");
+      button.setAttribute("aria-expanded", String(nowOpen));
     });
   });
 }
 
-// 7. Dark Mode Toggle
-const themeToggle = document.getElementById('theme-toggle');
+// 7. Dark mode toggle
+function initTheme() {
+  const themeToggle = document.getElementById("theme-toggle");
+  if (!themeToggle) return;
+  const moon = themeToggle.querySelector(".moon-icon");
+  const sun = themeToggle.querySelector(".sun-icon");
 
-if (themeToggle) {
-  const moon = themeToggle.querySelector('.moon-icon');
-  const sun = themeToggle.querySelector('.sun-icon');
-
-  const currentTheme = localStorage.getItem('youyou_theme') || 'dark';
-  
-  if (currentTheme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    moon.style.display = 'none';
-    sun.style.display = 'inline';
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-    moon.style.display = 'inline';
-    sun.style.display = 'none';
-  }
-
-  themeToggle.addEventListener('click', () => {
-    let theme = document.documentElement.getAttribute('data-theme');
-    
-    if (theme === 'dark') {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('youyou_theme', 'light');
-      moon.style.display = 'inline';
-      sun.style.display = 'none';
+  const apply = (theme) => {
+    if (theme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+      if (moon) moon.style.display = "none";
+      if (sun) sun.style.display = "inline";
     } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('youyou_theme', 'dark');
-      moon.style.display = 'none';
-      sun.style.display = 'inline';
+      document.documentElement.removeAttribute("data-theme");
+      if (moon) moon.style.display = "inline";
+      if (sun) sun.style.display = "none";
     }
+    loadBrandLogos();
+  };
+
+  apply(window.safeStorage.get("youyou_theme") || "dark");
+
+  themeToggle.addEventListener("click", () => {
+    const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    window.safeStorage.set("youyou_theme", next);
+    apply(next);
   });
 }
 
-// 8. Auto-Highlight Active Menu Link
-const navLinks = document.querySelectorAll(".main-nav a");
-const currentPath = window.location.pathname.split("/").pop() || "index.html";
+// 8. Highlight the active nav link (works with or without ".html")
+function initActiveLink() {
+  const here = (window.location.pathname.split("/").pop() || "index.html").replace(/\.html$/, "") || "index";
+  document.querySelectorAll(".main-nav a").forEach((link) => {
+    link.classList.remove("active");
+    const href = (link.getAttribute("href") || "").split("#")[0].replace(/\.html$/, "");
+    if (href && href === here) link.classList.add("active");
+  });
+}
 
-navLinks.forEach(link => {
-  link.classList.remove("active");
-  if (link.getAttribute("href") === currentPath) {
-    link.classList.add("active");
-  }
-});
-
-// 9. Google Translate Widget Initialization
-window.googleTranslateElementInit = function() {
-  new google.translate.TranslateElement({
-    pageLanguage: 'en',
-    includedLanguages: 'en,fr,ar', 
-    layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-    autoDisplay: false
-  }, 'google_translate_element');
-};
-
-const gtScript = document.createElement('script');
-gtScript.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-document.body.appendChild(gtScript);
+// 9. Load only the logo video that is actually visible (saves ~2 MB per page)
+function loadBrandLogos() {
+  document.querySelectorAll("video.brand-logo").forEach((video) => {
+    if (window.getComputedStyle(video).display === "none") return;
+    if (video.dataset.ready) return;
+    const source = video.querySelector("source[data-src]");
+    if (!source) return;
+    source.src = source.dataset.src;
+    video.dataset.ready = "1";
+    video.load();
+    const p = video.play();
+    if (p && p.catch) p.catch(() => {});
+  });
+}

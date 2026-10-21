@@ -1,0 +1,53 @@
+rules_version = '2';
+// Firebase Console > Firestore Database > Rules > paste > Publish.
+// The admin is identified by the verified sign-in token, never by anything the page sends.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email == "youyouscookies@gmail.com"
+        && request.auth.token.email_verified == true;
+    }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // Orders can be placed by guests OR signed-in customers, with strict shape/size checks.
+    function validOrder() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['userId','userEmail','customerName','phone','address','items','totalAmount','status','date','createdAt'])
+        && d.keys().hasAll(['userId','customerName','phone','address','items','totalAmount','status','createdAt'])
+        && ((request.auth == null && d.userId == 'guest') || (signedIn() && d.userId == request.auth.uid))
+        && d.status == 'Processing'
+        && d.items is list && d.items.size() > 0 && d.items.size() <= 50
+        && d.totalAmount is number && d.totalAmount > 0 && d.totalAmount <= 3000
+        && d.customerName is string && d.customerName.size() <= 80
+        && d.phone is string && d.phone.size() <= 30
+        && d.address is string && d.address.size() <= 400
+        && d.createdAt == request.time;
+    }
+
+    match /orders/{orderId} {
+      allow create: if validOrder();
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      // admin may only flip the status
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['Processing', 'Delivered'];
+      allow delete: if isAdmin();
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      // new accounts can only ever be "customer", with their own email
+      allow create: if isOwner(uid)
+        && request.resource.data.role == 'customer'
+        && request.resource.data.email.lower() == request.auth.token.email.lower();
+      // users can edit their own profile/cart but never their role
+      allow update: if (isOwner(uid) && request.resource.data.role == resource.data.role) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
