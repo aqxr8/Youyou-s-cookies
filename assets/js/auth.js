@@ -31,7 +31,7 @@ onAuthStateChanged(auth, async (user) => {
       userIconWrapper.innerHTML = `<img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
     }
 
-    // --- NEW: GLOBALLY FETCH USER DATA TO PRE-FILL CART ADDRESS ---
+    // --- GLOBALLY FETCH USER DATA TO PRE-FILL CART ADDRESS ---
     let userData = null;
     let userDocExists = false;
     try {
@@ -40,7 +40,6 @@ onAuthStateChanged(auth, async (user) => {
         userData = userDocSnap.data();
         userDocExists = true;
         
-        // Auto-fill the cart address on every page if they have one saved
         const cartAddressInput = document.getElementById('cart-address');
         if (cartAddressInput && userData.address) {
           cartAddressInput.value = userData.address;
@@ -50,7 +49,7 @@ onAuthStateChanged(auth, async (user) => {
       console.warn("Could not fetch user data for cart address", e);
     }
 
-    // --- 2. PROFILE PAGE LOGIC ---
+    // --- PROFILE PAGE LOGIC ---
     if (window.location.pathname.includes('profile.html')) {
       if (user.email === ADMIN_EMAIL) {
         window.location.href = "admin.html"; 
@@ -79,13 +78,10 @@ onAuthStateChanged(auth, async (user) => {
 
       try {
         if (rawCartString !== null) {
-          // If local cart exists, push it to Firebase
           localCart = JSON.parse(rawCartString);
           if (!Array.isArray(localCart)) localCart = Object.values(localCart);
-          
           await updateDoc(userRef, { cart: localCart });
         } else {
-          // Pull from Firebase
           if (userDocExists && userData.cart) {
             localCart = userData.cart;
           }
@@ -150,7 +146,7 @@ onAuthStateChanged(auth, async (user) => {
       }
     }
 
-    // --- 3. ADMIN PAGE LOGIC ---
+    // --- ADMIN PAGE LOGIC (STORED XSS FIXED) ---
     if (window.location.pathname.includes('admin.html')) {
       if (user.email !== ADMIN_EMAIL) {
         window.location.href = "profile.html"; 
@@ -164,15 +160,30 @@ onAuthStateChanged(auth, async (user) => {
         if (usersSnapshot.empty) {
           usersList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">No users registered yet.</p>';
         } else {
-          usersSnapshot.forEach((doc) => {
-            const data = doc.data();
-            usersList.innerHTML += `
-              <div style="border-bottom: 1px solid rgba(193, 119, 30, 0.2); padding: 12px 0;">
-                <strong style="font-size: 1.1rem; color: var(--brown);">${data.username || 'No Name'}</strong><br>
-                <span style="font-size: 0.9rem; color: var(--brown-soft);">${data.email}</span><br>
-                <span style="font-size: 0.75rem; background: var(--caramel); color: white; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 5px;">Role: ${data.role || 'customer'}</span>
-              </div>
-            `;
+          usersSnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            
+            // XSS Fix: Construct DOM nodes securely using textContent
+            const userCard = document.createElement('div');
+            userCard.style.cssText = "border-bottom: 1px solid rgba(193, 119, 30, 0.2); padding: 12px 0;";
+            
+            const nameEl = document.createElement('strong');
+            nameEl.style.cssText = "font-size: 1.1rem; color: var(--brown); display: block;";
+            nameEl.textContent = data.username || 'No Name';
+            
+            const emailEl = document.createElement('span');
+            emailEl.style.cssText = "font-size: 0.9rem; color: var(--brown-soft); display: block;";
+            emailEl.textContent = data.email || 'No Email';
+            
+            const roleEl = document.createElement('span');
+            roleEl.style.cssText = "font-size: 0.75rem; background: var(--caramel); color: white; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 5px;";
+            roleEl.textContent = `Role: ${data.role || 'customer'}`;
+            
+            userCard.appendChild(nameEl);
+            userCard.appendChild(emailEl);
+            userCard.appendChild(roleEl);
+            
+            usersList.appendChild(userCard);
           });
         }
       }
@@ -252,7 +263,6 @@ if (infoForm) {
         });
         document.getElementById('profile-name').textContent = newUsername;
         
-        // --- NEW: Instantly update the cart address text box when they save! ---
         const cartAddressInput = document.getElementById('cart-address');
         if (cartAddressInput) {
           cartAddressInput.value = newAddress;

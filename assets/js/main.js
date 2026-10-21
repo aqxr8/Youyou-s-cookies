@@ -62,13 +62,15 @@ function initOpenStatus() {
 
   const text = pill.querySelector(".status-text");
   
-  const now = new Date();
-  const mins = now.getHours() * 60 + now.getMinutes();
+  // Standardize time to Morocco
+  const moroccoTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Casablanca"}));
+  const currentHour = moroccoTime.getHours();
+  const mins = currentHour * 60 + moroccoTime.getMinutes();
 
   let open = false;
-  
   const closingTime = "20:00";
 
+  // Delivery Hours: 15:00 - 20:00
   if (mins >= 15 * 60 && mins < 20 * 60 ) {
     open = true;
   }

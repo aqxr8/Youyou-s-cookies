@@ -24,7 +24,7 @@ function initHeroCarousel() {
   });
 }
 
-// --- 2. COOKIE QUIZ FUNCTION ---
+// --- 2. COOKIE QUIZ FUNCTION (FAIR TIE-BREAKER FIXED) ---
 function initQuiz() {
   const root = document.getElementById("quiz");
   if (!root) return;
@@ -72,11 +72,11 @@ function initQuiz() {
   ];
 
   const RESULTS = {
-    Lotus: { name: "Cookies Lotus", price: "15 dh", desc: "Caramelized and crunchy sweetness...", href: "#" },
-    OreoKinder: { name: "Oreo or Kinder Cookies", price: "12-13 dh", desc: "You love indulgent treats!...", href: "#" },
-    RedVelvet: { name: "Red Velvet Cookies", price: "12 dh", desc: "Soft, melt-in-your-mouth...", href: "#" },
-    Classic: { name: "Classic Cookies", price: "7 dh", desc: "The authentic taste that everyone loves...", href: "#" },
-    ExtraChoc: { name: "Extra Chocolate Cookies", price: "10 dh", desc: "For true chocolate lovers...", href: "#" }
+    Lotus: { name: "Cookies Lotus", price: "15 dh", desc: "Caramelized and crunchy sweetness...", href: "menu.html#cookie-lotus" },
+    OreoKinder: { name: "Oreo or Kinder Cookies", price: "12-13 dh", desc: "You love indulgent treats!...", href: "menu.html#cookie-kinder" },
+    RedVelvet: { name: "Red Velvet Cookies", price: "12 dh", desc: "Soft, melt-in-your-mouth...", href: "menu.html#cookie-redvelvet" },
+    Classic: { name: "Classic Cookies", price: "7 dh", desc: "The authentic taste that everyone loves...", href: "menu.html#cookie-classic" },
+    ExtraChoc: { name: "Extra Chocolate Cookies", price: "10 dh", desc: "For true chocolate lovers...", href: "menu.html#cookie-extra" }
   };
 
   let step = 0;
@@ -108,7 +108,11 @@ function initQuiz() {
   };
 
   const showResult = () => {
-    const pick = Object.keys(score).sort((a, b) => score[b] - score[a])[0];
+    // Fair tie breaker: find all highest scoring keys and pick randomly among top scores
+    const maxScore = Math.max(...Object.values(score));
+    const topFlavors = Object.keys(score).filter(flavor => score[flavor] === maxScore);
+    const pick = topFlavors[Math.floor(Math.random() * topFlavors.length)];
+    
     const r = RESULTS[pick];
     resultName.textContent = r.name;
     resultDesc.textContent = r.desc;
@@ -191,7 +195,7 @@ function initNotesWall() {
   }
 }
 
-// --- 4. STICKY CART FUNCTION (With Smart Time Logic) ---
+// --- 4. STICKY CART FUNCTION (SVG CLICK BUG FIXED + MOROCCO TIMEZONE) ---
 function initCart() {
   let rawCart = JSON.parse(localStorage.getItem('youyou_cart')) || [];
   let cart = [];
@@ -216,51 +220,50 @@ function initCart() {
   const addressInput = document.getElementById('cart-address');
   const locateBtn = document.getElementById('locate-me-btn');
 
-  document.querySelectorAll('.add-to-cart').forEach(button => {
-    button.addEventListener('click', (e) => {
-      const name = e.target.getAttribute('data-name');
-      const price = parseInt(e.target.getAttribute('data-price'));
-      
-      const existing = cart.find(i => i.name === name);
-      if (existing) {
-        existing.quantity++;
-      } else {
-        cart.push({ name, price, quantity: 1 });
-      }
-      
-      if (window.va) {
-        window.va('track', 'AddToCart', { flavor: name, price: price });
-      }
-      
-      saveCart();
+  // SVG Click Bug Fix: Use event delegation with .closest('.add-to-cart')
+  document.addEventListener('click', (e) => {
+    const button = e.target.closest('.add-to-cart');
+    if (!button) return;
 
-      // --- NEW: TOAST NOTIFICATION ---
-      const toast = document.createElement('div');
-      toast.textContent = `Added ${name} to your box!`;
-      toast.style.cssText = `
-        position: fixed; bottom: 85px; right: 20px; 
-        background: var(--caramel); color: white; 
-        padding: 10px 20px; border-radius: 8px; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        font-weight: 600; z-index: 1001;
-        transition: opacity 0.3s, transform 0.3s;
-        transform: translateY(20px); opacity: 0;
-      `;
-      document.body.appendChild(toast);
+    const name = button.getAttribute('data-name');
+    const price = parseInt(button.getAttribute('data-price'));
+    if (!name || isNaN(price)) return;
+    
+    const existing = cart.find(i => i.name === name);
+    if (existing) {
+      existing.quantity++;
+    } else {
+      cart.push({ name, price, quantity: 1 });
+    }
+    
+    if (window.va) {
+      window.va('track', 'AddToCart', { flavor: name, price: price });
+    }
+    
+    saveCart();
 
-      // Animate in
-      requestAnimationFrame(() => {
-        toast.style.transform = 'translateY(0)';
-        toast.style.opacity = '1';
-      });
-      // Animate out and remove
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-      }, 2000);
-      // --- END TOAST NOTIFICATION ---
+    // TOAST NOTIFICATION
+    const toast = document.createElement('div');
+    toast.textContent = `Added ${name} to your box!`;
+    toast.style.cssText = `
+      position: fixed; bottom: 85px; right: 20px; 
+      background: var(--caramel); color: white; 
+      padding: 10px 20px; border-radius: 8px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-weight: 600; z-index: 1001;
+      transition: opacity 0.3s, transform 0.3s;
+      transform: translateY(20px); opacity: 0;
+    `;
+    document.body.appendChild(toast);
 
+    requestAnimationFrame(() => {
+      toast.style.transform = 'translateY(0)';
+      toast.style.opacity = '1';
     });
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 300);
+    }, 2000);
   });
 
   function saveCart() {
@@ -350,16 +353,14 @@ function initCart() {
     checkoutBtn.addEventListener('click', () => {
       if (cart.length === 0) return;
       
-      // NEW: Smart Baking Schedule Logic
-      const currentHour = new Date().getHours();
+      // Smart Baking Schedule Logic with Settat, Morocco Timezone
+      const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
+      const currentHour = moroccoTime.getHours();
       let timeNote = "";
       
-      // If it is 8:00 PM (20:00) or later, tag it for tomorrow
       if (currentHour >= 20) {
         timeNote = "🚨 *[PRE-ORDER FOR TOMORROW]*\n";
-      } 
-      // If it is before 3:00 PM (15:00), tag it for today's upcoming batch
-      else if (currentHour < 15) {
+      } else if (currentHour < 15) {
         timeNote = "⏳ *[PRE-ORDER FOR TODAY'S BATCH (15:00 - 20:00)]*\n";
       }
 
