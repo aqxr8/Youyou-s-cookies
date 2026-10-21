@@ -2350,7 +2350,7 @@ body {
     object-fit: contain !important;
 }
 
-/* 2. Mobile Menu Fix: User on Left, Basket on Right */
+/* 2. Mobile Menu Fix: User and Basket Side-by-Side */
 @media (max-width: 900px) {
     .main-nav {
         display: flex !important;
@@ -2359,36 +2359,38 @@ body {
         align-content: flex-start !important;
     }
 
-    /* Make all normal links and text stack vertically */
+    /* Make all normal links and text stack vertically below the icons */
     .main-nav > * {
         width: 100% !important;
         order: 3;
     }
 
-    /* Pin the User icon to the far Left */
+    /* User Icon - Positioned first */
     .main-nav #user-icon-link,
     .main-nav #user-icon-wrapper {
         width: auto !important;
         order: 1 !important;
-        margin-right: auto !important;
+        margin-right: 25px !important; /* Creates the perfect gap between User and Cart */
+        margin-bottom: 15px !important;
         border: none !important;
         background: transparent !important;
         padding: 0 !important;
     }
 
-    /* Pin the Cart to the far Right */
+    /* Cart Icon - Positioned right next to the User icon */
     .main-nav .cart-toggle, 
     .main-nav button[onclick*="cart-panel"], 
     .main-nav .cart-btn {
         width: auto !important;
         order: 2 !important;
-        margin-left: auto !important;
+        margin-left: 0 !important; 
+        margin-bottom: 15px !important;
         border: none !important;
         background: transparent !important;
         padding: 0 !important;
     }
 
-    /* Keep the close X button positioned absolutely */
+    /* Keep the close X button positioned absolutely in the corner */
     .main-nav .nav-close {
         position: absolute !important;
         top: 20px !important;
@@ -2397,7 +2399,7 @@ body {
         order: 0 !important;
     }
 
-    /* Keep theme toggle sized correctly */
+    /* Keep theme toggle sized correctly at the bottom */
     .main-nav .theme-toggle {
         width: 55px !important;
         order: 99 !important;
