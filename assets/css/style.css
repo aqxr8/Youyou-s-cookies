@@ -2339,55 +2339,54 @@ body {
    HEADER FIXES (LOGO SHAPE & MOBILE LAYOUT)
    ========================================= */
 
-/* 1. Fix the Logo and Brand Name Shape (Desktop & Mobile) */
+/* 1. Fix the Logo and Brand Name Shape so it never squishes */
 .site-header .brand, 
 .site-header .logo-container,
 .site-header .brand-text,
 .site-header h1 {
-    flex-shrink: 0 !important; /* Prevents the text from squishing */
-    white-space: nowrap !important; /* Forces the text to stay on its intended line */
+    flex-shrink: 0 !important; 
+    white-space: nowrap !important; 
 }
 
-/* Ensure the actual logo image doesn't distort or stretch */
-.site-header img {
-    object-fit: contain !important;
-}
-
-/* 2. Mobile Layout: User Profile on the Left, Cart on the Right */
+/* 2. Perfect Mobile Top Bar Layout */
 @media (max-width: 850px) {
     .site-header {
+        position: relative !important;
         display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: space-between !important;
+        justify-content: center !important; /* Centers your logo perfectly */
         align-items: center !important;
-        padding-left: 15px !important;
-        padding-right: 15px !important;
+        min-height: 70px !important; /* Ensures the header is tall enough */
     }
 
-    /* Force User Icon to the far left */
-    #user-icon-link, 
+    /* Keep the 3-line menu on the far left */
+    .nav-toggle {
+        position: absolute !important;
+        left: 15px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        margin: 0 !important;
+    }
+
+    /* Put the User Profile icon on the left, right next to the menu */
+    #user-icon-link,
     #user-icon-wrapper {
-        order: -1 !important; /* Moves it to the very start of the line */
-        margin-right: auto !important;
+        position: absolute !important;
+        left: 65px !important; /* Gives space for the 3 lines */
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        margin: 0 !important;
         display: block !important;
     }
 
-    /* Force Cart Icon to the far right */
+    /* Put the Basket / Cart icon on the far right */
     .cart-toggle, 
     button[onclick*="cart-panel"], 
     .cart-btn {
-        order: 99 !important; /* Moves it to the very end of the line */
-        margin-left: auto !important;
+        position: absolute !important;
+        right: 15px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        margin: 0 !important;
         display: block !important;
-    }
-    
-    /* Keep the Brand Name centered nicely between them */
-    .site-header .brand, 
-    .site-header .logo-container {
-        order: 1 !important;
-        margin: 0 auto !important;
-        text-align: center !important;
-        width: 100% !important; /* Pushes the logo to its own line below the icons if screen is very small, or leave unset to keep on same line */
-        margin-top: 10px !important;
     }
 }
