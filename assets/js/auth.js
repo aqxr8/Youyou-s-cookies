@@ -31,6 +31,25 @@ onAuthStateChanged(auth, async (user) => {
       userIconWrapper.innerHTML = `<img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
     }
 
+    // --- NEW: GLOBALLY FETCH USER DATA TO PRE-FILL CART ADDRESS ---
+    let userData = null;
+    let userDocExists = false;
+    try {
+      const userDocSnap = await getDoc(doc(db, "users", user.uid));
+      if (userDocSnap.exists()) {
+        userData = userDocSnap.data();
+        userDocExists = true;
+        
+        // Auto-fill the cart address on every page if they have one saved
+        const cartAddressInput = document.getElementById('cart-address');
+        if (cartAddressInput && userData.address) {
+          cartAddressInput.value = userData.address;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch user data for cart address", e);
+    }
+
     // --- 2. PROFILE PAGE LOGIC ---
     if (window.location.pathname.includes('profile.html')) {
       if (user.email === ADMIN_EMAIL) {
@@ -43,9 +62,7 @@ onAuthStateChanged(auth, async (user) => {
       profilePic.src = user.photoURL || `https://ui-avatars.com/api/?name=${user.email}&background=c1771e&color=fff&size=128`;
       profilePic.style.display = "block";
 
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
+      if (userDocExists && userData) {
         const displayName = userData.username || user.displayName || "Cookie Lover";
         document.getElementById('profile-name').textContent = displayName;
         
@@ -62,15 +79,15 @@ onAuthStateChanged(auth, async (user) => {
 
       try {
         if (rawCartString !== null) {
-          // If local cart exists (even if it's '[]' because you just checked out), push it to Firebase to clear the database too!
+          // If local cart exists, push it to Firebase
           localCart = JSON.parse(rawCartString);
           if (!Array.isArray(localCart)) localCart = Object.values(localCart);
           
           await updateDoc(userRef, { cart: localCart });
         } else {
-          // If local cart is totally missing (like logging in on a brand new phone), pull from Firebase
-          if (userDoc.exists() && userDoc.data().cart) {
-            localCart = userDoc.data().cart;
+          // Pull from Firebase
+          if (userDocExists && userData.cart) {
+            localCart = userData.cart;
           }
           localStorage.setItem('youyou_cart', JSON.stringify(localCart));
         }
@@ -234,6 +251,13 @@ if (infoForm) {
           address: newAddress
         });
         document.getElementById('profile-name').textContent = newUsername;
+        
+        // --- NEW: Instantly update the cart address text box when they save! ---
+        const cartAddressInput = document.getElementById('cart-address');
+        if (cartAddressInput) {
+          cartAddressInput.value = newAddress;
+        }
+
         msg.style.display = "block";
         msg.style.color = "#4CAF50";
         msg.textContent = "Profile updated successfully!";
