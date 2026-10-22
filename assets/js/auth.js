@@ -70,6 +70,14 @@ function authMessage(err, fallback) {
   return map[err && err.code] || fallback || "Une erreur est survenue.";
 }
 
+// --- RANKING SYSTEM HELPER ---
+function getCookieRank(totalSpent) {
+  if (totalSpent >= 1500) return { name: "Cookie Legend", icon: "👑", color: "#d49a00", bg: "#fff9e6" };
+  if (totalSpent >= 800)  return { name: "Sugar Boss", icon: "🧁", color: "#a85a3e", bg: "#fcedec" };
+  if (totalSpent >= 300)  return { name: "Cookie Lover", icon: "🤎", color: "#be5191", bg: "#fdf3f8" };
+  return { name: "Cookie Fan", icon: "🍪", color: "#7a5c46", bg: "#f5f0ec" };
+}
+
 // --- GLOBAL SAVE ORDER METHOD ---
 window.saveOrderToFirestore = async function(orderData) {
   try {
@@ -152,10 +160,8 @@ onAuthStateChanged(auth, async (user) => {
       console.warn("Impossible de récupérer le profil utilisateur:", e);
     }
 
-    // SYNCHRONISATION FIRESTORE ABSOLUE (Gère aussi le panier vide)
     try {
       if (userDocExists && Array.isArray(userData.cart)) {
-        // Le cloud est la référence absolue (même si le tableau est vide [])
         localStorage.setItem('youyou_cart', JSON.stringify(userData.cart));
         window.dispatchEvent(new Event('cart-synced'));
       } else {
@@ -276,17 +282,16 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   `;
 }
 
-window.openBoxModal = function() {
-  const panel = document.getElementById('cart-panel');
-  if (panel) {
-    panel.style.display = 'block';
-    panel.classList.add('open');
-    const overlay = document.getElementById('cart-overlay');
-    if (overlay) overlay.classList.add('show');
-  } else {
-    window.location.href = "menu.html";
+function updateProfileRankBadge(totalSpent) {
+  const rank = getCookieRank(totalSpent);
+  const rankBadge = document.querySelector('.profile-hero-card .status-pill-badge');
+  if (rankBadge) {
+      rankBadge.innerHTML = `${rank.icon} ${rank.name} <span style="opacity:0.75; margin-left:6px; font-weight:normal;">(${totalSpent} DH)</span>`;
+      rankBadge.style.backgroundColor = rank.bg;
+      rankBadge.style.color = rank.color;
+      rankBadge.style.border = `1px solid ${rank.color}40`;
   }
-};
+}
 
 async function loadCustomerOrderHistory(user, db) {
   const historyContainer = document.getElementById('profile-order-history');
@@ -296,8 +301,11 @@ async function loadCustomerOrderHistory(user, db) {
     const ordersQuery = query(collection(db, "orders"), where("userId", "==", user.uid));
     const querySnapshot = await getDocs(ordersQuery);
 
+    let totalSpent = 0;
+
     if (querySnapshot.empty) {
       historyContainer.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">Aucune commande précédente trouvée.</p>';
+      updateProfileRankBadge(0);
       return;
     }
 
@@ -308,6 +316,11 @@ async function loadCustomerOrderHistory(user, db) {
       const isDelivered = data.status === 'Delivered';
       const isCancelled = data.status === 'Cancelled';
       const isProcessing = data.status === 'Processing';
+
+      // Only count DELIVERED orders towards their Rank!
+      if (isDelivered) {
+         totalSpent += Number(data.totalAmount) || 0;
+      }
 
       let statusClass = 'processing';
       if (isDelivered) statusClass = 'delivered';
@@ -340,6 +353,9 @@ async function loadCustomerOrderHistory(user, db) {
         </div>
       `;
     });
+
+    // Update their Rank Badge visually
+    updateProfileRankBadge(totalSpent);
 
     document.querySelectorAll('.btn-cancel-order').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -386,8 +402,25 @@ async function loadAdminDashboard(db) {
   let totalOrdersCount = 0;
   let pendingOrdersCount = 0;
 
+  // Fetch users and orders in parallel to calculate ranks globally
+  const [usersSnapshot, ordersSnapshot] = await Promise.all([
+    getDocs(collection(db, "users")),
+    getDocs(collection(db, "orders"))
+  ]);
+
+  // Calculate total spent for each user
+  const userSpent = {};
+  if (!ordersSnapshot.empty) {
+    ordersSnapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      // Only count DELIVERED orders
+      if (data.status === 'Delivered' && data.userId) {
+        userSpent[data.userId] = (userSpent[data.userId] || 0) + (Number(data.totalAmount) || 0);
+      }
+    });
+  }
+
   if (usersList) {
-    const usersSnapshot = await getDocs(collection(db, "users"));
     usersList.innerHTML = "";
     if (statUsers) statUsers.textContent = usersSnapshot.size;
 
@@ -396,6 +429,12 @@ async function loadAdminDashboard(db) {
     } else {
       usersSnapshot.forEach((docSnap) => {
         const data = docSnap.data();
+        const userId = docSnap.id;
+        
+        // Find their rank!
+        const spent = userSpent[userId] || 0;
+        const rank = getCookieRank(spent);
+
         const card = document.createElement('div');
         card.className = "admin-user-card";
 
@@ -411,19 +450,32 @@ async function loadAdminDashboard(db) {
         infoDiv.appendChild(nameEl);
         infoDiv.appendChild(emailEl);
 
-        const badge = document.createElement('span');
-        badge.className = `role-badge ${data.role === 'admin' ? 'admin' : 'customer'}`;
-        badge.textContent = data.role || 'customer';
+        const badgesDiv = document.createElement('div');
+        badgesDiv.style.display = "flex";
+        badgesDiv.style.gap = "8px";
+        badgesDiv.style.alignItems = "center";
+
+        // Inject Rank Badge into Admin Panel for Customers
+        if (data.role !== 'admin') {
+            const rankBadge = document.createElement('span');
+            rankBadge.style.cssText = `font-size: 0.72rem; padding: 4px 10px; border-radius: 999px; font-weight: 700; background: ${rank.bg}; color: ${rank.color}; border: 1px solid ${rank.color}30;`;
+            rankBadge.textContent = `${rank.icon} ${rank.name}`;
+            badgesDiv.appendChild(rankBadge);
+        }
+
+        const roleBadge = document.createElement('span');
+        roleBadge.className = `role-badge ${data.role === 'admin' ? 'admin' : 'customer'}`;
+        roleBadge.textContent = data.role || 'customer';
+        badgesDiv.appendChild(roleBadge);
 
         card.appendChild(infoDiv);
-        card.appendChild(badge);
+        card.appendChild(badgesDiv);
         usersList.appendChild(card);
       });
     }
   }
 
   if (ordersList) {
-    const ordersSnapshot = await getDocs(collection(db, "orders"));
     ordersList.innerHTML = "";
     totalOrdersCount = ordersSnapshot.size;
 

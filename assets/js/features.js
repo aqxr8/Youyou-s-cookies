@@ -393,6 +393,53 @@ function initCart() {
     if (!cartItemsList) return;
 
     let total = 0;
+    // Calculate total first
+    cart.forEach(item => {
+      total += (item.price * item.quantity);
+    });
+
+    // --- FREE DELIVERY TRACKER LOGIC ---
+    const FREE_SHIPPING_THRESHOLD = 100; // Change 100 to whatever amount you want!
+    let tracker = document.getElementById('shipping-tracker');
+    
+    // Create the tracker dynamically if it doesn't exist
+    if (!tracker && cartItemsList.parentElement) {
+      tracker = document.createElement('div');
+      tracker.id = 'shipping-tracker';
+      tracker.className = 'shipping-tracker';
+      
+      // Insert right above the cart items list body
+      const cartBody = cartItemsList.parentElement;
+      cartBody.parentNode.insertBefore(tracker, cartBody);
+    }
+
+    if (tracker) {
+      if (cart.length === 0) {
+        tracker.style.display = 'none'; // Hide if cart is empty
+      } else {
+        tracker.style.display = 'flex';
+        const progressPercentage = Math.min((total / FREE_SHIPPING_THRESHOLD) * 100, 100);
+        const amountLeft = FREE_SHIPPING_THRESHOLD - total;
+        
+        if (total >= FREE_SHIPPING_THRESHOLD) {
+          tracker.innerHTML = `
+            <div class="shipping-text shipping-success">🎉 Félicitations ! Livraison gratuite débloquée.</div>
+            <div class="shipping-bar-bg">
+              <div class="shipping-bar-fill success" style="width: 100%;"></div>
+            </div>
+          `;
+        } else {
+          tracker.innerHTML = `
+            <div class="shipping-text">Ajoutez <span>${amountLeft} DH</span> pour la livraison gratuite !</div>
+            <div class="shipping-bar-bg">
+              <div class="shipping-bar-fill" style="width: ${progressPercentage}%;"></div>
+            </div>
+          `;
+        }
+      }
+    }
+    // --- END TRACKER LOGIC ---
+
     cartItemsList.innerHTML = '';
 
     if (cart.length === 0) {
@@ -410,7 +457,6 @@ function initCart() {
       
       cart.forEach((item, index) => {
         const itemTotal = item.price * item.quantity;
-        total += itemTotal;
         
         const li = document.createElement('li');
         li.className = 'cart-item-row';
