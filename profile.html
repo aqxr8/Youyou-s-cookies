@@ -8,13 +8,65 @@
   <link rel="stylesheet" href="assets/css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    /* Mobile Responsive Adaptation (PC remains untouched) */
+    /* Upgraded Mobile Responsive Adaptation (PC remains untouched) */
     @media (max-width: 900px) {
       .profile-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
-      .section.container { padding-left: 12px !important; padding-right: 12px !important; }
-      .profile-hero-card { flex-direction: column; align-items: flex-start !important; gap: 15px; }
-      .profile-hero-card .btn { width: 100%; text-align: center; }
-      .auth-input { font-size: 16px !important; }
+      .section.container { padding-left: 15px !important; padding-right: 15px !important; padding-top: 20px !important; }
+      
+      /* Center and beautify the hero card on mobile */
+      .profile-hero-card { 
+        flex-direction: column; 
+        align-items: center !important; 
+        text-align: center;
+        padding: 35px 20px !important;
+        border-radius: 24px;
+        background: linear-gradient(145deg, var(--white), var(--cream-light));
+      }
+      .profile-hero-card > div { 
+        justify-content: center; 
+        flex-direction: column; 
+        display: flex; 
+        align-items: center; 
+      }
+      .profile-avatar { 
+        width: 110px; 
+        height: 110px; 
+        margin-bottom: 12px; 
+        border-width: 4px; 
+        box-shadow: 0 8px 24px rgba(193, 119, 30, 0.2); 
+      }
+      .profile-hero-card .btn { 
+        width: 100%; 
+        text-align: center; 
+        margin-top: 15px; 
+        padding: 14px; 
+        border-radius: 12px; 
+        font-weight: bold;
+      }
+      
+      /* Enhance form cards */
+      .profile-section-card { padding: 22px 18px !important; border-radius: 20px; }
+      .auth-input { font-size: 16px !important; padding: 14px !important; border-radius: 10px !important; }
+      .profile-card-title { font-size: 1.4rem; text-align: center; margin-bottom: 22px; }
+      
+      /* Clean up the basket items for small screens */
+      .basket-item-row { 
+        flex-direction: column !important; 
+        align-items: flex-start !important; 
+        gap: 12px; 
+        padding: 18px 0; 
+      }
+      .basket-item-row > div:last-child { 
+        align-self: flex-end; 
+        font-size: 1.25rem !important; 
+        background: var(--cream);
+        padding: 6px 14px;
+        border-radius: 8px;
+      }
+      
+      /* Better order history stacking */
+      .order-history-header { flex-direction: column; gap: 8px; }
+      .order-history-header .status-pill-badge { align-self: flex-start; }
     }
   </style>
 </head>

@@ -8,13 +8,61 @@
   <link rel="stylesheet" href="assets/css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    /* Mobile Responsive Adaptation (PC remains untouched) */
+    /* Upgraded Mobile Responsive Adaptation (PC remains untouched) */
     @media (max-width: 900px) {
-      .admin-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+      .admin-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
       .admin-main-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
-      .section.container { padding-left: 10px !important; padding-right: 10px !important; }
-      .kpi-card { padding: 15px !important; }
-      .admin-order-card, .admin-user-card { padding: 15px !important; }
+      .section.container { padding-left: 12px !important; padding-right: 12px !important; padding-top: 15px !important; }
+      
+      /* Make KPI cards pop on mobile */
+      .kpi-card { padding: 18px 12px !important; text-align: center; border-radius: 16px; border-top-width: 5px; }
+      .kpi-value { font-size: 1.7rem !important; }
+      .kpi-label { font-size: 0.75rem !important; letter-spacing: 0.05em; }
+      
+      .profile-section-card { padding: 18px !important; border-radius: 20px; }
+      
+      /* Scrollable filter tabs to save space */
+      .admin-filter-tabs { 
+        width: 100%; 
+        display: flex; 
+        justify-content: space-between; 
+        overflow-x: auto; 
+        padding-bottom: 5px; 
+      }
+      .filter-btn { flex: 1; text-align: center; padding: 10px 5px !important; font-size: 0.85rem !important; white-space: nowrap; }
+      
+      /* Advanced Order Card Mobile Stacking */
+      .admin-order-card { padding: 18px !important; border-radius: 16px; }
+      .admin-order-header { flex-direction: column; align-items: flex-start !important; gap: 12px; }
+      .admin-order-header > div { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+      .admin-order-header .status-pill-badge { align-self: flex-start; }
+      
+      /* Target the bottom section containing Price and Buttons */
+      .admin-order-card > div:last-child { 
+        flex-direction: column !important; 
+        align-items: stretch !important; 
+        gap: 15px; 
+      }
+      .admin-order-card > div:last-child > div:first-child { 
+        text-align: left; 
+        font-size: 1.4rem !important; 
+      }
+      /* Place WhatsApp and Dropdown side by side evenly */
+      .admin-order-card > div:last-child > div:last-child { 
+        display: flex !important; 
+        flex-direction: row; 
+        width: 100%; 
+        gap: 10px;
+      }
+      .btn-whatsapp-sm, .admin-status-dropdown { 
+        flex: 1; 
+        text-align: center; 
+        justify-content: center; 
+        padding: 12px !important; 
+        font-size: 0.9rem !important; 
+        height: 44px !important; 
+        box-sizing: border-box;
+      }
     }
   </style>
 </head>
@@ -100,7 +148,7 @@
   </main>
 
   <script>
-    // Order filter tabs (cards are added later by auth.js, so look them up on every click)
+    // Order filter tabs
     document.querySelectorAll('.filter-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var status = btn.getAttribute('data-filter');
