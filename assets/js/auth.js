@@ -73,12 +73,11 @@ function authMessage(err, fallback) {
   return map[err && err.code] || fallback || "Something went wrong. Please try again.";
 }
 
-// --- GLOBAL SAVE ORDER METHOD FOR FIRESTORE (WITH PROFILE PHONE/ADDRESS BACKUP) ---
+// --- GLOBAL SAVE ORDER METHOD FOR FIRESTORE ---
 window.saveOrderToFirestore = async function(orderData) {
   try {
     const user = auth.currentUser;
 
-    // Bulletproof fallback: if orderData phone/address is empty, pull from global cached user doc data
     let finalPhone = orderData.phone;
     if (!finalPhone && window.userDataObj && window.userDataObj.phone) {
       finalPhone = window.userDataObj.phone;
@@ -111,6 +110,13 @@ window.saveOrderToFirestore = async function(orderData) {
     };
 
     const docRef = await addDoc(collection(db, "orders"), finalData);
+    
+    // Clear user cart in Firestore and localStorage after successful order
+    if (user) {
+      await updateDoc(doc(db, "users", user.uid), { cart: [] });
+    }
+    localStorage.removeItem('youyou_cart');
+    
     return docRef.id;
   } catch (error) {
     console.error("Firestore Order Saving Error:", error);
@@ -118,7 +124,7 @@ window.saveOrderToFirestore = async function(orderData) {
   }
 };
 
-// --- GLOBAL AUTH STATE OBSERVER ---
+// --- GLOBAL AUTH STATE OBSERVER & CLOUD CART SYNC ---
 onAuthStateChanged(auth, async (user) => {
   window.currentUserObj = user;
   const userIconLink = document.getElementById('user-icon-link');
@@ -138,7 +144,7 @@ onAuthStateChanged(auth, async (user) => {
       const userDocSnap = await getDoc(doc(db, "users", user.uid));
       if (userDocSnap.exists()) {
         userData = userDocSnap.data();
-        window.userDataObj = userData; // Expose profile data globally for auto-filling & backups
+        window.userDataObj = userData; 
         userDocExists = true;
         
         const cartAddressInput = document.getElementById('cart-address');
@@ -148,6 +154,24 @@ onAuthStateChanged(auth, async (user) => {
       }
     } catch (e) {
       console.warn("Could not fetch user profile:", e);
+    }
+
+    // CROSS-DEVICE CLOUD CART SYNCHRONIZATION
+    try {
+      const cloudCart = (userDocExists && Array.isArray(userData.cart)) ? userData.cart : [];
+      const localCartRaw = localStorage.getItem('youyou_cart');
+      let localCart = localCartRaw ? JSON.parse(localCartRaw) : [];
+
+      if (cloudCart.length > 0) {
+        // CLOUD-FIRST PRIORITY: Pull saved cart from Firestore into local storage across all devices
+        localStorage.setItem('youyou_cart', JSON.stringify(cloudCart));
+        window.dispatchEvent(new Event('cart-synced'));
+      } else if (localCart.length > 0) {
+        // If local storage has items but cloud is empty, back them up to Firestore
+        await updateDoc(doc(db, "users", user.uid), { cart: localCart });
+      }
+    } catch (cartSyncErr) {
+      console.warn("Cart cloud synchronization note:", cartSyncErr);
     }
 
     // PROFILE PAGE
@@ -201,20 +225,19 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Sync Profile Cart
+// Sync Profile Cart UI view (Prioritizing Cloud Firestore Data)
 async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
-  let rawCartString = localStorage.getItem('youyou_cart');
-  let localCart = [];
-  const userRef = doc(db, "users", user.uid);
-
+  let activeCart = [];
   try {
-    if (rawCartString !== null) {
-      localCart = JSON.parse(rawCartString);
-      if (!Array.isArray(localCart)) localCart = Object.values(localCart);
-      await updateDoc(userRef, { cart: localCart });
-    } else if (userDocExists && userData.cart) {
-      localCart = userData.cart;
-      localStorage.setItem('youyou_cart', JSON.stringify(localCart));
+    if (userDocExists && Array.isArray(userData.cart) && userData.cart.length > 0) {
+      activeCart = userData.cart;
+      localStorage.setItem('youyou_cart', JSON.stringify(activeCart));
+    } else {
+      const rawCartString = localStorage.getItem('youyou_cart');
+      if (rawCartString !== null) {
+        activeCart = JSON.parse(rawCartString);
+        if (!Array.isArray(activeCart)) activeCart = Object.values(activeCart);
+      }
     }
   } catch(err) {
     console.warn("Cart sync notice:", err);
@@ -223,7 +246,7 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   const basketList = document.getElementById('profile-basket-list');
   if (!basketList) return;
 
-  if (localCart.length === 0) {
+  if (activeCart.length === 0) {
     basketList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic; text-align: center; padding: 20px 0;">Your cookie box is currently empty. Visit the menu to stock up!</p>';
     return;
   }
@@ -231,7 +254,7 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   basketList.innerHTML = "";
   let total = 0;
   
-  localCart.forEach((item) => {
+  activeCart.forEach((item) => {
     const itemPrice = Number(item.price) || 0;
     const itemQty = Number(item.quantity) || 1;
     const itemTotal = itemPrice * itemQty;
@@ -261,17 +284,18 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   `;
 }
 
-// Global Helper to trigger box panel
 window.openBoxModal = function() {
   const panel = document.getElementById('cart-panel');
   if (panel) {
     panel.style.display = 'block';
+    panel.classList.add('open');
+    const overlay = document.getElementById('cart-overlay');
+    if (overlay) overlay.classList.add('show');
   } else {
     window.location.href = "menu.html";
   }
 };
 
-// Customer Order History Loader (With Cancel Option)
 async function loadCustomerOrderHistory(user, db) {
   const historyContainer = document.getElementById('profile-order-history');
   if (!historyContainer) return;
@@ -325,7 +349,6 @@ async function loadCustomerOrderHistory(user, db) {
       `;
     });
 
-    // Attach Event Listeners for Customer Cancellation
     document.querySelectorAll('.btn-cancel-order').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const orderId = e.target.getAttribute('data-id');
@@ -358,7 +381,6 @@ async function loadCustomerOrderHistory(user, db) {
   }
 }
 
-// Admin Dashboard Loader
 async function loadAdminDashboard(db) {
   const usersList = document.getElementById('admin-users');
   const ordersList = document.getElementById('admin-orders');
@@ -372,7 +394,6 @@ async function loadAdminDashboard(db) {
   let totalOrdersCount = 0;
   let pendingOrdersCount = 0;
 
-  // Load Users
   if (usersList) {
     const usersSnapshot = await getDocs(collection(db, "users"));
     usersList.innerHTML = "";
@@ -409,7 +430,6 @@ async function loadAdminDashboard(db) {
     }
   }
 
-  // Load Orders
   if (ordersList) {
     const ordersSnapshot = await getDocs(collection(db, "orders"));
     ordersList.innerHTML = "";
@@ -426,7 +446,6 @@ async function loadAdminDashboard(db) {
         const isProcessing = data.status === 'Processing';
         const amount = Number(data.totalAmount) || 0;
 
-        // Only count revenue if the order isn't cancelled
         if (!isCancelled) totalRevenue += amount;
         if (isProcessing) pendingOrdersCount++;
 
@@ -479,7 +498,6 @@ async function loadAdminDashboard(db) {
         ordersList.appendChild(orderCard);
       });
 
-      // Admin Status Dropdown Handler
       document.querySelectorAll('.admin-status-dropdown').forEach(dropdown => {
         dropdown.addEventListener('change', async (e) => {
           const orderId = e.target.getAttribute('data-id');
@@ -527,7 +545,6 @@ async function initAdminDashboard(db) {
   }
 }
 
-// Password Reset Form
 const forgotPasswordForm = document.getElementById('forgot-password-form');
 if (forgotPasswordForm) {
   forgotPasswordForm.addEventListener('submit', async (e) => {
@@ -549,7 +566,6 @@ if (forgotPasswordForm) {
   });
 }
 
-// Profile Info Form
 const infoForm = document.getElementById('profile-info-form');
 if (infoForm) {
   infoForm.addEventListener('submit', async (e) => {
@@ -568,7 +584,6 @@ if (infoForm) {
           phone: newPhone
         });
         
-        // Update cached data immediately
         if (window.userDataObj) {
           window.userDataObj.username = newUsername;
           window.userDataObj.address = newAddress;
@@ -591,7 +606,6 @@ if (infoForm) {
   });
 }
 
-// Password Form
 const passwordForm = document.getElementById('password-form');
 if (passwordForm) {
   passwordForm.addEventListener('submit', async (e) => {
@@ -621,7 +635,6 @@ function routeUser(user) {
   }
 }
 
-// Login
 const loginForm = document.getElementById('auth-form');
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
@@ -641,7 +654,6 @@ if (loginForm) {
   });
 }
 
-// Signup
 const signupForm = document.getElementById('auth-form-signup');
 if (signupForm) {
   signupForm.addEventListener('submit', async (e) => {
@@ -655,7 +667,8 @@ if (signupForm) {
         username: username, 
         email: email, 
         role: "customer", 
-        joinedAt: new Date()
+        joinedAt: new Date(),
+        cart: []
       });
       routeUser(cred.user);
     } catch (error) {
@@ -668,7 +681,6 @@ if (signupForm) {
   });
 }
 
-// Google Sign In
 const googleBtn = document.getElementById('google-btn');
 if (googleBtn) {
   googleBtn.addEventListener('click', async () => {
@@ -681,7 +693,8 @@ if (googleBtn) {
           username: cred.user.displayName, 
           email: cred.user.email, 
           role: "customer", 
-          joinedAt: new Date()
+          joinedAt: new Date(),
+          cart: []
         });
       }
       routeUser(cred.user);
@@ -695,11 +708,11 @@ if (googleBtn) {
   });
 }
 
-// Logout
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) {
   logoutBtn.addEventListener('click', () => {
     signOut(auth).then(() => {
+      localStorage.removeItem('youyou_cart');
       window.location.href = "index.html";
     });
   });

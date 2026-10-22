@@ -243,7 +243,7 @@ function initNotesWall() {
   }
 }
 
-// --- UPGRADED STICKY CART & FIRESTORE CHECKOUT MECHANIC ---
+// --- CLOUD-SYNCED CART MECHANIC ---
 function initCart() {
   let rawCart = JSON.parse(localStorage.getItem('youyou_cart')) || [];
   let cart = [];
@@ -283,6 +283,17 @@ function initCart() {
   if (cartOverlay) {
     cartOverlay.addEventListener('click', window.closeCart);
   }
+
+  // Listen for background cloud sync updates (e.g. logging in from another device)
+  window.addEventListener('cart-synced', () => {
+    const syncedCartRaw = localStorage.getItem('youyou_cart');
+    if (syncedCartRaw) {
+      try {
+        cart = JSON.parse(syncedCartRaw);
+        updateCartUI();
+      } catch(e) {}
+    }
+  });
 
   document.addEventListener('click', (e) => {
     const button = e.target.closest('.add-to-cart');
@@ -352,9 +363,20 @@ function initCart() {
     }, 600);
   }
 
-  function saveCart() {
+  async function saveCart() {
     localStorage.setItem('youyou_cart', JSON.stringify(cart));
     updateCartUI();
+
+    // Push cart update to Firestore cloud if logged in so other devices receive it
+    if (window.currentUserObj) {
+      try {
+        const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const db = getFirestore();
+        await updateDoc(doc(db, "users", window.currentUserObj.uid), { cart: cart });
+      } catch (err) {
+        console.warn("Could not push cart update to cloud:", err);
+      }
+    }
   }
 
   window.updateQuantity = function(index, change) {
@@ -415,9 +437,6 @@ function initCart() {
     });
   }
 
-  // =========================================================
-  // --- BULLETPROOF CHECKOUT MODAL GENERATOR ---
-  // =========================================================
   let confirmModal = document.getElementById('checkout-confirm-modal');
   
   if (!confirmModal) {
@@ -474,7 +493,6 @@ function initCart() {
       if (confirmList) confirmList.textContent = summaryText;
       if (confirmTotal) confirmTotal.textContent = `${total} DH`;
 
-      // Auto-fill form fields if the user has saved them in their profile
       if (window.currentUserObj && window.userDataObj) {
          if (confirmAddressInput) confirmAddressInput.value = window.userDataObj.address || "";
          const phoneInp = document.getElementById('confirm-phone-input');
@@ -493,7 +511,6 @@ function initCart() {
   }
 
   if (confirmSubmitBtn) {
-    // Prevent double binding
     const newSubmitBtn = confirmSubmitBtn.cloneNode(true);
     confirmSubmitBtn.parentNode.replaceChild(newSubmitBtn, confirmSubmitBtn);
     confirmSubmitBtn = newSubmitBtn;
@@ -502,7 +519,6 @@ function initCart() {
       const phone = document.getElementById('confirm-phone-input').value.trim();
       const address = document.getElementById('confirm-address-input').value.trim();
 
-      // THIS is the block that guarantees a phone number is required
       if (!phone) {
         alert("Please enter a contact phone number so we can fulfill your order.");
         return; 
