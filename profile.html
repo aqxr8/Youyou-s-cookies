@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" type="image/png" sizes="48x48" href="assets/images/logo.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Profile | YouYou's Cookies</title>
@@ -61,21 +62,92 @@
 
   <header class="site-header">
     <div class="container header-inner">
-      <a href="index.html" class="brand">
-        <img src="assets/images/logo.png" alt="YouYou's Cookies" class="brand-logo">
-        <div class="brand-text">
-          <b>YOUYOU'S COOKIES</b>
-          <span>SETTAT, MOROCCO</span>
-        </div>
-      </a>
+      <a class="brand" href="index.html">
+        <video class="brand-logo logo-light" poster="assets/images/logo.png" autoplay loop muted playsinline>
+          <source data-src="assets/videos/logo-light.mp4" type="video/mp4">
+          <img src="assets/images/logo.png" alt="Youyou Cookies">
+        </video>
 
-      <div style="display: flex; align-items: center; gap: 15px;">
-        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
-          <span class="moon-icon">🌙</span>
-          <span class="sun-icon" style="display: none;">☀️</span>
-        </button>
-        <a href="index.html" class="btn btn-outline" style="color: var(--brown); border-color: rgba(74,55,40,0.2);">← Back to Shop</a>
+        <video class="brand-logo logo-dark" poster="assets/images/logo1.png" autoplay loop muted playsinline>
+          <source data-src="assets/videos/logo-dark.mp4" type="video/mp4">
+          <img src="assets/images/logo1.png" alt="Youyou Cookies">
+        </video>
+        
+        <span class="brand-text">
+          <b>Youyou's Cookies</b>
+          <span>MADE WITH LOVE</span>
+        </span>
+      </a>
+      <div class="status-pill" data-status-pill role="status">
+        <span class="status-dot"></span>
+        <span class="status-text">Closed</span>
       </div>
+      
+      <!-- Mobile Toggle Group -->
+      <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
+        <button class="nav-toggle" aria-label="Toggle Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <!-- Main Navigation -->
+      <!-- Main Navigation -->
+      <nav class="main-nav" style="display: flex; align-items: center;">
+        <button class="nav-close" aria-label="Close Menu">&times;</button>
+        
+        <!-- CSS to fix ONLY the mobile drawer version without touching PC -->
+        <style>
+          .mobile-icon-wrapper {
+            display: flex; 
+            align-items: center;
+          }
+          @media (max-width: 900px) {
+            .mobile-icon-wrapper {
+              width: 100%;
+              justify-content: center;
+              margin: 20px auto 40px auto; /* Adds clean breathing room above the Home link */
+              gap: 35px; /* Perfect spacing between User and Cart on mobile */
+            }
+            .mobile-icon-wrapper a {
+              margin-right: 0 !important; /* Removes the PC margins so they center perfectly */
+              transform: scale(1.2); /* Makes them slightly bigger and nicer to tap on phones */
+            }
+          }
+        </style>
+
+        <!-- WRAPPER (Invisible on PC, acts as a layout fixer on Mobile) -->
+        <div class="mobile-icon-wrapper">
+          
+          <!-- ORIGINAL USER ICON (PC style preserved) -->
+          <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; margin-right: 15px; transition: 0.2s;">
+            <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+              </svg>
+            </div>
+          </a>
+
+          <!-- ORIGINAL CART ICON (PC style preserved) -->
+          <a href="#" onclick="window.openBoxModal(); return false;" id="nav-cart-icon" aria-label="Open Cart" style="color: inherit; display: flex; align-items: center; margin-right: 20px; position: relative; transition: 0.2s;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+          </a>
+          
+        </div>
+
+        <a href="index.html"><span class="nav-icon"></span> Home</a>
+        <a href="menu.html"><span class="nav-icon"></span> Menu</a>
+        <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
+        <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Dark Mode">
+          <span class="moon-icon" style="display:none;">🌙</span>
+          <span class="sun-icon">☀️</span>
+        </button>
+        
+        <div class="nav-decor">Baked fresh in Settat</div>
+      </nav>
     </div>
   </header>
 
