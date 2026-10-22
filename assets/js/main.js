@@ -4,11 +4,10 @@
    (hero carousel lives in features.js)
    ========================================================= */
 
-// Delivery window in Morocco time (24h). Change here and everything updates.
+// Delivery window in Morocco time (24h). All week from 15:00 to 20:00.
 window.YOUYOU_HOURS = { open: 15, close: 20 };
 
 // Current time in Morocco, independent of the visitor's device timezone.
-// (Uses Intl parts - parsing toLocaleString() output is unreliable on Safari.)
 window.getMoroccoTime = function () {
   try {
     const parts = new Intl.DateTimeFormat("en-GB", {
@@ -26,7 +25,6 @@ window.getMoroccoTime = function () {
   }
 };
 
-// localStorage can throw (private mode / blocked storage) - never crash on it.
 window.safeStorage = {
   get(key) { try { return localStorage.getItem(key); } catch (e) { return null; } },
   set(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* ignore */ } }
@@ -45,7 +43,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadBrandLogos();
 });
 
-// 1. Header scroll effect
 function initHeader() {
   const header = document.querySelector(".site-header");
   if (!header) return;
@@ -54,7 +51,6 @@ function initHeader() {
   onScroll();
 }
 
-// 2. Mobile navigation
 function initMobileNav() {
   const navToggle = document.querySelector(".nav-toggle");
   const mainNav = document.querySelector(".main-nav");
@@ -87,7 +83,6 @@ function initMobileNav() {
   });
 }
 
-// 3. Scroll reveal
 function initReveal() {
   const revealEls = document.querySelectorAll(".reveal");
   if (revealEls.length && "IntersectionObserver" in window) {
@@ -108,13 +103,11 @@ function initReveal() {
   }
 }
 
-// 4. Copyright year
 function initYear() {
   const yearEl = document.querySelector(".year-now");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 }
 
-// 5. Open / Closed status pill (Morocco time)
 function initOpenStatus() {
   const pill = document.querySelector("[data-status-pill]");
   if (!pill) return;
@@ -138,7 +131,6 @@ function initOpenStatus() {
     : "Opens at " + fmt(openH) + " (Morocco time)";
 }
 
-// 6. FAQ accordion
 function initFaq() {
   document.querySelectorAll(".faq-q").forEach((button) => {
     button.addEventListener("click", () => {
@@ -150,7 +142,6 @@ function initFaq() {
   });
 }
 
-// 7. Dark mode toggle
 function initTheme() {
   const themeToggle = document.getElementById("theme-toggle");
   if (!themeToggle) return;
@@ -179,7 +170,6 @@ function initTheme() {
   });
 }
 
-// 8. Highlight the active nav link (works with or without ".html")
 function initActiveLink() {
   const here = (window.location.pathname.split("/").pop() || "index.html").replace(/\.html$/, "") || "index";
   document.querySelectorAll(".main-nav a").forEach((link) => {
@@ -189,7 +179,6 @@ function initActiveLink() {
   });
 }
 
-// 9. Load only the logo video that is actually visible (saves ~2 MB per page)
 function loadBrandLogos() {
   document.querySelectorAll("video.brand-logo").forEach((video) => {
     if (window.getComputedStyle(video).display === "none") return;

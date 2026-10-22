@@ -284,7 +284,6 @@ function initCart() {
     cartOverlay.addEventListener('click', window.closeCart);
   }
 
-  // Écouteur pour mettre à jour le panier à la volée (vidage ou ajout cross-device)
   window.addEventListener('cart-synced', () => {
     const syncedCartRaw = localStorage.getItem('youyou_cart');
     try {
@@ -318,7 +317,7 @@ function initCart() {
     flyCookie(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
     const toast = document.createElement('div');
-    toast.textContent = `Ajouté ${name} à votre boîte !`;
+    toast.textContent = `Added ${name} to your box!`;
     toast.style.cssText = `
       position: fixed; bottom: 35px; left: 50%; transform: translate(-50%, 20px); 
       background: var(--caramel); color: white; padding: 12px 28px; border-radius: 999px; 
@@ -369,14 +368,13 @@ function initCart() {
     localStorage.setItem('youyou_cart', JSON.stringify(cart));
     updateCartUI();
 
-    // Envoi immédiat vers Firestore (y compris un tableau vide [])
     if (window.currentUserObj) {
       try {
         const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
         const db = getFirestore();
         await updateDoc(doc(db, "users", window.currentUserObj.uid), { cart: cart });
       } catch (err) {
-        console.warn("Impossible de synchroniser le panier sur le cloud:", err);
+        console.warn("Unable to sync cart to cloud:", err);
       }
     }
   }
@@ -392,36 +390,37 @@ function initCart() {
   function updateCartUI() {
     if (!cartItemsList) return;
 
-    let total = 0;
-    // Calculate total first
+    let subtotal = 0;
     cart.forEach(item => {
-      total += (item.price * item.quantity);
+      subtotal += (item.price * item.quantity);
     });
 
-    // --- FREE DELIVERY TRACKER LOGIC ---
-    const FREE_SHIPPING_THRESHOLD = 100; // Change 100 to whatever amount you want!
+    // Delivery fee logic: Free if subtotal >= 100 DH, otherwise 15 DH standard fee (or change as needed)
+    const STANDARD_DELIVERY_FEE = 15;
+    const FREE_SHIPPING_THRESHOLD = 100;
+    const deliveryFee = subtotal === 0 ? 0 : (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_DELIVERY_FEE);
+    const finalTotal = subtotal + deliveryFee;
+
     let tracker = document.getElementById('shipping-tracker');
     
-    // Create the tracker dynamically if it doesn't exist
     if (!tracker && cartItemsList.parentElement) {
       tracker = document.createElement('div');
       tracker.id = 'shipping-tracker';
       tracker.className = 'shipping-tracker';
       
-      // Insert right above the cart items list body
       const cartBody = cartItemsList.parentElement;
       cartBody.parentNode.insertBefore(tracker, cartBody);
     }
 
     if (tracker) {
       if (cart.length === 0) {
-        tracker.style.display = 'none'; // Hide if cart is empty
+        tracker.style.display = 'none';
       } else {
         tracker.style.display = 'flex';
-        const progressPercentage = Math.min((total / FREE_SHIPPING_THRESHOLD) * 100, 100);
-        const amountLeft = FREE_SHIPPING_THRESHOLD - total;
+        const progressPercentage = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
+        const amountLeft = FREE_SHIPPING_THRESHOLD - subtotal;
         
-        if (total >= FREE_SHIPPING_THRESHOLD) {
+        if (subtotal >= FREE_SHIPPING_THRESHOLD) {
           tracker.innerHTML = `
             <div class="shipping-text shipping-success">🎉 Congratulations! Free delivery unlocked.</div>
             <div class="shipping-bar-bg">
@@ -430,7 +429,7 @@ function initCart() {
           `;
         } else {
           tracker.innerHTML = `
-            <div class="shipping-text">Ajoutez <span>${amountLeft} DH</span> pour la livraison gratuite !</div>
+            <div class="shipping-text">Add <span>${amountLeft} DH</span> to get free delivery!</div>
             <div class="shipping-bar-bg">
               <div class="shipping-bar-fill" style="width: ${progressPercentage}%;"></div>
             </div>
@@ -438,7 +437,6 @@ function initCart() {
         }
       }
     }
-    // --- END TRACKER LOGIC ---
 
     cartItemsList.innerHTML = '';
 
@@ -446,9 +444,9 @@ function initCart() {
       cartItemsList.innerHTML = `
         <div class="cart-empty">
           <div class="cart-empty-icon">🍪</div>
-          <h4 style="color: var(--brown); font-size: 1.4rem; margin-bottom: 10px; font-family: 'Cormorant Garamond', serif; font-weight: 700;">Votre boîte est vide !</h4>
-          <p>Il semble que vous n'avez pas encore ajouté de gourmandises.</p>
-          <button onclick="window.openBoxModal(); window.location.href='menu.html'" class="btn btn-dark" style="margin-top: 20px;">Explorer le Menu</button>
+          <h4 style="color: var(--brown); font-size: 1.4rem; margin-bottom: 10px; font-family: 'Cormorant Garamond', serif; font-weight: 700;">Your box is empty!</h4>
+          <p>It looks like you haven't added any sweet treats yet.</p>
+          <button onclick="window.openBoxModal(); window.location.href='menu.html'" class="btn btn-dark" style="margin-top: 20px;">Explore Menu</button>
         </div>
       `;
       if(cartFooter) cartFooter.style.display = 'none';
@@ -463,19 +461,31 @@ function initCart() {
         li.innerHTML = `
           <div class="cart-item-info">
             <div class="cart-item-title">${item.name}</div>
-            <div class="cart-item-price">${itemTotal} DH <span style="font-size:0.8rem; opacity:0.7;">(${item.price} DH Per unit)</span></div>
+            <div class="cart-item-price">${itemTotal} DH <span style="font-size:0.8rem; opacity:0.7;">(${item.price} DH each)</span></div>
           </div>
           <div class="qty-controls">
-            <button onclick="window.updateQuantity(${index}, -1)" class="qty-btn" title="Retirer">&minus;</button>
+            <button onclick="window.updateQuantity(${index}, -1)" class="qty-btn" title="Remove">&minus;</button>
             <span class="qty-val">${item.quantity}</span>
-            <button onclick="window.updateQuantity(${index}, 1)" class="qty-btn" title="Ajouter">&plus;</button>
+            <button onclick="window.updateQuantity(${index}, 1)" class="qty-btn" title="Add">&plus;</button>
           </div>
         `;
         cartItemsList.appendChild(li);
       });
+
+      const existingFeeRow = document.getElementById('cart-delivery-fee-row');
+      if (existingFeeRow) existingFeeRow.remove();
+
+      const totalRowEl = document.querySelector('.cart-total-row');
+      if (totalRowEl && totalRowEl.parentNode) {
+        const feeRow = document.createElement('div');
+        feeRow.id = 'cart-delivery-fee-row';
+        feeRow.style.cssText = 'display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--brown-soft); margin-bottom: 8px;';
+        feeRow.innerHTML = `<span>Delivery:</span><span>${deliveryFee === 0 ? '<strong style="color: #57a05f;">Free</strong>' : deliveryFee + ' DH'}</span>`;
+        totalRowEl.parentNode.insertBefore(feeRow, totalRowEl);
+      }
     }
     
-    if (cartTotal) cartTotal.textContent = total;
+    if (cartTotal) cartTotal.textContent = finalTotal;
   }
 
   if (clearBtn) {
@@ -495,31 +505,33 @@ function initCart() {
     confirmModal.innerHTML = `
       <div class="confirm-modal-content" style="background: var(--cream); padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
         <div class="confirm-modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(74,55,40,0.1); padding-bottom: 15px; margin-bottom: 15px;">
-          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--brown); margin: 0;">Confirmer la commande</h3>
+          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--brown); margin: 0;">Confirm Order</h3>
           <button id="close-confirm-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--brown);">&times;</button>
         </div>
         <div class="confirm-order-summary">
-          <strong style="color: var(--brown);">Résumé des articles :</strong>
+          <strong style="color: var(--brown);">Items Summary:</strong>
           <pre id="confirm-items-summary" style="font-family: inherit; white-space: pre-wrap; margin: 8px 0; color: var(--brown); font-size: 0.95rem; line-height: 1.4;"></pre>
+          <div id="confirm-delivery-summary" style="font-size: 0.85rem; color: var(--brown-soft); margin-top: 5px;"></div>
           <div style="text-align: right; font-weight: bold; color: var(--caramel); font-size: 1.1rem; border-top: 1px dashed rgba(74,55,40,0.2); padding-top: 10px; margin-top: 10px;">
-            Total : <span id="confirm-total-price">0 DH</span>
+            Total: <span id="confirm-total-price">0 DH</span>
           </div>
         </div>
         <div style="margin-top: 15px;">
-          <label for="confirm-phone-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Numéro de téléphone (WhatsApp) :</label>
+          <label for="confirm-phone-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Phone Number (WhatsApp):</label>
           <input type="tel" id="confirm-phone-input" style="width:100%; padding:12px; border:1px solid rgba(74,55,40,0.2); border-radius:8px; font-family:inherit; background: #fff; color: var(--brown);" placeholder="+212 6XX-XXXXXX" required>
         </div>
         <div style="margin-top: 15px; margin-bottom: 20px;">
-          <label for="confirm-address-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Adresse de livraison à Settat :</label>
-          <textarea id="confirm-address-input" style="width:100%; padding:12px; border:1px solid rgba(74,55,40,0.2); border-radius:8px; font-family:inherit; background: #fff; color: var(--brown); min-height:80px; resize: vertical;" placeholder="Quartier, rue, bâtiment..."></textarea>
+          <label for="confirm-address-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Delivery Address in Settat:</label>
+          <textarea id="confirm-address-input" style="width:100%; padding:12px; border:1px solid rgba(74,55,40,0.2); border-radius:8px; font-family:inherit; background: #fff; color: var(--brown); min-height:80px; resize: vertical;" placeholder="Neighborhood, street, building..."></textarea>
         </div>
-        <button id="confirm-submit-order" class="btn btn-dark" style="width:100%; padding: 14px; font-size: 1.1rem; background: var(--caramel); border-color: var(--caramel);">Confirmer & Envoyer sur WhatsApp</button>
+        <button id="confirm-submit-order" class="btn btn-dark" style="width:100%; padding: 14px; font-size: 1.1rem; background: var(--caramel); border-color: var(--caramel);">Confirm & Send via WhatsApp</button>
       </div>
     `;
     document.body.appendChild(confirmModal);
   }
 
   const confirmList = document.getElementById('confirm-items-summary');
+  const confirmDeliverySummary = document.getElementById('confirm-delivery-summary');
   const confirmTotal = document.getElementById('confirm-total-price');
   const confirmCloseBtn = document.getElementById('close-confirm-modal');
   let confirmSubmitBtn = document.getElementById('confirm-submit-order');
@@ -530,16 +542,22 @@ function initCart() {
       if (cart.length === 0) return;
       window.closeCart();
 
+      let subtotal = 0;
       let summaryText = "";
-      let total = 0;
       cart.forEach(item => {
         const itemTotal = item.price * item.quantity;
         summaryText += `• ${item.quantity}x ${item.name} (${itemTotal} DH)\n`;
-        total += itemTotal;
+        subtotal += itemTotal;
       });
 
+      const deliveryFee = subtotal >= 100 ? 0 : 15;
+      const finalTotal = subtotal + deliveryFee;
+
       if (confirmList) confirmList.textContent = summaryText;
-      if (confirmTotal) confirmTotal.textContent = `${total} DH`;
+      if (confirmDeliverySummary) {
+        confirmDeliverySummary.textContent = deliveryFee === 0 ? "Delivery Fee: Free (Order ≥ 100 DH)" : `Delivery Fee: ${deliveryFee} DH`;
+      }
+      if (confirmTotal) confirmTotal.textContent = `${finalTotal} DH`;
 
       if (window.currentUserObj && window.userDataObj) {
          if (confirmAddressInput) confirmAddressInput.value = window.userDataObj.address || "";
@@ -568,24 +586,26 @@ function initCart() {
       const address = document.getElementById('confirm-address-input').value.trim();
 
       if (!phone) {
-        alert("Veuillez entrer un numéro de téléphone pour finaliser votre commande.");
+        alert("Please enter a phone number to finalize your order.");
         return; 
       }
 
       confirmSubmitBtn.disabled = true;
-      confirmSubmitBtn.textContent = "Traitement...";
+      confirmSubmitBtn.textContent = "Processing...";
 
       await processFinalCheckout(phone, address);
 
       confirmSubmitBtn.disabled = false;
-      confirmSubmitBtn.textContent = "Confirmer & Envoyer sur WhatsApp";
+      confirmSubmitBtn.textContent = "Confirm & Send via WhatsApp";
       confirmModal.style.display = 'none';
     });
   }
 
   async function processFinalCheckout(phone = "", address = "") {
-    let total = 0;
-    cart.forEach(i => total += (i.price * i.quantity));
+    let subtotal = 0;
+    cart.forEach(i => subtotal += (i.price * i.quantity));
+    const deliveryFee = subtotal >= 100 ? 0 : 15;
+    const finalTotal = subtotal + deliveryFee;
 
     if (window.saveOrderToFirestore) {
       await window.saveOrderToFirestore({
@@ -593,20 +613,20 @@ function initCart() {
         phone: phone,
         address: address || "Settat",
         items: cart,
-        totalAmount: total
+        totalAmount: finalTotal
       });
     }
 
     const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
     const currentHour = moroccoTime.getHours();
-    let timeNote = currentHour >= 20 ? "🚨 *[PRÉCOMMANDE POUR DEMAIN]*\n" : (currentHour < 15 ? "⏳ *[PRÉCOMMANDE POUR AUJOURD'HUI (15:00 - 20:00)]*\n" : "");
+    let timeNote = currentHour >= 20 ? "🚨 *[PRE-ORDER FOR TOMORROW]*\n" : (currentHour < 15 ? "⏳ *[PRE-ORDER FOR TODAY (15:00 - 20:00)]*\n" : "");
 
-    let message = `Salut YouYou's Cookies !\n${timeNote}Nouvelle commande :\n\n`;
+    let message = `Hi YouYou's Cookies !\n${timeNote}New order:\n\n`;
     cart.forEach(item => {
       message += `- ${item.quantity}x ${item.name} (${item.price * item.quantity} DH)\n`;
     });
     
-    message += `\nTotal : ${total} DH\nTél : ${phone}\nAdresse : ${address || "Settat"}`;
+    message += `\nSubtotal : ${subtotal} DH\nDelivery : ${deliveryFee === 0 ? 'Free' : deliveryFee + ' DH'}\nTotal : ${finalTotal} DH\nPhone : ${phone}\nAddress : ${address || "Settat"}`;
     
     const targetPhone = "212789233029"; 
     window.location.href = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;

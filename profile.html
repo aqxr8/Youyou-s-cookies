@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="assets/css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    /* Upgraded Mobile Responsive Adaptation */
     @media (max-width: 900px) {
       .profile-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
       .section.container { padding-left: 15px !important; padding-right: 15px !important; padding-top: 20px !important; }
@@ -83,19 +82,15 @@
         <span class="status-text">Closed</span>
       </div>
       
-      <!-- Mobile Toggle Group -->
       <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
         <button class="nav-toggle" aria-label="Toggle Menu">
           <span></span><span></span><span></span>
         </button>
       </div>
 
-      <!-- Main Navigation -->
-      <!-- Main Navigation -->
       <nav class="main-nav" style="display: flex; align-items: center;">
         <button class="nav-close" aria-label="Close Menu">&times;</button>
         
-        <!-- CSS to fix ONLY the mobile drawer version without touching PC -->
         <style>
           .mobile-icon-wrapper {
             display: flex; 
@@ -105,20 +100,17 @@
             .mobile-icon-wrapper {
               width: 100%;
               justify-content: center;
-              margin: 20px auto 40px auto; /* Adds clean breathing room above the Home link */
-              gap: 35px; /* Perfect spacing between User and Cart on mobile */
+              margin: 20px auto 40px auto;
+              gap: 35px;
             }
             .mobile-icon-wrapper a {
-              margin-right: 0 !important; /* Removes the PC margins so they center perfectly */
-              transform: scale(1.2); /* Makes them slightly bigger and nicer to tap on phones */
+              margin-right: 0 !important;
+              transform: scale(1.2);
             }
           }
         </style>
 
-        <!-- WRAPPER (Invisible on PC, acts as a layout fixer on Mobile) -->
         <div class="mobile-icon-wrapper">
-          
-          <!-- ORIGINAL USER ICON (PC style preserved) -->
           <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; margin-right: 15px; transition: 0.2s;">
             <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
@@ -128,13 +120,11 @@
             </div>
           </a>
 
-          <!-- ORIGINAL CART ICON (PC style preserved) -->
           <a href="#" onclick="window.openBoxModal(); return false;" id="nav-cart-icon" aria-label="Open Cart" style="color: inherit; display: flex; align-items: center; margin-right: 20px; position: relative; transition: 0.2s;">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
               <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
             </svg>
           </a>
-          
         </div>
 
         <a href="index.html"><span class="nav-icon"></span> Home</a>
@@ -161,19 +151,16 @@
           <h1 id="profile-name" style="font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; color: var(--brown); margin: 0;">Loading...</h1>
           <p id="profile-email" style="color: var(--brown-soft); margin: 2px 0 10px; font-size: 0.95rem;"></p>
           
-          <!-- RANK BADGE -->
-          <!-- RANK BADGE & PROGRESS -->
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
             <span class="status-pill-badge" style="font-size: 0.85rem; padding: 6px 14px; background: var(--cream); color: var(--brown); border: 1px solid rgba(74,55,40,0.2);">
               🍪 Cookie Fan
             </span>
           </div>
 
-          <!-- PROGRESS BAR CONTAINER (Directly Visible) -->
           <div id="rank-progress-container" style="display: block; width: 100%; max-width: 380px; background: rgba(74,55,40,0.05); padding: 12px 16px; border-radius: 12px; margin-top: 8px; border: 1px dashed rgba(74,55,40,0.15);">
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px;">
-              <span id="rank-current-text" style="color: var(--brown); font-weight: bold;">0 DH dépensés</span>
-              <span id="rank-next-text" style="color: var(--brown-soft);">Chargement...</span>
+              <span id="rank-current-text" style="color: var(--brown); font-weight: bold;">0 DH spent</span>
+              <span id="rank-next-text" style="color: var(--brown-soft);">Loading...</span>
             </div>
             <div style="width: 100%; height: 8px; background: rgba(74,55,40,0.12); border-radius: 999px; overflow: hidden;">
               <div id="rank-progress-fill" style="width: 0%; height: 100%; background: var(--caramel); transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1); border-radius: 999px;"></div>
@@ -242,7 +229,6 @@
 
   </main>
 
-  <!-- Cart Drawer -->
   <div id="cart-overlay" class="cart-overlay"></div>
   <div id="cart-panel" class="cart-drawer">
     <div class="cart-header">
@@ -262,7 +248,6 @@
     </div>
   </div>
 
-  <!-- Order Confirmation Modal -->
   <div id="checkout-confirm-modal" class="confirm-modal-overlay">
     <div class="confirm-modal-content">
       <div class="confirm-modal-header">
@@ -273,7 +258,8 @@
       <div class="confirm-order-summary">
         <strong>Items Summary:</strong>
         <pre id="confirm-items-summary" style="font-family: inherit; white-space: pre-wrap; margin: 8px 0; color: var(--brown);"></pre>
-        <div style="text-align: right; font-weight: bold; color: var(--caramel); font-size: 1.1rem;">
+        <div id="confirm-delivery-summary" style="font-size: 0.85rem; color: var(--brown-soft); margin-top: 5px;"></div>
+        <div style="text-align: right; font-weight: bold; color: var(--caramel); font-size: 1.1rem; border-top: 1px dashed rgba(74,55,40,0.2); padding-top: 10px; margin-top: 10px;">
           Total: <span id="confirm-total-price">0 DH</span>
         </div>
       </div>
