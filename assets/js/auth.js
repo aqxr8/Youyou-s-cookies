@@ -220,17 +220,20 @@ window.saveOrderToFirestore = async function (orderData) {
       finalAddress = window.userDataObj.address;
     }
 
-    const items = (
-      Array.isArray(orderData.items) ? orderData.items : []
-    )
+    // Prices are authoritative here; never trust browser/localStorage prices.
+    const MENU_PRICES = {
+      "10 Mini Cookies Box": 15, "15 Mini Cookies Box": 20, "20 Mini Cookies Box": 27, "30 Mini Cookies Box": 40,
+      "Classic Cookie": 7, "Extra Chocolate": 10, "Kinder Cookie": 13, "KitKat Cookie": 15,
+      "Lemon Cookie": 13, "Loaded Fudge Brownie": 15, "Lotus Cookie": 15, "Monster Cookie": 15,
+      "Oreo Cookie": 12, "Red Velvet": 12
+    };
+    const items = (Array.isArray(orderData.items) ? orderData.items : [])
       .slice(0, 50)
-      .map((i) => ({
-        name: String((i && i.name) || "Item").slice(0, 60),
-        price: Math.max(0, Number(i && i.price) || 0),
-        quantity: Math.min(
-          99,
-          Math.max(1, parseInt(i && i.quantity, 10) || 1)
-        )
+      .filter(i => i && typeof i.name === "string" && Object.prototype.hasOwnProperty.call(MENU_PRICES, i.name))
+      .map(i => ({
+        name: i.name,
+        price: MENU_PRICES[i.name],
+        quantity: Math.min(99, Math.max(1, parseInt(i.quantity, 10) || 1))
       }));
 
     if (items.length === 0) return null;

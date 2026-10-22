@@ -192,21 +192,25 @@ function initNotesWall() {
 
   if (!form || !grid) return;
 
-  const savedNotes = JSON.parse(localStorage.getItem("youyou_notes")) || [];
-  savedNotes.forEach(note => createNoteCard(note.name, note.rating, note.text, note.rot, false));
+  let savedNotes = [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem("youyou_notes") || "[]");
+    savedNotes = Array.isArray(parsed) ? parsed.filter(n => n && typeof n.name === "string" && typeof n.text === "string") : [];
+  } catch (_) { savedNotes = []; }
+  savedNotes.forEach(note => createNoteCard(note.name.slice(0, 60), Math.max(1, Math.min(5, Number(note.rating) || 5)), note.text.slice(0, 500), Number(note.rot) || 0, false));
 
   form.addEventListener("submit", function (e) {
     e.preventDefault(); 
-    const name = document.getElementById("note-name").value.trim();
-    const rating = parseInt(document.getElementById("note-rating").value);
-    const text = document.getElementById("note-text").value.trim();
+    const name = document.getElementById("note-name").value.trim().slice(0, 60);
+    const rating = Math.max(1, Math.min(5, parseInt(document.getElementById("note-rating").value, 10) || 5));
+    const text = document.getElementById("note-text").value.trim().slice(0, 500);
 
     if (!name || !text) return;
     const rot = (Math.random() * 6 - 3).toFixed(1);
     createNoteCard(name, rating, text, rot, true);
 
     savedNotes.unshift({ name, rating, text, rot });
-    localStorage.setItem("youyou_notes", JSON.stringify(savedNotes));
+    try { localStorage.setItem("youyou_notes", JSON.stringify(savedNotes.slice(0, 100))); } catch (_) { /* storage may be disabled */ }
 
     form.reset();
     
@@ -234,28 +238,40 @@ function initNotesWall() {
     card.className = isNew ? "note-card reveal visible" : "note-card";
     card.style.setProperty("--rot", `${rot}deg`);
 
-    card.innerHTML = `
-      <div class="note-stars">${stars}</div>
-      <p class="note-text">"${text}"</p>
-      <div class="note-by">— ${name}</div>
-    `;
+    const starEl = document.createElement("div");
+    starEl.className = "note-stars";
+    starEl.textContent = stars;
+    const textEl = document.createElement("p");
+    textEl.className = "note-text";
+    textEl.textContent = `“${String(text).slice(0, 500)}”`;
+    const byEl = document.createElement("div");
+    byEl.className = "note-by";
+    byEl.textContent = `— ${String(name).slice(0, 60)}`;
+    card.append(starEl, textEl, byEl);
     grid.insertBefore(card, grid.firstChild);
   }
 }
 
 // --- CLOUD-SYNCED CART MECHANIC ---
 function initCart() {
-  let rawCart = JSON.parse(localStorage.getItem('youyou_cart')) || [];
+  const MENU_PRICES = {
+    "10 Mini Cookies Box": 15, "15 Mini Cookies Box": 20, "20 Mini Cookies Box": 27, "30 Mini Cookies Box": 40,
+    "Classic Cookie": 7, "Extra Chocolate": 10, "Kinder Cookie": 13, "KitKat Cookie": 15,
+    "Lemon Cookie": 13, "Loaded Fudge Brownie": 15, "Lotus Cookie": 15, "Monster Cookie": 15,
+    "Oreo Cookie": 12, "Red Velvet": 12
+  };
+  let rawCart = [];
+  try {
+    const parsed = JSON.parse(localStorage.getItem('youyou_cart') || '[]');
+    rawCart = Array.isArray(parsed) ? parsed : [];
+  } catch (_) { rawCart = []; }
   let cart = [];
-  
   rawCart.forEach(item => {
-    if (item.quantity) {
-      cart.push(item);
-    } else {
-      const existing = cart.find(i => i.name === item.name);
-      if (existing) existing.quantity++;
-      else cart.push({ name: item.name, price: item.price, quantity: 1 });
-    }
+    if (!item || typeof item.name !== 'string' || !(item.name in MENU_PRICES)) return;
+    const quantity = Math.max(1, Math.min(99, parseInt(item.quantity, 10) || 1));
+    const existing = cart.find(i => i.name === item.name);
+    if (existing) existing.quantity = Math.min(99, existing.quantity + quantity);
+    else cart.push({ name: item.name, price: MENU_PRICES[item.name], quantity });
   });
 
   const cartPanel = document.getElementById('cart-panel');
@@ -288,8 +304,10 @@ function initCart() {
   window.addEventListener('cart-synced', () => {
     const syncedCartRaw = localStorage.getItem('youyou_cart');
     try {
-      cart = syncedCartRaw ? JSON.parse(syncedCartRaw) : [];
-      if (!Array.isArray(cart)) cart = [];
+      const parsed = syncedCartRaw ? JSON.parse(syncedCartRaw) : [];
+      cart = Array.isArray(parsed) ? parsed
+        .filter(item => item && typeof item.name === 'string' && Object.prototype.hasOwnProperty.call(MENU_PRICES, item.name))
+        .map(item => ({ name: item.name, price: MENU_PRICES[item.name], quantity: Math.max(1, Math.min(99, parseInt(item.quantity, 10) || 1)) })) : [];
       updateCartUI();
     } catch(e) {
       cart = [];
@@ -302,11 +320,12 @@ function initCart() {
     if (!button) return;
 
     const name = button.getAttribute('data-name');
-    const price = parseInt(button.getAttribute('data-price'));
-    if (!name || isNaN(price)) return;
+    const price = MENU_PRICES[name];
+    if (!name || !Number.isFinite(price)) return;
     
     const existing = cart.find(i => i.name === name);
     if (existing) {
+      if (existing.quantity >= 99) return;
       existing.quantity++;
     } else {
       cart.push({ name, price, quantity: 1 });
@@ -366,7 +385,7 @@ function initCart() {
   }
 
   async function saveCart() {
-    localStorage.setItem('youyou_cart', JSON.stringify(cart));
+    try { localStorage.setItem('youyou_cart', JSON.stringify(cart)); } catch (_) { /* cart remains usable for this page session */ }
     updateCartUI();
 
     // Envoi immédiat vers Firestore (y compris un tableau vide [])
@@ -398,47 +417,21 @@ function initCart() {
       total += (item.price * item.quantity);
     });
 
-    // --- FREE DELIVERY TRACKER LOGIC ---
-    const FREE_SHIPPING_THRESHOLD = 100; // Change 100 to whatever amount you want!
+    // Delivery fee notice (delivery is not free).
     let tracker = document.getElementById('shipping-tracker');
-    
-    // Create the tracker dynamically if it doesn't exist
     if (!tracker && cartItemsList.parentElement) {
       tracker = document.createElement('div');
       tracker.id = 'shipping-tracker';
       tracker.className = 'shipping-tracker';
-      
-      // Insert right above the cart items list body
       const cartBody = cartItemsList.parentElement;
       cartBody.parentNode.insertBefore(tracker, cartBody);
     }
-
     if (tracker) {
-      if (cart.length === 0) {
-        tracker.style.display = 'none'; // Hide if cart is empty
-      } else {
-        tracker.style.display = 'flex';
-        const progressPercentage = Math.min((total / FREE_SHIPPING_THRESHOLD) * 100, 100);
-        const amountLeft = FREE_SHIPPING_THRESHOLD - total;
-        
-        if (total >= FREE_SHIPPING_THRESHOLD) {
-          tracker.innerHTML = `
-            <div class="shipping-text shipping-success">🎉 Congratulations! Free delivery unlocked.</div>
-            <div class="shipping-bar-bg">
-              <div class="shipping-bar-fill success" style="width: 100%;"></div>
-            </div>
-          `;
-        } else {
-          tracker.innerHTML = `
-            <div class="shipping-text">Ajoutez <span>${amountLeft} DH</span> pour la livraison gratuite !</div>
-            <div class="shipping-bar-bg">
-              <div class="shipping-bar-fill" style="width: ${progressPercentage}%;"></div>
-            </div>
-          `;
-        }
+      tracker.style.display = cart.length === 0 ? 'none' : 'flex';
+      if (cart.length > 0) {
+        tracker.innerHTML = '<div class="shipping-text">Delivery fees apply. The fee will be confirmed when you place your order.</div>';
       }
     }
-    // --- END TRACKER LOGIC ---
 
     cartItemsList.innerHTML = '';
 
@@ -460,18 +453,17 @@ function initCart() {
         
         const li = document.createElement('li');
         li.className = 'cart-item-row';
-        li.innerHTML = `
-          <div class="cart-item-info">
-            <div class="cart-item-title">${item.name}</div>
-            <div class="cart-item-price">${itemTotal} DH <span style="font-size:0.8rem; opacity:0.7;">(${item.price} DH Per unit)</span></div>
-          </div>
-          <div class="qty-controls">
-            <button onclick="window.updateQuantity(${index}, -1)" class="qty-btn" title="Retirer">&minus;</button>
-            <span class="qty-val">${item.quantity}</span>
-            <button onclick="window.updateQuantity(${index}, 1)" class="qty-btn" title="Ajouter">&plus;</button>
-          </div>
-        `;
-        cartItemsList.appendChild(li);
+        const info = document.createElement('div'); info.className = 'cart-item-info';
+        const title = document.createElement('div'); title.className = 'cart-item-title'; title.textContent = item.name;
+        const price = document.createElement('div'); price.className = 'cart-item-price';
+        price.append(document.createTextNode(`${itemTotal} DH `));
+        const unit = document.createElement('span'); unit.style.cssText = 'font-size:0.8rem; opacity:0.7;'; unit.textContent = `(${item.price} DH per unit)`;
+        price.appendChild(unit); info.append(title, price);
+        const controls = document.createElement('div'); controls.className = 'qty-controls';
+        const minus = document.createElement('button'); minus.type = 'button'; minus.className = 'qty-btn'; minus.title = 'Retirer'; minus.textContent = '−'; minus.addEventListener('click', () => window.updateQuantity(index, -1));
+        const qty = document.createElement('span'); qty.className = 'qty-val'; qty.textContent = String(item.quantity);
+        const plus = document.createElement('button'); plus.type = 'button'; plus.className = 'qty-btn'; plus.title = 'Ajouter'; plus.textContent = '+'; plus.addEventListener('click', () => window.updateQuantity(index, 1));
+        controls.append(minus, qty, plus); li.append(info, controls); cartItemsList.appendChild(li);
       });
     }
     
@@ -567,6 +559,10 @@ function initCart() {
       const phone = document.getElementById('confirm-phone-input').value.trim();
       const address = document.getElementById('confirm-address-input').value.trim();
 
+      if (!/^[+\d()\s.-]{9,24}$/.test(phone) || phone.replace(/\D/g, '').length < 9 || phone.replace(/\D/g, '').length > 15) {
+        alert("Veuillez entrer un numéro valide (9 à 15 chiffres).");
+        return;
+      }
       if (!phone) {
         alert("Veuillez entrer un numéro de téléphone pour finaliser votre commande.");
         return; 
@@ -584,21 +580,21 @@ function initCart() {
   }
 
   async function processFinalCheckout(phone = "", address = "") {
-    let total = 0;
-    cart.forEach(i => total += (i.price * i.quantity));
-
+    cart = cart.filter(i => i && MENU_PRICES[i.name]).map(i => ({ name: i.name, price: MENU_PRICES[i.name], quantity: Math.max(1, Math.min(99, parseInt(i.quantity, 10) || 1)) }));
+    if (!cart.length) { alert("Votre panier est vide ou contient des articles invalides."); return; }
+    const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    let orderRef = "";
     if (window.saveOrderToFirestore) {
-      await window.saveOrderToFirestore({
-        customerName: window.currentUserObj ? (window.currentUserObj.displayName || window.currentUserObj.email) : "Guest",
-        phone: phone,
-        address: address || "Settat",
-        items: cart,
-        totalAmount: total
-      });
+      try {
+        const savedId = await window.saveOrderToFirestore({
+          customerName: window.currentUserObj ? (window.currentUserObj.displayName || window.currentUserObj.email) : "Guest",
+          phone, address: address || "Settat", items: cart, totalAmount: total
+        });
+        if (savedId) orderRef = `\nRéférence commande : #${String(savedId).slice(-6).toUpperCase()}`;
+      } catch (err) { console.warn("Commande non enregistrée dans le tableau de bord:", err); }
     }
-
-    const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
-    const currentHour = moroccoTime.getHours();
+    const hourParts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Casablanca', hour: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+    const currentHour = Number(hourParts.find(p => p.type === 'hour')?.value || 12);
     let timeNote = currentHour >= 20 ? "🚨 *[PRÉCOMMANDE POUR DEMAIN]*\n" : (currentHour < 15 ? "⏳ *[PRÉCOMMANDE POUR AUJOURD'HUI (15:00 - 20:00)]*\n" : "");
 
     let message = `Salut YouYou's Cookies !\n${timeNote}Nouvelle commande :\n\n`;
@@ -606,7 +602,7 @@ function initCart() {
       message += `- ${item.quantity}x ${item.name} (${item.price * item.quantity} DH)\n`;
     });
     
-    message += `\nTotal : ${total} DH\nTél : ${phone}\nAdresse : ${address || "Settat"}`;
+    message += `\nTotal : ${total} DH\nTél : ${phone}\nAdresse : ${address || "Settat"}${orderRef}`;
     
     const targetPhone = "212789233029"; 
     window.location.href = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
