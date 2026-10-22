@@ -284,14 +284,16 @@ function initCart() {
     cartOverlay.addEventListener('click', window.closeCart);
   }
 
-  // Listen for background cloud sync updates (e.g. logging in from another device)
+  // Écouteur pour mettre à jour le panier à la volée (vidage ou ajout cross-device)
   window.addEventListener('cart-synced', () => {
     const syncedCartRaw = localStorage.getItem('youyou_cart');
-    if (syncedCartRaw) {
-      try {
-        cart = JSON.parse(syncedCartRaw);
-        updateCartUI();
-      } catch(e) {}
+    try {
+      cart = syncedCartRaw ? JSON.parse(syncedCartRaw) : [];
+      if (!Array.isArray(cart)) cart = [];
+      updateCartUI();
+    } catch(e) {
+      cart = [];
+      updateCartUI();
     }
   });
 
@@ -316,7 +318,7 @@ function initCart() {
     flyCookie(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
     const toast = document.createElement('div');
-    toast.textContent = `Added ${name} to your box!`;
+    toast.textContent = `Ajouté ${name} à votre boîte !`;
     toast.style.cssText = `
       position: fixed; bottom: 35px; left: 50%; transform: translate(-50%, 20px); 
       background: var(--caramel); color: white; padding: 12px 28px; border-radius: 999px; 
@@ -367,14 +369,14 @@ function initCart() {
     localStorage.setItem('youyou_cart', JSON.stringify(cart));
     updateCartUI();
 
-    // Push cart update to Firestore cloud if logged in so other devices receive it
+    // Envoi immédiat vers Firestore (y compris un tableau vide [])
     if (window.currentUserObj) {
       try {
         const { getFirestore, doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
         const db = getFirestore();
         await updateDoc(doc(db, "users", window.currentUserObj.uid), { cart: cart });
       } catch (err) {
-        console.warn("Could not push cart update to cloud:", err);
+        console.warn("Impossible de synchroniser le panier sur le cloud:", err);
       }
     }
   }
@@ -397,9 +399,9 @@ function initCart() {
       cartItemsList.innerHTML = `
         <div class="cart-empty">
           <div class="cart-empty-icon">🍪</div>
-          <h4 style="color: var(--brown); font-size: 1.4rem; margin-bottom: 10px; font-family: 'Cormorant Garamond', serif; font-weight: 700;">Your box is empty!</h4>
-          <p>Looks like you haven't added any sweet treats yet.</p>
-          <button onclick="window.closeCart(); window.location.href='menu.html'" class="btn btn-dark" style="margin-top: 20px;">Explore Menu</button>
+          <h4 style="color: var(--brown); font-size: 1.4rem; margin-bottom: 10px; font-family: 'Cormorant Garamond', serif; font-weight: 700;">Votre boîte est vide !</h4>
+          <p>Il semble que vous n'avez pas encore ajouté de gourmandises.</p>
+          <button onclick="window.openBoxModal(); window.location.href='menu.html'" class="btn btn-dark" style="margin-top: 20px;">Explorer le Menu</button>
         </div>
       `;
       if(cartFooter) cartFooter.style.display = 'none';
@@ -415,12 +417,12 @@ function initCart() {
         li.innerHTML = `
           <div class="cart-item-info">
             <div class="cart-item-title">${item.name}</div>
-            <div class="cart-item-price">${itemTotal} DH <span style="font-size:0.8rem; opacity:0.7;">(${item.price} DH each)</span></div>
+            <div class="cart-item-price">${itemTotal} DH <span style="font-size:0.8rem; opacity:0.7;">(${item.price} DH l'unité)</span></div>
           </div>
           <div class="qty-controls">
-            <button onclick="window.updateQuantity(${index}, -1)" class="qty-btn" title="Remove one">&minus;</button>
+            <button onclick="window.updateQuantity(${index}, -1)" class="qty-btn" title="Retirer">&minus;</button>
             <span class="qty-val">${item.quantity}</span>
-            <button onclick="window.updateQuantity(${index}, 1)" class="qty-btn" title="Add another">&plus;</button>
+            <button onclick="window.updateQuantity(${index}, 1)" class="qty-btn" title="Ajouter">&plus;</button>
           </div>
         `;
         cartItemsList.appendChild(li);
@@ -447,25 +449,25 @@ function initCart() {
     confirmModal.innerHTML = `
       <div class="confirm-modal-content" style="background: var(--cream); padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
         <div class="confirm-modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(74,55,40,0.1); padding-bottom: 15px; margin-bottom: 15px;">
-          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--brown); margin: 0;">Confirm Order</h3>
+          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--brown); margin: 0;">Confirmer la commande</h3>
           <button id="close-confirm-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--brown);">&times;</button>
         </div>
         <div class="confirm-order-summary">
-          <strong style="color: var(--brown);">Items Summary:</strong>
+          <strong style="color: var(--brown);">Résumé des articles :</strong>
           <pre id="confirm-items-summary" style="font-family: inherit; white-space: pre-wrap; margin: 8px 0; color: var(--brown); font-size: 0.95rem; line-height: 1.4;"></pre>
           <div style="text-align: right; font-weight: bold; color: var(--caramel); font-size: 1.1rem; border-top: 1px dashed rgba(74,55,40,0.2); padding-top: 10px; margin-top: 10px;">
-            Total: <span id="confirm-total-price">0 DH</span>
+            Total : <span id="confirm-total-price">0 DH</span>
           </div>
         </div>
         <div style="margin-top: 15px;">
-          <label for="confirm-phone-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Phone Number (WhatsApp):</label>
+          <label for="confirm-phone-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Numéro de téléphone (WhatsApp) :</label>
           <input type="tel" id="confirm-phone-input" style="width:100%; padding:12px; border:1px solid rgba(74,55,40,0.2); border-radius:8px; font-family:inherit; background: #fff; color: var(--brown);" placeholder="+212 6XX-XXXXXX" required>
         </div>
         <div style="margin-top: 15px; margin-bottom: 20px;">
-          <label for="confirm-address-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Delivery Address in Settat:</label>
-          <textarea id="confirm-address-input" style="width:100%; padding:12px; border:1px solid rgba(74,55,40,0.2); border-radius:8px; font-family:inherit; background: #fff; color: var(--brown); min-height:80px; resize: vertical;" placeholder="Neighborhood, street, building..."></textarea>
+          <label for="confirm-address-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Adresse de livraison à Settat :</label>
+          <textarea id="confirm-address-input" style="width:100%; padding:12px; border:1px solid rgba(74,55,40,0.2); border-radius:8px; font-family:inherit; background: #fff; color: var(--brown); min-height:80px; resize: vertical;" placeholder="Quartier, rue, bâtiment..."></textarea>
         </div>
-        <button id="confirm-submit-order" class="btn btn-dark" style="width:100%; padding: 14px; font-size: 1.1rem; background: var(--caramel); border-color: var(--caramel);">Confirm & Send via WhatsApp</button>
+        <button id="confirm-submit-order" class="btn btn-dark" style="width:100%; padding: 14px; font-size: 1.1rem; background: var(--caramel); border-color: var(--caramel);">Confirmer & Envoyer sur WhatsApp</button>
       </div>
     `;
     document.body.appendChild(confirmModal);
@@ -520,17 +522,17 @@ function initCart() {
       const address = document.getElementById('confirm-address-input').value.trim();
 
       if (!phone) {
-        alert("Please enter a contact phone number so we can fulfill your order.");
+        alert("Veuillez entrer un numéro de téléphone pour finaliser votre commande.");
         return; 
       }
 
       confirmSubmitBtn.disabled = true;
-      confirmSubmitBtn.textContent = "Processing Order...";
+      confirmSubmitBtn.textContent = "Traitement...";
 
       await processFinalCheckout(phone, address);
 
       confirmSubmitBtn.disabled = false;
-      confirmSubmitBtn.textContent = "Confirm & Send via WhatsApp";
+      confirmSubmitBtn.textContent = "Confirmer & Envoyer sur WhatsApp";
       confirmModal.style.display = 'none';
     });
   }
@@ -551,14 +553,14 @@ function initCart() {
 
     const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
     const currentHour = moroccoTime.getHours();
-    let timeNote = currentHour >= 20 ? "🚨 *[PRE-ORDER FOR TOMORROW]*\n" : (currentHour < 15 ? "⏳ *[PRE-ORDER FOR TODAY (15:00 - 20:00)]*\n" : "");
+    let timeNote = currentHour >= 20 ? "🚨 *[PRÉCOMMANDE POUR DEMAIN]*\n" : (currentHour < 15 ? "⏳ *[PRÉCOMMANDE POUR AUJOURD'HUI (15:00 - 20:00)]*\n" : "");
 
-    let message = `Hi YouYou's Cookies!\n${timeNote}New Order Confirmation:\n\n`;
+    let message = `Salut YouYou's Cookies !\n${timeNote}Nouvelle commande :\n\n`;
     cart.forEach(item => {
       message += `- ${item.quantity}x ${item.name} (${item.price * item.quantity} DH)\n`;
     });
     
-    message += `\nTotal: ${total} DH\nPhone: ${phone}\nAddress: ${address || "Settat"}`;
+    message += `\nTotal : ${total} DH\nTél : ${phone}\nAdresse : ${address || "Settat"}`;
     
     const targetPhone = "212789233029"; 
     window.location.href = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;

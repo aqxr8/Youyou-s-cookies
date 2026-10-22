@@ -58,22 +58,19 @@ function normalizePhone(raw) {
 
 function authMessage(err, fallback) {
   const map = {
-    "auth/invalid-credential": "Invalid email or password.",
-    "auth/wrong-password": "Invalid email or password.",
-    "auth/user-not-found": "Invalid email or password.",
-    "auth/invalid-email": "Please enter a valid email address.",
-    "auth/email-already-in-use": "An account with this email already exists. Try signing in.",
-    "auth/weak-password": "Password should be at least 6 characters.",
-    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
-    "auth/network-request-failed": "Network error. Check your connection and try again.",
-    "auth/requires-recent-login": "For security, please log out and log back in, then change your password.",
-    "auth/popup-closed-by-user": "The sign-in window was closed before finishing.",
-    "auth/popup-blocked": "Your browser blocked the sign-in popup. Please allow popups and try again."
+    "auth/invalid-credential": "Email ou mot de passe invalide.",
+    "auth/wrong-password": "Email ou mot de passe invalide.",
+    "auth/user-not-found": "Email ou mot de passe invalide.",
+    "auth/invalid-email": "Veuillez entrer une adresse email valide.",
+    "auth/email-already-in-use": "Un compte existe déjà avec cet email.",
+    "auth/weak-password": "Le mot de passe doit contenir au moins 6 caractères.",
+    "auth/too-many-requests": "Trop de tentatives. Veuillez réessayer plus tard.",
+    "auth/network-request-failed": "Erreur réseau. Vérifiez votre connexion."
   };
-  return map[err && err.code] || fallback || "Something went wrong. Please try again.";
+  return map[err && err.code] || fallback || "Une erreur est survenue.";
 }
 
-// --- GLOBAL SAVE ORDER METHOD FOR FIRESTORE ---
+// --- GLOBAL SAVE ORDER METHOD ---
 window.saveOrderToFirestore = async function(orderData) {
   try {
     const user = auth.currentUser;
@@ -111,7 +108,6 @@ window.saveOrderToFirestore = async function(orderData) {
 
     const docRef = await addDoc(collection(db, "orders"), finalData);
     
-    // Clear user cart in Firestore and localStorage after successful order
     if (user) {
       await updateDoc(doc(db, "users", user.uid), { cart: [] });
     }
@@ -119,12 +115,12 @@ window.saveOrderToFirestore = async function(orderData) {
     
     return docRef.id;
   } catch (error) {
-    console.error("Firestore Order Saving Error:", error);
+    console.error("Erreur de sauvegarde de commande:", error);
     return null;
   }
 };
 
-// --- GLOBAL AUTH STATE OBSERVER & CLOUD CART SYNC ---
+// --- AUTH STATE OBSERVER & CLOUD CART SYNC ---
 onAuthStateChanged(auth, async (user) => {
   window.currentUserObj = user;
   const userIconLink = document.getElementById('user-icon-link');
@@ -153,28 +149,26 @@ onAuthStateChanged(auth, async (user) => {
         }
       }
     } catch (e) {
-      console.warn("Could not fetch user profile:", e);
+      console.warn("Impossible de récupérer le profil utilisateur:", e);
     }
 
-    // CROSS-DEVICE CLOUD CART SYNCHRONIZATION
+    // SYNCHRONISATION FIRESTORE ABSOLUE (Gère aussi le panier vide)
     try {
-      const cloudCart = (userDocExists && Array.isArray(userData.cart)) ? userData.cart : [];
-      const localCartRaw = localStorage.getItem('youyou_cart');
-      let localCart = localCartRaw ? JSON.parse(localCartRaw) : [];
-
-      if (cloudCart.length > 0) {
-        // CLOUD-FIRST PRIORITY: Pull saved cart from Firestore into local storage across all devices
-        localStorage.setItem('youyou_cart', JSON.stringify(cloudCart));
+      if (userDocExists && Array.isArray(userData.cart)) {
+        // Le cloud est la référence absolue (même si le tableau est vide [])
+        localStorage.setItem('youyou_cart', JSON.stringify(userData.cart));
         window.dispatchEvent(new Event('cart-synced'));
-      } else if (localCart.length > 0) {
-        // If local storage has items but cloud is empty, back them up to Firestore
-        await updateDoc(doc(db, "users", user.uid), { cart: localCart });
+      } else {
+        const localCartRaw = localStorage.getItem('youyou_cart');
+        let localCart = localCartRaw ? JSON.parse(localCartRaw) : [];
+        if (localCart.length > 0 && userDocExists) {
+          await updateDoc(doc(db, "users", user.uid), { cart: localCart });
+        }
       }
     } catch (cartSyncErr) {
-      console.warn("Cart cloud synchronization note:", cartSyncErr);
+      console.warn("Erreur de synchro panier:", cartSyncErr);
     }
 
-    // PROFILE PAGE
     if (PAGE === 'profile') {
       if (user.email === ADMIN_EMAIL) {
         window.location.href = "admin.html"; 
@@ -208,7 +202,6 @@ onAuthStateChanged(auth, async (user) => {
       loadCustomerOrderHistory(user, db);
     }
 
-    // ADMIN PAGE
     if (PAGE === 'admin') {
       if (user.email !== ADMIN_EMAIL) {
         window.location.href = "profile.html"; 
@@ -225,11 +218,10 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Sync Profile Cart UI view (Prioritizing Cloud Firestore Data)
 async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   let activeCart = [];
   try {
-    if (userDocExists && Array.isArray(userData.cart) && userData.cart.length > 0) {
+    if (userDocExists && Array.isArray(userData.cart)) {
       activeCart = userData.cart;
       localStorage.setItem('youyou_cart', JSON.stringify(activeCart));
     } else {
@@ -240,14 +232,14 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
       }
     }
   } catch(err) {
-    console.warn("Cart sync notice:", err);
+    console.warn("Erreur d'affichage du panier profil:", err);
   }
 
   const basketList = document.getElementById('profile-basket-list');
   if (!basketList) return;
 
   if (activeCart.length === 0) {
-    basketList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic; text-align: center; padding: 20px 0;">Your cookie box is currently empty. Visit the menu to stock up!</p>';
+    basketList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic; text-align: center; padding: 20px 0;">Votre boîte de cookies est actuellement vide. Visitez le menu pour faire le plein !</p>';
     return;
   }
 
@@ -266,7 +258,7 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
           <div class="basket-item-badge">${itemQty}x</div>
           <div>
             <strong style="color: var(--brown); font-size: 1.05rem;">${esc(item.name || 'Cookie Treat')}</strong><br>
-            <span style="color: var(--brown-soft); font-size: 0.85rem;">${itemPrice} DH each</span>
+            <span style="color: var(--brown-soft); font-size: 0.85rem;">${itemPrice} DH l'unité</span>
           </div>
         </div>
         <div style="color: var(--caramel); font-weight: bold; font-size: 1.1rem;">
@@ -278,8 +270,8 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
 
   basketList.innerHTML += `
     <div style="padding-top: 20px; text-align: right;">
-      <p style="font-size: 1.2rem; margin-bottom: 12px;">Total: <strong style="color: var(--caramel); font-size: 1.4rem;">${total} DH</strong></p>
-      <button onclick="window.openBoxModal()" class="btn btn-dark">Open Box & Checkout</button>
+      <p style="font-size: 1.2rem; margin-bottom: 12px;">Total : <strong style="color: var(--caramel); font-size: 1.4rem;">${total} DH</strong></p>
+      <button onclick="window.openBoxModal()" class="btn btn-dark">Ouvrir la boîte & Commander</button>
     </div>
   `;
 }
@@ -305,7 +297,7 @@ async function loadCustomerOrderHistory(user, db) {
     const querySnapshot = await getDocs(ordersQuery);
 
     if (querySnapshot.empty) {
-      historyContainer.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">No previous orders found.</p>';
+      historyContainer.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">Aucune commande précédente trouvée.</p>';
       return;
     }
 
@@ -329,8 +321,8 @@ async function loadCustomerOrderHistory(user, db) {
         <div class="order-history-card">
           <div class="order-history-header">
             <div>
-              <strong style="color: var(--brown);">Order #${orderId.slice(-6).toUpperCase()}</strong>
-              <div style="font-size: 0.8rem; color: var(--brown-soft);">${esc(data.date || 'Recent Order')}</div>
+              <strong style="color: var(--brown);">Commande #${orderId.slice(-6).toUpperCase()}</strong>
+              <div style="font-size: 0.8rem; color: var(--brown-soft);">${esc(data.date || 'Récemment')}</div>
             </div>
             <span class="status-pill-badge ${statusClass}" id="customer-status-${orderId}" ${isCancelled ? 'style="background:#ffebee; color:#c62828;"' : ''}>
               ${esc(data.status || 'Processing')}
@@ -343,7 +335,7 @@ async function loadCustomerOrderHistory(user, db) {
             <div style="font-weight: bold; color: ${isCancelled ? '#888; text-decoration: line-through;' : 'var(--caramel);'}">
               ${Number(data.totalAmount) || 0} DH
             </div>
-            ${isProcessing ? `<button class="btn-cancel-order" data-id="${orderId}" style="background: transparent; border: 1px solid #d9534f; color: #d9534f; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.2s;">Cancel Order</button>` : ''}
+            ${isProcessing ? `<button class="btn-cancel-order" data-id="${orderId}" style="background: transparent; border: 1px solid #d9534f; color: #d9534f; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Annuler</button>` : ''}
           </div>
         </div>
       `;
@@ -352,10 +344,10 @@ async function loadCustomerOrderHistory(user, db) {
     document.querySelectorAll('.btn-cancel-order').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const orderId = e.target.getAttribute('data-id');
-        if (confirm("Are you sure you want to cancel this order?")) {
+        if (confirm("Êtes-vous sûr de vouloir annuler cette commande ?")) {
           try {
             e.target.disabled = true;
-            e.target.textContent = "Cancelling...";
+            e.target.textContent = "Annulation...";
             await updateDoc(doc(db, "orders", orderId), { status: "Cancelled" });
             
             e.target.style.display = 'none';
@@ -366,18 +358,18 @@ async function loadCustomerOrderHistory(user, db) {
               statusBadge.style = "background:#ffebee; color:#c62828;";
             }
           } catch(err) {
-            console.error("Failed to cancel order", err);
-            alert("Could not cancel order. Please try again.");
+            console.error("Échec de l'annulation", err);
+            alert("Impossible d'annuler la commande.");
             e.target.disabled = false;
-            e.target.textContent = "Cancel Order";
+            e.target.textContent = "Annuler";
           }
         }
       });
     });
 
   } catch (err) {
-    console.warn("Could not load order history:", err);
-    historyContainer.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">Unable to load order history.</p>';
+    console.warn("Impossible de charger l'historique:", err);
+    historyContainer.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">Impossible de charger l\'historique.</p>';
   }
 }
 
@@ -400,7 +392,7 @@ async function loadAdminDashboard(db) {
     if (statUsers) statUsers.textContent = usersSnapshot.size;
 
     if (usersSnapshot.empty) {
-      usersList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">No registered users yet.</p>';
+      usersList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">Aucun utilisateur inscrit.</p>';
     } else {
       usersSnapshot.forEach((docSnap) => {
         const data = docSnap.data();
@@ -410,11 +402,11 @@ async function loadAdminDashboard(db) {
         const infoDiv = document.createElement('div');
         const nameEl = document.createElement('strong');
         nameEl.style.cssText = "font-size: 1rem; color: var(--brown); display: block;";
-        nameEl.textContent = data.username || 'Anonymous User';
+        nameEl.textContent = data.username || 'Anonyme';
 
         const emailEl = document.createElement('span');
         emailEl.style.cssText = "font-size: 0.85rem; color: var(--brown-soft); display: block;";
-        emailEl.textContent = data.email || 'No Email';
+        emailEl.textContent = data.email || 'Pas d\'email';
 
         infoDiv.appendChild(nameEl);
         infoDiv.appendChild(emailEl);
@@ -436,7 +428,7 @@ async function loadAdminDashboard(db) {
     totalOrdersCount = ordersSnapshot.size;
 
     if (ordersSnapshot.empty) {
-      ordersList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">No orders placed yet.</p>';
+      ordersList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">Aucune commande passée.</p>';
     } else {
       sortNewestFirst(ordersSnapshot.docs).forEach((docSnap) => {
         const data = docSnap.data();
@@ -459,13 +451,12 @@ async function loadAdminDashboard(db) {
 
         const orderCard = document.createElement('div');
         orderCard.className = `admin-order-card ${isDelivered ? 'is-delivered' : (isCancelled ? 'is-cancelled' : 'is-pending')}`;
-        orderCard.setAttribute('data-status', data.status || 'Processing');
 
         orderCard.innerHTML = `
           <div class="admin-order-header">
             <div>
-              <strong style="font-size: 1.1rem; color: var(--brown);">Order #${orderId.slice(-6).toUpperCase()}</strong>
-              <span style="font-size: 0.8rem; color: var(--brown-soft); margin-left: 8px;">(${esc(data.date || 'Today')})</span>
+              <strong style="font-size: 1.1rem; color: var(--brown);">Commande #${orderId.slice(-6).toUpperCase()}</strong>
+              <span style="font-size: 0.8rem; color: var(--brown-soft); margin-left: 8px;">(${esc(data.date || 'Aujourd\'hui')})</span>
             </div>
             <span id="badge-status-${esc(orderId)}" class="status-pill-badge ${statusClass}" ${isCancelled ? 'style="background:#ffebee; color:#c62828;"' : ''}>
               ${esc(data.status || 'Processing')}
@@ -473,10 +464,10 @@ async function loadAdminDashboard(db) {
           </div>
 
           <div style="margin: 10px 0; font-size: 0.9rem; line-height: 1.5; color: var(--brown-soft);">
-            <strong>Items:</strong> ${itemsSummary}<br>
-            <strong>Customer:</strong> ${esc(data.customerName || data.userEmail || 'Guest')}<br>
-            <strong>Phone:</strong> <span style="color: ${data.phone ? 'inherit' : '#d9534f'}">${esc(data.phone || 'N/A')}</span><br>
-            <strong>Address:</strong> ${esc(data.address || 'Settat')}
+            <strong>Articles :</strong> ${itemsSummary}<br>
+            <strong>Client :</strong> ${esc(data.customerName || data.userEmail || 'Guest')}<br>
+            <strong>Téléphone :</strong> <span style="color: ${data.phone ? 'inherit' : '#d9534f'}">${esc(data.phone || 'N/A')}</span><br>
+            <strong>Adresse :</strong> ${esc(data.address || 'Settat')}
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(74,55,40,0.15);">
@@ -520,8 +511,8 @@ async function loadAdminDashboard(db) {
               }
             }
           } catch (error) {
-            console.error("Error updating status:", error);
-            alert("Failed to update status.");
+            console.error("Erreur de mise à jour:", error);
+            alert("Échec de la mise à jour du statut.");
           }
         });
       });
@@ -537,11 +528,7 @@ async function initAdminDashboard(db) {
   try {
     await loadAdminDashboard(db);
   } catch (err) {
-    console.error("Admin dashboard error:", err);
-    ["admin-orders", "admin-users"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = "Could not load data. Check your connection and Firestore rules.";
-    });
+    console.error("Erreur dashboard admin:", err);
   }
 }
 
@@ -556,7 +543,7 @@ if (forgotPasswordForm) {
       await sendPasswordResetEmail(auth, resetEmail);
       msg.style.display = "block";
       msg.style.color = "#57a05f";
-      msg.textContent = "Password reset email sent! Check your inbox.";
+      msg.textContent = "Email de réinitialisation envoyé ! Vérifiez votre boîte de réception.";
       forgotPasswordForm.reset();
     } catch (error) {
       msg.style.display = "block";
@@ -595,13 +582,13 @@ if (infoForm) {
 
         msg.style.display = "block";
         msg.style.color = "#57a05f";
-        msg.textContent = "Profile details saved!";
+        msg.textContent = "Profil mis à jour avec succès !";
         setTimeout(() => { msg.style.display = "none"; }, 4000);
       }
     } catch (error) {
       msg.style.display = "block";
       msg.style.color = "#d9534f";
-      msg.textContent = "Error saving profile details.";
+      msg.textContent = "Erreur lors de l'enregistrement.";
     }
   });
 }
@@ -616,7 +603,7 @@ if (passwordForm) {
       await updatePassword(auth.currentUser, newPassword);
       msg.style.display = "block";
       msg.style.color = "#57a05f";
-      msg.textContent = "Password updated successfully!";
+      msg.textContent = "Mot de passe mis à jour avec succès !";
       passwordForm.reset();
       setTimeout(() => { msg.style.display = "none"; }, 4000);
     } catch (error) {
@@ -702,7 +689,7 @@ if (googleBtn) {
       const errEl = document.getElementById('error-msg');
       if (errEl) {
         errEl.style.display = "block";
-        errEl.textContent = authMessage(error, "Google Sign-In failed.");
+        errEl.textContent = authMessage(error, "Connexion Google échouée.");
       }
     }
   });
