@@ -1,4 +1,15 @@
 {
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/home", "destination": "/index.html" },
+    { "source": "/menu", "destination": "/menu.html" },
+    { "source": "/profile", "destination": "/profile.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/reviews", "destination": "/reviews.html" },
+    { "source": "/contact", "destination": "/contact.html" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/signup", "destination": "/signup.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
