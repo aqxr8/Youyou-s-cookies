@@ -27,6 +27,13 @@
       margin-bottom: 5px;
       display: inline-block;
     }
+
+    /* Mobile Responsive Adaptation (PC stays exact) */
+    @media (max-width: 900px) {
+      .login-wrapper { padding: 15px; display: flex; align-items: center; justify-content: center; }
+      .auth-card.glass-card { width: 100%; max-width: 100%; padding: 25px 20px; box-sizing: border-box; }
+      .auth-input { font-size: 16px !important; } /* Prevents iOS zoom on focus */
+    }
   </style>
 </head>
 <body>
