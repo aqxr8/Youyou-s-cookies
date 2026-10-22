@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   initHeroCarousel();
   initQuiz();
-  initNotesWall(); 
   initCart(); 
   init3DHoverEffect(); 
 });

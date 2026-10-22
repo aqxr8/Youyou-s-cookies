@@ -8,7 +8,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reviews | Youyou's Cookies | Made With Love</title>
-  <meta name="description" content="Read what our community is saying about Youyou Cookies, and leave a note for Aya!">
+  <meta name="description" content="Read approved customer reviews and share your experience. Reviews appear after admin approval.">
   <link rel="canonical" href="https://youyouscookies.vercel.app/reviews.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Reviews | Youyou's Cookies | Made With Love">
@@ -121,40 +121,7 @@
         <span class="hero-tag">COMMUNITY LOVE</span>
         <h1>Reviews & Notes</h1>
         <div class="en">Sweet Words from Sweet People</div>
-        <p>Read what our cookie family has to say, and leave a little note for Aya below.</p>
-      </div>
-    </section>
-
-    <section class="section bg-cream">
-      <div class="container">
-        <div class="section-head reveal">
-          <span class="en">Customer Feedback</span>
-          <h2>What You're Saying</h2>
-          <div class="divider"></div>
-        </div>
-        
-        <div class="press-grid">
-          <article class="press-card reveal">
-            <div class="star-rating">★★★★★</div>
-            <h3>The Best in Town!</h3>
-            <p>"I've tried every bakery in the city, but Aya's chocolate chunk cookies are on another level. The brown butter makes such a difference. I'm officially addicted!"</p>
-            <span class="press-src">—  Malak </span>
-          </article>
-          
-          <article class="press-card reveal">
-            <div class="star-rating">★★★★★</div>
-            <h3>Fast Shipping & Fresh!</h3>
-            <p>"I was worried about ordering cookies online, but they arrived perfectly packaged and still tasted like they just came out of the oven. The gooey center and crispy edges are literally perfection."</p>
-            <span class="press-src">— Zaid </span>
-          </article>
-          
-          <article class="press-card reveal">
-            <div class="star-rating">★★★★☆</div>
-            <h3>Beautiful Custom Box</h3>
-            <p>"Ordered a custom box for my sister's birthday. Not only were the cookies delicious, but the packaging was so thoughtfully put together. Aya is so talented!"</p>
-            <span class="press-src">— Fatima </span>
-          </article>
-        </div>
+        <p>Read approved reviews from our cookie family, or share your own experience below.</p>
       </div>
     </section>
 
@@ -164,7 +131,8 @@
           <span class="en">Message Wall</span>
           <h2>Leave a Review or Note</h2>
           <div class="divider"></div>
-          <p style="text-align: center; margin-top: 15px; color: #555;">Did you love your cookies? Drop a rating and leave a message for Aya!</p>
+          <p style="text-align: center; margin-top: 15px; color: #555;">Share your experience. Your review will be visible after the admin approves it.</p>
+          <p id="reviews-status" role="status" aria-live="polite" style="text-align:center;margin-top:10px;"></p>
         </div>
         
         <div class="notes-grid" id="notes-grid"></div>
@@ -185,7 +153,7 @@
           <label for="note-text">Your Review / Note to Aya</label>
           <textarea id="note-text" name="note-text" maxlength="200" placeholder="What was your favorite flavor? Any sweet words for Aya?" required></textarea>
           
-          <button class="btn btn-dark" type="submit">Post Review</button>
+          <button class="btn btn-dark" type="submit">Submit for Approval</button>
         </form>
       </div>
     </section>
@@ -263,5 +231,6 @@
   <script src="assets/js/main.js"></script>
   <script src="assets/js/features.js"></script>
   <script type="module" src="assets/js/auth.js"></script>
+  <script type="module" src="assets/js/reviews.js"></script>
 </body>
 </html>
