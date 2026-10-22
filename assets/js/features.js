@@ -524,7 +524,8 @@ function initCart() {
     message += `\nTotal: ${total} DH\nPhone: ${phone}\nAddress: ${address || "Settat"}`;
     
     const targetPhone = "212789233029"; 
-    window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, '_blank');
+    // Fix applied here: using window.location.href bypasses browser popup blockers
+    window.location.href = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 
     cart = [];
     saveCart();
