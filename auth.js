@@ -73,7 +73,7 @@ function authMessage(err, fallback) {
   return map[err && err.code] || fallback || "Something went wrong. Please try again.";
 }
 
-// --- GLOBAL SAVE ORDER METHOD FOR FIRESTORE (WITH PROFILE PHONE/ADDRESS BACKUP) ---
+// --- GLOBAL SAVE ORDER METHOD FOR FIRESTORE ---
 window.saveOrderToFirestore = async function(orderData) {
   try {
     const user = auth.currentUser;
@@ -158,18 +158,17 @@ onAuthStateChanged(auth, async (user) => {
 
     // CROSS-DEVICE CLOUD CART SYNCHRONIZATION
     try {
+      const cloudCart = (userDocExists && Array.isArray(userData.cart)) ? userData.cart : [];
       const localCartRaw = localStorage.getItem('youyou_cart');
       let localCart = localCartRaw ? JSON.parse(localCartRaw) : [];
-      const cloudCart = (userDocExists && Array.isArray(userData.cart)) ? userData.cart : [];
 
-      if (localCart.length > 0) {
-        // If user built a cart as guest before logging in, merge or push to cloud account
-        await updateDoc(doc(db, "users", user.uid), { cart: localCart });
-      } else if (cloudCart.length > 0) {
-        // If logging in from another device, pull the user's saved cart from Firestore into local storage
+      if (cloudCart.length > 0) {
+        // CLOUD-FIRST PRIORITY: Pull saved cart from Firestore into local storage across all devices
         localStorage.setItem('youyou_cart', JSON.stringify(cloudCart));
-        // Dispatch custom event to refresh UI cart counters/drawers if features.js listens
         window.dispatchEvent(new Event('cart-synced'));
+      } else if (localCart.length > 0) {
+        // If local storage has items but cloud is empty, back them up to Firestore
+        await updateDoc(doc(db, "users", user.uid), { cart: localCart });
       }
     } catch (cartSyncErr) {
       console.warn("Cart cloud synchronization note:", cartSyncErr);
@@ -226,17 +225,19 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Sync Profile Cart UI view
+// Sync Profile Cart UI view (Prioritizing Cloud Firestore Data)
 async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
-  let localCart = [];
+  let activeCart = [];
   try {
-    const rawCartString = localStorage.getItem('youyou_cart');
-    if (rawCartString !== null) {
-      localCart = JSON.parse(rawCartString);
-      if (!Array.isArray(localCart)) localCart = Object.values(localCart);
-    } else if (userDocExists && userData.cart) {
-      localCart = userData.cart;
-      localStorage.setItem('youyou_cart', JSON.stringify(localCart));
+    if (userDocExists && Array.isArray(userData.cart) && userData.cart.length > 0) {
+      activeCart = userData.cart;
+      localStorage.setItem('youyou_cart', JSON.stringify(activeCart));
+    } else {
+      const rawCartString = localStorage.getItem('youyou_cart');
+      if (rawCartString !== null) {
+        activeCart = JSON.parse(rawCartString);
+        if (!Array.isArray(activeCart)) activeCart = Object.values(activeCart);
+      }
     }
   } catch(err) {
     console.warn("Cart sync notice:", err);
@@ -245,7 +246,7 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   const basketList = document.getElementById('profile-basket-list');
   if (!basketList) return;
 
-  if (localCart.length === 0) {
+  if (activeCart.length === 0) {
     basketList.innerHTML = '<p style="color: var(--brown-soft); font-style: italic; text-align: center; padding: 20px 0;">Your cookie box is currently empty. Visit the menu to stock up!</p>';
     return;
   }
@@ -253,7 +254,7 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   basketList.innerHTML = "";
   let total = 0;
   
-  localCart.forEach((item) => {
+  activeCart.forEach((item) => {
     const itemPrice = Number(item.price) || 0;
     const itemQty = Number(item.quantity) || 1;
     const itemTotal = itemPrice * itemQty;
