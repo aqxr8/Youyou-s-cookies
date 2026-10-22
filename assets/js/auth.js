@@ -134,6 +134,7 @@ onAuthStateChanged(auth, async (user) => {
       const userDocSnap = await getDoc(doc(db, "users", user.uid));
       if (userDocSnap.exists()) {
         userData = userDocSnap.data();
+        window.userDataObj = userData; // <--- This exposes address globally so features.js can grab it
         userDocExists = true;
         
         const cartAddressInput = document.getElementById('cart-address');

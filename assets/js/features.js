@@ -248,7 +248,6 @@ function initCart() {
   let rawCart = JSON.parse(localStorage.getItem('youyou_cart')) || [];
   let cart = [];
   
-  // Clean raw cart data on init
   rawCart.forEach(item => {
     if (item.quantity) {
       cart.push(item);
@@ -267,7 +266,6 @@ function initCart() {
   const checkoutBtn = document.getElementById('checkout-btn');
   const clearBtn = document.getElementById('clear-cart-btn');
   
-  // Make drawer actions globally accessible
   window.openBoxModal = function() {
     if (cartPanel) {
       cartPanel.classList.add('open');
@@ -282,12 +280,10 @@ function initCart() {
     if (cartOverlay) cartOverlay.classList.remove('show');
   };
 
-  // Close drawer if overlay is clicked
   if (cartOverlay) {
     cartOverlay.addEventListener('click', window.closeCart);
   }
 
-  // Add To Cart Listener (with Flying Cookie)
   document.addEventListener('click', (e) => {
     const button = e.target.closest('.add-to-cart');
     if (!button) return;
@@ -305,11 +301,9 @@ function initCart() {
     
     saveCart();
 
-    // Trigger Flying Cookie Animation
     const rect = button.getBoundingClientRect();
     flyCookie(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
-    // Modern Toast Notification
     const toast = document.createElement('div');
     toast.textContent = `Added ${name} to your box!`;
     toast.style.cssText = `
@@ -331,7 +325,6 @@ function initCart() {
     }, 2000);
   });
 
-  // Flying Cookie Logic
   function flyCookie(startX, startY) {
     const cookie = document.createElement('div');
     cookie.className = 'flying-cookie';
@@ -343,9 +336,8 @@ function initCart() {
     const cartIcon = document.getElementById('nav-cart-icon');
     const cartRect = cartIcon ? cartIcon.getBoundingClientRect() : { left: window.innerWidth - 60, top: 20 };
 
-    void cookie.offsetWidth; // Trigger reflow for CSS transition
+    void cookie.offsetWidth; 
 
-    // Fly to Header Icon
     cookie.style.left = (cartRect.left + 5) + 'px';
     cookie.style.top = (cartRect.top + 5) + 'px';
     cookie.style.transform = 'scale(0.1) rotate(180deg)';
@@ -354,7 +346,7 @@ function initCart() {
     setTimeout(() => {
       cookie.remove();
       if(cartIcon) {
-        cartIcon.classList.add('cart-pop'); // Bounce the cart icon
+        cartIcon.classList.add('cart-pop'); 
         setTimeout(() => cartIcon.classList.remove('cart-pop'), 400);
       }
     }, 600);
@@ -365,7 +357,6 @@ function initCart() {
     updateCartUI();
   }
 
-  // Handle + and - buttons
   window.updateQuantity = function(index, change) {
     cart[index].quantity += change;
     if (cart[index].quantity <= 0) {
@@ -380,7 +371,6 @@ function initCart() {
     let total = 0;
     cartItemsList.innerHTML = '';
 
-    // Empty State Illustration
     if (cart.length === 0) {
       cartItemsList.innerHTML = `
         <div class="cart-empty">
@@ -425,64 +415,97 @@ function initCart() {
     });
   }
 
-  // --- CHECKOUT CONFIRMATION MODAL TRIGGER ---
-  const confirmModal = document.getElementById('checkout-confirm-modal');
+  // =========================================================
+  // --- BULLETPROOF CHECKOUT MODAL GENERATOR ---
+  // =========================================================
+  let confirmModal = document.getElementById('checkout-confirm-modal');
+  
+  if (!confirmModal) {
+    confirmModal = document.createElement('div');
+    confirmModal.id = 'checkout-confirm-modal';
+    confirmModal.className = 'confirm-modal-overlay';
+    confirmModal.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; place-items: center; backdrop-filter: blur(4px);';
+    confirmModal.innerHTML = `
+      <div class="confirm-modal-content" style="background: var(--cream); padding: 25px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+        <div class="confirm-modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(74,55,40,0.1); padding-bottom: 15px; margin-bottom: 15px;">
+          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--brown); margin: 0;">Confirm Order</h3>
+          <button id="close-confirm-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--brown);">&times;</button>
+        </div>
+        <div class="confirm-order-summary">
+          <strong style="color: var(--brown);">Items Summary:</strong>
+          <pre id="confirm-items-summary" style="font-family: inherit; white-space: pre-wrap; margin: 8px 0; color: var(--brown); font-size: 0.95rem; line-height: 1.4;"></pre>
+          <div style="text-align: right; font-weight: bold; color: var(--caramel); font-size: 1.1rem; border-top: 1px dashed rgba(74,55,40,0.2); padding-top: 10px; margin-top: 10px;">
+            Total: <span id="confirm-total-price">0 DH</span>
+          </div>
+        </div>
+        <div style="margin-top: 15px;">
+          <label for="confirm-phone-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Phone Number (WhatsApp):</label>
+          <input type="tel" id="confirm-phone-input" style="width:100%; padding:12px; border:1px solid rgba(74,55,40,0.2); border-radius:8px; font-family:inherit; background: #fff; color: var(--brown);" placeholder="+212 6XX-XXXXXX" required>
+        </div>
+        <div style="margin-top: 15px; margin-bottom: 20px;">
+          <label for="confirm-address-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Delivery Address in Settat:</label>
+          <textarea id="confirm-address-input" style="width:100%; padding:12px; border:1px solid rgba(74,55,40,0.2); border-radius:8px; font-family:inherit; background: #fff; color: var(--brown); min-height:80px; resize: vertical;" placeholder="Neighborhood, street, building..."></textarea>
+        </div>
+        <button id="confirm-submit-order" class="btn btn-dark" style="width:100%; padding: 14px; font-size: 1.1rem; background: var(--caramel); border-color: var(--caramel);">Confirm & Send via WhatsApp</button>
+      </div>
+    `;
+    document.body.appendChild(confirmModal);
+  }
+
   const confirmList = document.getElementById('confirm-items-summary');
   const confirmTotal = document.getElementById('confirm-total-price');
+  const confirmCloseBtn = document.getElementById('close-confirm-modal');
+  let confirmSubmitBtn = document.getElementById('confirm-submit-order');
+  const confirmAddressInput = document.getElementById('confirm-address-input');
 
   if (checkoutBtn) {
     checkoutBtn.addEventListener('click', () => {
       if (cart.length === 0) return;
-
-      // Close the side drawer to show the popup checkout form
       window.closeCart();
 
-      if (confirmModal) {
-        let summaryText = "";
-        let total = 0;
-        cart.forEach(item => {
-          const itemTotal = item.price * item.quantity;
-          summaryText += `• ${item.quantity}x ${item.name} (${itemTotal} DH)\n`;
-          total += itemTotal;
-        });
+      let summaryText = "";
+      let total = 0;
+      cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        summaryText += `• ${item.quantity}x ${item.name} (${itemTotal} DH)\n`;
+        total += itemTotal;
+      });
 
-        if (confirmList) confirmList.textContent = summaryText;
-        if (confirmTotal) confirmTotal.textContent = `${total} DH`;
+      if (confirmList) confirmList.textContent = summaryText;
+      if (confirmTotal) confirmTotal.textContent = `${total} DH`;
 
-        // Attempt to auto-fill address if user has saved it
-        const confirmAddressInput = document.getElementById('confirm-address-input');
-        if (confirmAddressInput && window.currentUserObj && window.userDataObj) {
-           confirmAddressInput.value = window.userDataObj.address || "";
-        }
-
-        confirmModal.style.display = 'grid';
-      } else {
-        processFinalCheckout();
+      // Auto-fill form fields if the user has saved them in their profile
+      if (window.currentUserObj && window.userDataObj) {
+         if (confirmAddressInput) confirmAddressInput.value = window.userDataObj.address || "";
+         const phoneInp = document.getElementById('confirm-phone-input');
+         if (phoneInp) phoneInp.value = window.userDataObj.phone || "";
       }
+
+      confirmModal.style.display = 'grid'; 
     });
   }
-
-  // Original Confirm/WhatsApp Processing Code
-  const confirmCloseBtn = document.getElementById('close-confirm-modal');
-  const confirmSubmitBtn = document.getElementById('confirm-submit-order');
-  const confirmPhoneInput = document.getElementById('confirm-phone-input');
-  const confirmAddressInput = document.getElementById('confirm-address-input');
 
   if (confirmCloseBtn) {
     confirmCloseBtn.addEventListener('click', () => {
       confirmModal.style.display = 'none';
-      window.openBoxModal(); // Re-open drawer if they cancel checkout
+      window.openBoxModal(); 
     });
   }
 
   if (confirmSubmitBtn) {
-    confirmSubmitBtn.addEventListener('click', async () => {
-      const phone = confirmPhoneInput ? confirmPhoneInput.value.trim() : "";
-      const address = confirmAddressInput ? confirmAddressInput.value.trim() : "";
+    // Prevent double binding
+    const newSubmitBtn = confirmSubmitBtn.cloneNode(true);
+    confirmSubmitBtn.parentNode.replaceChild(newSubmitBtn, confirmSubmitBtn);
+    confirmSubmitBtn = newSubmitBtn;
 
+    confirmSubmitBtn.addEventListener('click', async () => {
+      const phone = document.getElementById('confirm-phone-input').value.trim();
+      const address = document.getElementById('confirm-address-input').value.trim();
+
+      // THIS is the block that guarantees a phone number is required
       if (!phone) {
         alert("Please enter a contact phone number so we can fulfill your order.");
-        return;
+        return; 
       }
 
       confirmSubmitBtn.disabled = true;
@@ -500,7 +523,6 @@ function initCart() {
     let total = 0;
     cart.forEach(i => total += (i.price * i.quantity));
 
-    // Save to Firestore
     if (window.saveOrderToFirestore) {
       await window.saveOrderToFirestore({
         customerName: window.currentUserObj ? (window.currentUserObj.displayName || window.currentUserObj.email) : "Guest",
@@ -511,7 +533,6 @@ function initCart() {
       });
     }
 
-    // WhatsApp logic
     const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
     const currentHour = moroccoTime.getHours();
     let timeNote = currentHour >= 20 ? "🚨 *[PRE-ORDER FOR TOMORROW]*\n" : (currentHour < 15 ? "⏳ *[PRE-ORDER FOR TODAY (15:00 - 20:00)]*\n" : "");
@@ -524,14 +545,12 @@ function initCart() {
     message += `\nTotal: ${total} DH\nPhone: ${phone}\nAddress: ${address || "Settat"}`;
     
     const targetPhone = "212789233029"; 
-    // Fix applied here: using window.location.href bypasses browser popup blockers
     window.location.href = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 
     cart = [];
     saveCart();
   }
 
-  // Initial UI Render
   updateCartUI();
 }
 
