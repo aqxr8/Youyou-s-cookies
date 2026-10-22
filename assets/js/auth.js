@@ -220,20 +220,17 @@ window.saveOrderToFirestore = async function (orderData) {
       finalAddress = window.userDataObj.address;
     }
 
-    // Prices are authoritative here; never trust browser/localStorage prices.
-    const MENU_PRICES = {
-      "10 Mini Cookies Box": 15, "15 Mini Cookies Box": 20, "20 Mini Cookies Box": 27, "30 Mini Cookies Box": 40,
-      "Classic Cookie": 7, "Extra Chocolate": 10, "Kinder Cookie": 13, "KitKat Cookie": 15,
-      "Lemon Cookie": 13, "Loaded Fudge Brownie": 15, "Lotus Cookie": 15, "Monster Cookie": 15,
-      "Oreo Cookie": 12, "Red Velvet": 12
-    };
-    const items = (Array.isArray(orderData.items) ? orderData.items : [])
+    const items = (
+      Array.isArray(orderData.items) ? orderData.items : []
+    )
       .slice(0, 50)
-      .filter(i => i && typeof i.name === "string" && Object.prototype.hasOwnProperty.call(MENU_PRICES, i.name))
-      .map(i => ({
-        name: i.name,
-        price: MENU_PRICES[i.name],
-        quantity: Math.min(99, Math.max(1, parseInt(i.quantity, 10) || 1))
+      .map((i) => ({
+        name: String((i && i.name) || "Item").slice(0, 60),
+        price: Math.max(0, Number(i && i.price) || 0),
+        quantity: Math.min(
+          99,
+          Math.max(1, parseInt(i && i.quantity, 10) || 1)
+        )
       }));
 
     if (items.length === 0) return null;
@@ -935,73 +932,8 @@ async function loadAdminDashboard(db) {
 async function initAdminDashboard(db) {
   try {
     await loadAdminDashboard(db);
-    await loadAdminReviews(db);
-    const refreshButton = document.getElementById("refresh-reviews-btn");
-    if (refreshButton && !refreshButton.dataset.bound) {
-      refreshButton.dataset.bound = "true";
-      refreshButton.addEventListener("click", () => loadAdminReviews(db));
-    }
   } catch (err) {
     console.error("Admin dashboard error:", err);
-  }
-}
-
-async function loadAdminReviews(db) {
-  const container = document.getElementById("admin-reviews");
-  if (!container) return;
-  container.textContent = "Loading reviews...";
-  try {
-    const snapshot = await getDocs(collection(db, "reviews"));
-    const reviews = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-    reviews.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-    container.replaceChildren();
-    if (!reviews.length) {
-      container.textContent = "No reviews submitted yet.";
-      return;
-    }
-    reviews.forEach((review) => {
-      const card = document.createElement("article");
-      card.style.cssText = "border:1px solid rgba(74,55,40,.16);border-radius:12px;padding:16px;margin:12px 0;background:var(--cream-light);";
-      const title = document.createElement("div");
-      title.style.cssText = "display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-weight:700;";
-      const name = document.createElement("span");
-      name.textContent = `${String(review.name || "Anonymous").slice(0,25)} · ${"★".repeat(Math.max(1, Math.min(5, Number(review.rating) || 5)))}${"☆".repeat(5-Math.max(1, Math.min(5, Number(review.rating) || 5)))}`;
-      const status = document.createElement("span");
-      status.textContent = String(review.status || "pending").toUpperCase();
-      status.style.cssText = "font-size:.75rem;letter-spacing:.06em;color:var(--caramel);";
-      title.append(name, status);
-      const body = document.createElement("p");
-      body.style.cssText = "margin:10px 0 14px;white-space:pre-wrap;overflow-wrap:anywhere;";
-      body.textContent = String(review.text || "").slice(0, 200);
-      card.append(title, body);
-      if (review.status === "pending") {
-        const actions = document.createElement("div");
-        actions.style.cssText = "display:flex;gap:10px;flex-wrap:wrap;";
-        [["Approve", "approved", "btn btn-dark"], ["Reject", "rejected", "btn btn-outline"]].forEach(([label, nextStatus, className]) => {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = className;
-          button.textContent = label;
-          button.addEventListener("click", async () => {
-            button.disabled = true;
-            try {
-              await updateDoc(doc(db, "reviews", review.id), { status: nextStatus });
-              await loadAdminReviews(db);
-            } catch (error) {
-              console.error("Review moderation failed:", error);
-              alert("Could not update this review. Check Firestore rules and try again.");
-              button.disabled = false;
-            }
-          });
-          actions.appendChild(button);
-        });
-        card.appendChild(actions);
-      }
-      container.appendChild(card);
-    });
-  } catch (error) {
-    console.error("Could not load reviews:", error);
-    container.textContent = "Unable to load reviews. Check that the updated Firestore rules are published.";
   }
 }
 

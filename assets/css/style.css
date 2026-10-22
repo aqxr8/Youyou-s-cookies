@@ -2814,27 +2814,3 @@ body {
   background: #57a05f;
   box-shadow: 0 0 10px rgba(87, 160, 95, 0.4);
 }
-
-/* Final polish: consistent interaction states and resilient small-screen layout */
-:where(button, a, input, textarea, select, [tabindex]):focus-visible {
-  outline: 3px solid var(--caramel, #c1771e);
-  outline-offset: 3px;
-}
-:where(button, .btn, .quiz-option, .qty-btn) {
-  -webkit-tap-highlight-color: transparent;
-}
-img, video { max-width: 100%; }
-.cart-item-title, .cart-item-price, .note-text, .note-by { overflow-wrap: anywhere; }
-.cart-item-row { gap: 1rem; }
-.qty-controls { flex-shrink: 0; }
-#checkout-confirm-modal { overflow-y: auto; padding: 1rem; }
-#checkout-confirm-modal .confirm-modal-content { max-height: calc(100dvh - 2rem); overflow-y: auto; }
-@media (max-width: 560px) {
-  .cart-item-row { align-items: flex-start; flex-wrap: wrap; }
-  .cart-item-info { min-width: 0; flex: 1 1 150px; }
-  #checkout-confirm-modal .confirm-modal-content { width: 100%; padding: 1.1rem; }
-  #confirm-phone-input, #confirm-address-input { box-sizing: border-box; font-size: 16px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-}
