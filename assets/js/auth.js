@@ -41,19 +41,14 @@ const googleProvider = new GoogleAuthProvider();
 
 const ADMIN_EMAIL = "youyouscookies@gmail.com";
 window.currentUserObj = null;
+window.userDataObj = null;
 
 // ---- helpers ----
-// Escape anything that comes from users/Firestore before putting it in innerHTML.
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-
-// Page name works with or without ".html" in the URL.
 const PAGE = (window.location.pathname.split("/").pop() || "index").replace(/\.html$/, "");
-
-// Newest orders first (older docs without createdAt go last).
 const createdMs = (d) => { const t = d.data().createdAt; return t && typeof t.toMillis === "function" ? t.toMillis() : 0; };
 const sortNewestFirst = (docs) => [...docs].sort((a, b) => createdMs(b) - createdMs(a));
 
-// Moroccan numbers are often typed as 06xxxxxxxx; wa.me needs the country code.
 function normalizePhone(raw) {
   let d = String(raw || "").replace(/\D/g, "");
   if (d.startsWith("00")) d = d.slice(2);
@@ -61,7 +56,6 @@ function normalizePhone(raw) {
   return d;
 }
 
-// Friendly messages instead of raw Firebase errors.
 function authMessage(err, fallback) {
   const map = {
     "auth/invalid-credential": "Invalid email or password.",
@@ -79,12 +73,22 @@ function authMessage(err, fallback) {
   return map[err && err.code] || fallback || "Something went wrong. Please try again.";
 }
 
-// --- GLOBAL SAVE ORDER METHOD FOR FIRESTORE ---
+// --- GLOBAL SAVE ORDER METHOD FOR FIRESTORE (WITH PROFILE PHONE/ADDRESS BACKUP) ---
 window.saveOrderToFirestore = async function(orderData) {
   try {
     const user = auth.currentUser;
 
-    // Clean the items and recompute the total here - never trust a total sent from the page.
+    // Bulletproof fallback: if orderData phone/address is empty, pull from global cached user doc data
+    let finalPhone = orderData.phone;
+    if (!finalPhone && window.userDataObj && window.userDataObj.phone) {
+      finalPhone = window.userDataObj.phone;
+    }
+
+    let finalAddress = orderData.address;
+    if ((!finalAddress || finalAddress === "Settat") && window.userDataObj && window.userDataObj.address) {
+      finalAddress = window.userDataObj.address;
+    }
+
     const items = (Array.isArray(orderData.items) ? orderData.items : []).slice(0, 50).map((i) => ({
       name: String((i && i.name) || "Item").slice(0, 60),
       price: Math.max(0, Number(i && i.price) || 0),
@@ -96,9 +100,9 @@ window.saveOrderToFirestore = async function(orderData) {
     const finalData = {
       userId: user ? user.uid : "guest",
       userEmail: user ? user.email : "Guest",
-      customerName: String(orderData.customerName || (user && user.displayName) || "Guest").slice(0, 80),
-      phone: String(orderData.phone || "").slice(0, 30),
-      address: String(orderData.address || "Settat").slice(0, 400),
+      customerName: String(orderData.customerName || (user && user.displayName) || (window.userDataObj ? window.userDataObj.username : "") || "Guest").slice(0, 80),
+      phone: String(finalPhone || "").slice(0, 30),
+      address: String(finalAddress || "Settat").slice(0, 400),
       items: items,
       totalAmount: totalAmount,
       status: "Processing",
@@ -134,7 +138,7 @@ onAuthStateChanged(auth, async (user) => {
       const userDocSnap = await getDoc(doc(db, "users", user.uid));
       if (userDocSnap.exists()) {
         userData = userDocSnap.data();
-        window.userDataObj = userData; // <--- This exposes address globally so features.js can grab it
+        window.userDataObj = userData; // Expose profile data globally for auto-filling & backups
         userDocExists = true;
         
         const cartAddressInput = document.getElementById('cart-address');
@@ -267,7 +271,7 @@ window.openBoxModal = function() {
   }
 };
 
-// Customer Order History Loader
+// Customer Order History Loader (With Cancel Option)
 async function loadCustomerOrderHistory(user, db) {
   const historyContainer = document.getElementById('profile-order-history');
   if (!historyContainer) return;
@@ -284,7 +288,15 @@ async function loadCustomerOrderHistory(user, db) {
     historyContainer.innerHTML = "";
     sortNewestFirst(querySnapshot.docs).forEach((docSnap) => {
       const data = docSnap.data();
+      const orderId = docSnap.id;
       const isDelivered = data.status === 'Delivered';
+      const isCancelled = data.status === 'Cancelled';
+      const isProcessing = data.status === 'Processing';
+
+      let statusClass = 'processing';
+      if (isDelivered) statusClass = 'delivered';
+      if (isCancelled) statusClass = 'cancelled';
+
       const itemsList = Array.isArray(data.items) 
         ? data.items.map(i => `${esc(i.quantity)}x ${esc(i.name)}`).join(', ') 
         : esc(data.itemsSummary || 'Cookie Box Order');
@@ -293,22 +305,53 @@ async function loadCustomerOrderHistory(user, db) {
         <div class="order-history-card">
           <div class="order-history-header">
             <div>
-              <strong style="color: var(--brown);">Order #${docSnap.id.slice(-6).toUpperCase()}</strong>
+              <strong style="color: var(--brown);">Order #${orderId.slice(-6).toUpperCase()}</strong>
               <div style="font-size: 0.8rem; color: var(--brown-soft);">${esc(data.date || 'Recent Order')}</div>
             </div>
-            <span class="status-pill-badge ${isDelivered ? 'delivered' : 'processing'}">
+            <span class="status-pill-badge ${statusClass}" id="customer-status-${orderId}" ${isCancelled ? 'style="background:#ffebee; color:#c62828;"' : ''}>
               ${esc(data.status || 'Processing')}
             </span>
           </div>
           <div style="font-size: 0.9rem; margin: 10px 0; color: var(--brown-soft);">
             ${itemsList}
           </div>
-          <div style="text-align: right; font-weight: bold; color: var(--caramel);">
-            ${Number(data.totalAmount) || 0} DH
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <div style="font-weight: bold; color: ${isCancelled ? '#888; text-decoration: line-through;' : 'var(--caramel);'}">
+              ${Number(data.totalAmount) || 0} DH
+            </div>
+            ${isProcessing ? `<button class="btn-cancel-order" data-id="${orderId}" style="background: transparent; border: 1px solid #d9534f; color: #d9534f; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: 0.2s;">Cancel Order</button>` : ''}
           </div>
         </div>
       `;
     });
+
+    // Attach Event Listeners for Customer Cancellation
+    document.querySelectorAll('.btn-cancel-order').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const orderId = e.target.getAttribute('data-id');
+        if (confirm("Are you sure you want to cancel this order?")) {
+          try {
+            e.target.disabled = true;
+            e.target.textContent = "Cancelling...";
+            await updateDoc(doc(db, "orders", orderId), { status: "Cancelled" });
+            
+            e.target.style.display = 'none';
+            const statusBadge = document.getElementById(`customer-status-${orderId}`);
+            if (statusBadge) {
+              statusBadge.textContent = "Cancelled";
+              statusBadge.className = "status-pill-badge cancelled";
+              statusBadge.style = "background:#ffebee; color:#c62828;";
+            }
+          } catch(err) {
+            console.error("Failed to cancel order", err);
+            alert("Could not cancel order. Please try again.");
+            e.target.disabled = false;
+            e.target.textContent = "Cancel Order";
+          }
+        }
+      });
+    });
+
   } catch (err) {
     console.warn("Could not load order history:", err);
     historyContainer.innerHTML = '<p style="color: var(--brown-soft); font-style: italic;">Unable to load order history.</p>';
@@ -328,9 +371,6 @@ async function loadAdminDashboard(db) {
   let totalRevenue = 0;
   let totalOrdersCount = 0;
   let pendingOrdersCount = 0;
-  const refreshPending = () => {
-    if (statPending) statPending.textContent = document.querySelectorAll('.admin-order-card[data-status="Processing"]').length;
-  };
 
   // Load Users
   if (usersList) {
@@ -382,18 +422,25 @@ async function loadAdminDashboard(db) {
         const data = docSnap.data();
         const orderId = docSnap.id;
         const isDelivered = data.status === 'Delivered';
+        const isCancelled = data.status === 'Cancelled';
+        const isProcessing = data.status === 'Processing';
         const amount = Number(data.totalAmount) || 0;
 
-        totalRevenue += amount;
-        if (!isDelivered) pendingOrdersCount++;
+        // Only count revenue if the order isn't cancelled
+        if (!isCancelled) totalRevenue += amount;
+        if (isProcessing) pendingOrdersCount++;
 
         const itemsSummary = Array.isArray(data.items) 
           ? data.items.map(i => `${esc(i.quantity)}x ${esc(i.name)}`).join(', ') 
           : esc(data.itemsSummary || 'Standard Box');
 
+        let statusClass = 'processing';
+        if (isDelivered) statusClass = 'delivered';
+        if (isCancelled) statusClass = 'cancelled';
+
         const orderCard = document.createElement('div');
-        orderCard.className = `admin-order-card ${isDelivered ? 'is-delivered' : 'is-pending'}`;
-        orderCard.setAttribute('data-status', isDelivered ? 'Delivered' : 'Processing');
+        orderCard.className = `admin-order-card ${isDelivered ? 'is-delivered' : (isCancelled ? 'is-cancelled' : 'is-pending')}`;
+        orderCard.setAttribute('data-status', data.status || 'Processing');
 
         orderCard.innerHTML = `
           <div class="admin-order-header">
@@ -401,7 +448,7 @@ async function loadAdminDashboard(db) {
               <strong style="font-size: 1.1rem; color: var(--brown);">Order #${orderId.slice(-6).toUpperCase()}</strong>
               <span style="font-size: 0.8rem; color: var(--brown-soft); margin-left: 8px;">(${esc(data.date || 'Today')})</span>
             </div>
-            <span id="badge-status-${esc(orderId)}" class="status-pill-badge ${isDelivered ? 'delivered' : 'processing'}">
+            <span id="badge-status-${esc(orderId)}" class="status-pill-badge ${statusClass}" ${isCancelled ? 'style="background:#ffebee; color:#c62828;"' : ''}>
               ${esc(data.status || 'Processing')}
             </span>
           </div>
@@ -409,20 +456,22 @@ async function loadAdminDashboard(db) {
           <div style="margin: 10px 0; font-size: 0.9rem; line-height: 1.5; color: var(--brown-soft);">
             <strong>Items:</strong> ${itemsSummary}<br>
             <strong>Customer:</strong> ${esc(data.customerName || data.userEmail || 'Guest')}<br>
-            <strong>Phone:</strong> ${esc(data.phone || 'N/A')}<br>
+            <strong>Phone:</strong> <span style="color: ${data.phone ? 'inherit' : '#d9534f'}">${esc(data.phone || 'N/A')}</span><br>
             <strong>Address:</strong> ${esc(data.address || 'Settat')}
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(74,55,40,0.15);">
-            <div style="font-size: 1.2rem; font-weight: bold; color: var(--caramel);">
+            <div style="font-size: 1.2rem; font-weight: bold; color: ${isCancelled ? '#888; text-decoration: line-through;' : 'var(--caramel);'}">
               ${amount} DH
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
               ${data.phone ? `<a href="https://wa.me/${esc(normalizePhone(data.phone))}" target="_blank" rel="noopener" class="btn-whatsapp-sm">WhatsApp</a>` : ''}
-              <label class="delivery-toggle-label">
-                <input type="checkbox" class="status-checkbox" data-id="${esc(orderId)}" ${isDelivered ? 'checked' : ''}>
-                <span>Delivered</span>
-              </label>
+              
+              <select class="admin-status-dropdown" data-id="${esc(orderId)}" style="padding:5px; border-radius:5px; border:1px solid #ccc; background:#fff; font-size:0.85rem; cursor:pointer;">
+                <option value="Processing" ${isProcessing ? 'selected' : ''}>Processing</option>
+                <option value="Delivered" ${isDelivered ? 'selected' : ''}>Delivered</option>
+                <option value="Cancelled" ${isCancelled ? 'selected' : ''}>Cancelled</option>
+              </select>
             </div>
           </div>
         `;
@@ -430,28 +479,30 @@ async function loadAdminDashboard(db) {
         ordersList.appendChild(orderCard);
       });
 
-      document.querySelectorAll('.status-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', async (e) => {
+      // Admin Status Dropdown Handler
+      document.querySelectorAll('.admin-status-dropdown').forEach(dropdown => {
+        dropdown.addEventListener('change', async (e) => {
           const orderId = e.target.getAttribute('data-id');
-          const newStatus = e.target.checked ? 'Delivered' : 'Processing';
+          const newStatus = e.target.value;
           const badge = document.getElementById(`badge-status-${orderId}`);
           
           try {
             await updateDoc(doc(db, "orders", orderId), { status: newStatus });
-            const card = e.target.closest('.admin-order-card');
-            if (card) {
-              card.setAttribute('data-status', newStatus);
-              card.classList.toggle('is-delivered', newStatus === 'Delivered');
-              card.classList.toggle('is-pending', newStatus !== 'Delivered');
-            }
-            refreshPending();
             if (badge) {
               badge.textContent = newStatus;
-              badge.className = `status-pill-badge ${newStatus === 'Delivered' ? 'delivered' : 'processing'}`;
+              if (newStatus === "Delivered") {
+                badge.className = "status-pill-badge delivered";
+                badge.style = "";
+              } else if (newStatus === "Cancelled") {
+                badge.className = "status-pill-badge cancelled";
+                badge.style = "background:#ffebee; color:#c62828;";
+              } else {
+                badge.className = "status-pill-badge processing";
+                badge.style = "";
+              }
             }
           } catch (error) {
-            console.error("Error updating order:", error);
-            e.target.checked = !e.target.checked;
+            console.error("Error updating status:", error);
             alert("Failed to update status.");
           }
         });
@@ -517,6 +568,13 @@ if (infoForm) {
           phone: newPhone
         });
         
+        // Update cached data immediately
+        if (window.userDataObj) {
+          window.userDataObj.username = newUsername;
+          window.userDataObj.address = newAddress;
+          window.userDataObj.phone = newPhone;
+        }
+
         const nameEl = document.getElementById('profile-name');
         if (nameEl) nameEl.textContent = newUsername;
 
