@@ -1492,7 +1492,7 @@ a {
 
 
 /* =======================================================
-   ULTIMATE MOBILE POLISH & COMPILED HEADER DE-CONGESTION
+   ULTIMATE MOBILE POLISH & SLEEK MENU DRAWER
    ======================================================= */
 @media (max-width: 900px) {
   .intro,
@@ -1525,25 +1525,25 @@ a {
     display: flex; 
   }
 
-  /* COMPILED MOBILE DRAWER USING CSS GRID */
+  /* SLEEK, CREATIVE MOBILE DRAWER */
   .main-nav {
     position: fixed;
     top: 0;
     right: 0;
     height: 100vh;
-    width: min(300px, 85vw) !important;
-    background: #e3dbd4; 
+    width: min(320px, 85vw) !important;
+    background: var(--cream-light); 
     box-shadow: -15px 0 50px rgba(0, 0, 0, 0.15);
     transform: translateX(100%);
     transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     z-index: 999;
     
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    grid-auto-rows: min-content;
-    gap: 12px !important;
-    padding: 85px 25px 30px !important;
-    align-content: start;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 25px !important;
+    padding: 80px 30px 40px !important;
   }
 
   [data-theme="dark"] .main-nav {
@@ -1557,8 +1557,8 @@ a {
   /* Close Button Top Right */
   .main-nav .nav-close {
     position: absolute !important;
-    top: 15px !important;
-    right: 20px !important;
+    top: 20px !important;
+    right: 25px !important;
     display: block;
     background: none;
     border: none;
@@ -1568,124 +1568,139 @@ a {
     line-height: 1;
     padding: 0;
     transition: transform 0.3s;
-    order: -1;
   }
   
   .main-nav .nav-close:hover {
     transform: rotate(90deg);
   }
 
-  /* Standard Links - Full Width Clean App Buttons */
-  .main-nav a:not(#user-icon-link):not(.cart-toggle):not([onclick*="cart-panel"]):not(#nav-cart-icon):not(.cart-btn) {
-    grid-column: 1 / -1;
-    background: rgba(255, 255, 255, 0.6) !important;
-    font-family: "Noto Serif TC", serif;
-    font-size: 1.25rem !important;
-    font-weight: 600 !important;
-    width: 100%;
-    padding: 16px 10px !important;
+  /* Wrapper for Profile & Cart */
+  .mobile-icon-wrapper {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 25px !important;
+    width: 100% !important;
+    margin-bottom: 20px !important;
+    margin-top: -20px !important;
+  }
+
+  /* Profile & Cart Icons - Minimal Circles */
+  .main-nav #user-icon-link,
+  .main-nav #nav-cart-icon {
+    background: transparent !important;
+    border: 1px solid rgba(190, 81, 145, 0.3) !important;
+    border-radius: 50% !important;
+    width: 52px !important;
+    height: 52px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--brown) !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .main-nav #user-icon-link:hover,
+  .main-nav #nav-cart-icon:hover {
+    background: var(--brown) !important;
+    color: var(--white) !important;
+    transform: translateY(-3px);
+  }
+
+  /* Reset inline styles on inner wrapper */
+  .main-nav #user-icon-wrapper {
     border: none !important;
-    display: flex;
-    align-items: center;
-    justify-content: center !important; /* Centered Text */
-    border-radius: 12px !important;
-    transition: background 0.3s, transform 0.2s, color 0.3s;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    width: 100% !important;
+    height: 100% !important;
   }
 
-  .main-nav a:hover, 
-  .main-nav a:active {
-    background: rgba(255, 255, 255, 0.9) !important;
-    color: var(--caramel);
-    transform: translateY(-1px);
+  .main-nav #user-icon-link svg, 
+  .main-nav #nav-cart-icon svg {
+    width: 22px !important;
+    height: 22px !important;
+    margin: 0 !important;
   }
 
-  [data-theme="dark"] .main-nav a:not(#user-icon-link):not(.cart-toggle):not([onclick*="cart-panel"]):not(#nav-cart-icon):not(.cart-btn) {
-    background: rgba(255, 255, 255, 0.05) !important;
-    box-shadow: none;
+  /* Main Text Links - Elegant Typography */
+  .main-nav a:not(#user-icon-link):not(#nav-cart-icon) {
+    font-family: "Cormorant Garamond", serif !important;
+    font-size: 2.1rem !important;
+    font-weight: 600 !important;
+    color: var(--brown) !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 5px 15px !important;
+    width: auto !important;
+    position: relative;
+    transition: color 0.3s ease;
   }
 
-  [data-theme="dark"] .main-nav a:hover, 
-  [data-theme="dark"] .main-nav a:active {
-    background: rgba(255, 255, 255, 0.1) !important;
+  /* Animated Expanding Underline for Links */
+  .main-nav a:not(#user-icon-link):not(#nav-cart-icon)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: var(--caramel);
+    transition: width 0.3s ease;
+    display: block !important;
+  }
+
+  .main-nav a:not(#user-icon-link):not(#nav-cart-icon):hover,
+  .main-nav a:not(#user-icon-link):not(#nav-cart-icon).active {
+    color: var(--caramel) !important;
+    transform: none !important;
+  }
+
+  .main-nav a:not(#user-icon-link):not(#nav-cart-icon):hover::after,
+  .main-nav a:not(#user-icon-link):not(#nav-cart-icon).active::after {
+    width: 100%;
+  }
+
+  /* Theme Toggle - Positioned near the bottom */
+  .main-nav .theme-toggle {
+    margin-top: auto !important; 
+    margin-bottom: 5px !important;
+    margin-left: 0 !important;
+    background: transparent !important;
+    border: 1px solid rgba(190, 81, 145, 0.3) !important;
+    color: var(--brown) !important;
+    border-radius: 50% !important;
+    width: 52px !important;
+    height: 52px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-shadow: none !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .main-nav .theme-toggle:hover {
+    background: var(--brown) !important;
+    transform: rotate(15deg) scale(1.05);
   }
 
   /* Spacer & "Baked fresh in Settat" Text */
   .nav-decor {
-    grid-column: 1 / -1;
     display: block;
-    margin-top: 30px !important; 
+    margin-top: 0 !important; 
     font-family: "Cormorant Garamond", serif;
     font-style: italic;
     color: var(--caramel);
-    font-size: 1.1rem;
-    width: 100%;
+    font-size: 1.1rem !important;
     text-align: center;
     padding-bottom: 10px !important;
     opacity: 0.8;
   }
 
-  /* Bottom Actions Container: Profile Icon, Cart Icon, Theme Toggle */
-  .main-nav #user-icon-link,
-  .main-nav #user-icon-wrapper {
-    grid-column: 1 / 2;
-    background: rgba(193, 119, 30, 0.15) !important;
-    border-radius: 14px !important;
-    padding: 14px !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    border: none !important;
-    margin: 0 !important;
-    width: 100% !important;
-  }
-
-  .main-nav .cart-toggle, 
-  .main-nav button[onclick*="cart-panel"], 
-  .main-nav a[onclick*="cart-panel"],
-  .main-nav #nav-cart-icon,
-  .main-nav .cart-btn {
-    grid-column: 2 / 3;
-    background: rgba(193, 119, 30, 0.15) !important;
-    border-radius: 14px !important;
-    padding: 14px !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    border: none !important;
-    margin: 0 !important;
-    width: 100% !important;
-  }
-
-  /* Hide the text next to icons inside the mobile menu */
-  .main-nav #user-icon-link .nav-icon + span,
-  .main-nav .cart-toggle .nav-icon + span {
+  /* Hide the little emoji/icon spans inside text links */
+  .main-nav a .nav-icon {
     display: none !important;
-  }
-
-  .main-nav #user-icon-link i, 
-  .main-nav .cart-toggle i,
-  .main-nav #user-icon-link svg, 
-  .main-nav .cart-toggle svg {
-    font-size: 1.4rem;
-    margin-right: 0 !important;
-  }
-
-  /* Theme Toggle Centered at Bottom */
-  .main-nav .theme-toggle {
-    grid-column: 1 / -1;
-    justify-self: center;
-    margin-top: 15px !important;
-    margin-left: 0;
-    background: #e4e4e4 !important; 
-    border-radius: 50% !important;
-    width: 50px !important;
-    height: 50px !important;
-    box-shadow: var(--shadow) !important;
-  }
-
-  [data-theme="dark"] .main-nav .theme-toggle {
-    background: var(--cream) !important;
   }
 }
 
@@ -2079,16 +2094,16 @@ body {
 }
 
 /* =========================================
-   DESKTOP NAVIGATION (FLOATING DOCK STYLE)
+   DESKTOP NAVIGATION (CLEAN STYLE)
 ========================================= */
 @media (min-width: 901px) {
   .main-nav {
-    background: rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(122, 92, 70, 0.2);
-    padding: 6px 32px;
-    border-radius: 999px;
-    gap: 40px;
-    box-shadow: 0 4px 20px rgba(74, 55, 40, 0.04);
+    background: transparent;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+    gap: 35px;
+    box-shadow: none;
   }
   
   .main-nav a {
@@ -2096,8 +2111,9 @@ body {
     transition: color 0.2s ease;
   }
 
+  /* Restores the elegant underline hover effect */
   .main-nav a::after {
-    display: none;
+    display: block;
   }
   
   .main-nav a:hover,
@@ -2106,9 +2122,9 @@ body {
   }
 
   [data-theme="dark"] .main-nav {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 }
 
