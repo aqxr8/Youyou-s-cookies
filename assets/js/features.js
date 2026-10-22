@@ -423,7 +423,7 @@ function initCart() {
         
         if (total >= FREE_SHIPPING_THRESHOLD) {
           tracker.innerHTML = `
-            <div class="shipping-text shipping-success">🎉 Félicitations ! Livraison gratuite débloquée.</div>
+            <div class="shipping-text shipping-success">🎉 Congratulations! Free delivery unlocked.</div>
             <div class="shipping-bar-bg">
               <div class="shipping-bar-fill success" style="width: 100%;"></div>
             </div>
@@ -463,7 +463,7 @@ function initCart() {
         li.innerHTML = `
           <div class="cart-item-info">
             <div class="cart-item-title">${item.name}</div>
-            <div class="cart-item-price">${itemTotal} DH <span style="font-size:0.8rem; opacity:0.7;">(${item.price} DH l'unité)</span></div>
+            <div class="cart-item-price">${itemTotal} DH <span style="font-size:0.8rem; opacity:0.7;">(${item.price} DH Per unit)</span></div>
           </div>
           <div class="qty-controls">
             <button onclick="window.updateQuantity(${index}, -1)" class="qty-btn" title="Retirer">&minus;</button>
