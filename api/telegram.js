@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
 
   if (!token) {
-    return res.status(500).json({ error: 'Server missing bot token.' });
+    return res.status(500).json({ error: 'Server missing TELEGRAM_BOT_TOKEN.' });
   }
 
   try {

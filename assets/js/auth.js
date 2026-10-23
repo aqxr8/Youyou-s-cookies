@@ -194,7 +194,7 @@ function updateProfileRankBadge(totalSpent) {
   }
 }
 
-// --- GLOBAL SAVE ORDER METHOD WITH MULTI-ADMIN TELEGRAM NOTIFICATION ---
+// --- GLOBAL SAVE ORDER METHOD WITH SECURE TELEGRAM NOTIFICATION ---
 
 window.saveOrderToFirestore = async function (orderData) {
   try {
@@ -248,8 +248,7 @@ window.saveOrderToFirestore = async function (orderData) {
 
     const docRef = await addDoc(collection(db, "orders"), finalData);
 
-    // --- TELEGRAM MULTI-ADMIN NOTIFICATION ---
-    const TELEGRAM_BOT_TOKEN = "8882054977:AAGihV3wi-XNQLbRBcBn3ExO8pWR4mKwtpM";
+    // --- SECURE SERVERLESS TELEGRAM NOTIFICATION ---
     const ADMIN_CHAT_IDS = [
       "7932537222", // Mohamed
       "7523215470"  // Aya
@@ -266,18 +265,15 @@ window.saveOrderToFirestore = async function (orderData) {
       `🛍️ *Items:*\n${itemsText}\n\n` +
       `💰 *Total:* ${totalAmount} DH`;
 
-    ADMIN_CHAT_IDS.forEach((chatId) => {
-      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: telegramMsg,
-          parse_mode: "Markdown"
-        })
-      }).catch(err => console.warn(`Telegram alert failed for Chat ID ${chatId}:`, err));
-    });
-    // ----------------------------------------
+    fetch("/api/telegram", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: telegramMsg,
+        chatIds: ADMIN_CHAT_IDS
+      })
+    }).catch(err => console.warn("Telegram alert failed:", err));
+    // ----------------------------------------------
 
     if (user) {
       await updateDoc(doc(db, "users", user.uid), { cart: [] });
