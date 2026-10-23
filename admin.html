@@ -7,193 +7,449 @@
   <title>Admin Dashboard | YouYou's Cookies</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="assets/css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    @media (max-width: 900px) {
-      .admin-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
-      .admin-main-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
-      .section.container { padding-left: 12px !important; padding-right: 12px !important; padding-top: 15px !important; }
-      
-      .kpi-card { padding: 18px 12px !important; text-align: center; border-radius: 16px; border-top-width: 5px; }
-      .kpi-value { font-size: 1.7rem !important; }
-      .kpi-label { font-size: 0.75rem !important; letter-spacing: 0.05em; }
-      
-      .profile-section-card { padding: 18px !important; border-radius: 20px; }
-      
-      .admin-filter-tabs { 
-        width: 100%; 
-        display: flex; 
-        justify-content: space-between; 
-        overflow-x: auto; 
-        padding-bottom: 5px; 
-      }
-      .filter-btn, .filter-btn-review { flex: 1; text-align: center; padding: 10px 5px !important; font-size: 0.85rem !important; white-space: nowrap; }
-      
-      .admin-order-card { padding: 18px !important; border-radius: 16px; }
-      .admin-order-header { flex-direction: column; align-items: flex-start !important; gap: 12px; }
-      .admin-order-header > div { width: 100%; display: flex; justify-content: space-between; align-items: center; }
-      .admin-order-header .status-pill-badge { align-self: flex-start; }
-      
-      .admin-order-card > div:last-child { 
-        flex-direction: column !important; 
-        align-items: stretch !important; 
-        gap: 15px; 
-      }
-      .admin-order-card > div:last-child > div:first-child { 
-        text-align: left; 
-        font-size: 1.4rem !important; 
-      }
-      .admin-order-card > div:last-child > div:last-child { 
-        display: flex !important; 
-        flex-direction: row; 
-        width: 100%; 
-        gap: 10px;
-      }
-      .btn-whatsapp-sm, .admin-status-dropdown { 
-        flex: 1; 
-        text-align: center; 
-        justify-content: center; 
-        padding: 12px !important; 
-        font-size: 0.9rem !important; 
-        height: 44px !important; 
-        box-sizing: border-box;
-      }
+    /* Admin Dashboard Specific Styles */
+    .admin-hero-banner {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(74, 55, 40, 0.08);
+      position: relative;
+      overflow: hidden;
     }
-    .filter-btn-review {
+
+    .admin-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .admin-title-row h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.3rem;
+      color: var(--brown);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .metric-card {
+      background: var(--cream-light);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid rgba(74, 55, 40, 0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+
+    .metric-icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+      background: var(--white);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .metric-data strong {
+      display: block;
+      font-size: 1.5rem;
+      color: var(--caramel);
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .metric-data small {
+      font-size: 0.78rem;
+      color: var(--brown-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+    }
+
+    /* Tabs Navigation */
+    .admin-tabs-nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+      border-bottom: 1px solid rgba(74, 55, 40, 0.12);
+      padding-bottom: 10px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: transparent;
       border: none;
-      background: none;
+      padding: 10px 22px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--brown-soft);
+      cursor: pointer;
+      border-radius: 999px;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .tab-btn.active {
+      background: var(--caramel);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(168, 90, 62, 0.3);
+    }
+
+    .admin-section-pane {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .admin-section-pane.active {
+      display: block;
+    }
+
+    /* Sub-filters */
+    .filter-pills-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: var(--cream);
+      border: 1px solid rgba(74, 55, 40, 0.12);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--brown);
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--brown);
+      color: var(--white);
+    }
+
+    /* Cards Layout */
+    .admin-card-container {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 25px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(74, 55, 40, 0.08);
+    }
+
+    .admin-order-card {
+      border: 1px solid rgba(74, 55, 40, 0.12);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+      background: var(--white);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .admin-order-card.is-pending {
+      border-left: 5px solid #f0ad4e;
+    }
+
+    .admin-order-card.is-delivered {
+      border-left: 5px solid #57a05f;
+    }
+
+    .admin-order-card.is-cancelled {
+      border-left: 5px solid #d9534f;
+      opacity: 0.85;
+    }
+
+    .admin-order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed rgba(74, 55, 40, 0.1);
+    }
+
+    .btn-whatsapp-sm {
+      background: #25D366;
+      color: white;
       padding: 6px 14px;
       border-radius: 6px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      color: var(--brown);
-      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
-    .filter-btn-review.active {
-      background: var(--white);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+
+    .btn-whatsapp-sm:hover {
+      background: #1eb956;
+      color: white;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .admin-metrics-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+      }
+      .admin-hero-banner {
+        padding: 20px !important;
+      }
+      .admin-title-row h1 {
+        font-size: 1.8rem;
+      }
+      .metric-card {
+        padding: 14px !important;
+      }
+      .metric-data strong {
+        font-size: 1.25rem;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .admin-metrics-grid {
+        grid-template-columns: 1fr !important;
+      }
     }
   </style>
 </head>
-<body style="background: var(--cream-light);">
+<body>
 
-  <!-- Header -->
+  <!-- Site Header -->
   <header class="site-header">
     <div class="container header-inner">
-      <a href="index.html" class="brand">
-        <img src="assets/images/logo.png" alt="YouYou's Cookies" class="brand-logo">
-        <div class="brand-text">
-          <b>ADMIN CONTROL PANEL</b>
-          <span>YOUYOU'S COOKIES</span>
-        </div>
+      <a class="brand" href="index.html">
+        <video class="brand-logo logo-light" poster="assets/images/logo.png" autoplay loop muted playsinline>
+          <source data-src="assets/videos/logo-light.mp4" type="video/mp4">
+          <img src="assets/images/logo.png" alt="Youyou Cookies">
+        </video>
+
+        <video class="brand-logo logo-dark" poster="assets/images/logo1.png" autoplay loop muted playsinline>
+          <source data-src="assets/videos/logo-dark.mp4" type="video/mp4">
+          <img src="assets/images/logo1.png" alt="Youyou Cookies">
+        </video>
+        
+        <span class="brand-text">
+          <b>Youyou's Cookies</b>
+          <span>ADMIN PORTAL</span>
+        </span>
       </a>
 
-      <div style="display: flex; align-items: center; gap: 15px;">
-        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
-          <span class="moon-icon">🌙</span>
-          <span class="sun-icon" style="display: none;">☀️</span>
-        </button>
-        <button id="logout-btn" class="btn btn-dark" style="padding: 8px 18px; font-size: 0.85rem;">Log Out</button>
+      <div class="status-pill" data-status-pill role="status">
+        <span class="status-dot"></span>
+        <span class="status-text">Closed</span>
       </div>
+      
+      <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
+        <button class="nav-toggle" aria-label="Toggle Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <nav class="main-nav" style="display: flex; align-items: center;">
+        <button class="nav-close" aria-label="Close Menu">&times;</button>
+
+        <a href="admin.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; margin-right: 15px; transition: 0.2s;">
+          <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+              <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+            </svg>
+          </div>
+        </a>
+
+        <a href="index.html"><span class="nav-icon"></span> Home</a>
+        <a href="menu.html"><span class="nav-icon"></span> Menu</a>
+        <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
+        <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Dark Mode">
+          <span class="moon-icon" style="display:none;">🌙</span>
+          <span class="sun-icon">☀️</span>
+        </button>
+        <div class="nav-decor">Bakery Management</div>
+      </nav>
     </div>
   </header>
 
   <main class="section container" style="max-width: 1100px; padding-top: 30px;">
     
-    <!-- Analytics KPI Cards -->
-    <div class="admin-kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Total Revenue</div>
-        <div id="stat-total-revenue" class="kpi-value">0 DH</div>
-        <div class="kpi-sub">Lifetime orders</div>
+    <!-- Admin Hero Banner & Live Stats -->
+    <div class="admin-hero-banner">
+      <div class="admin-title-row">
+        <h1>
+          <span>⚡ Bakery Control Panel</span>
+        </h1>
+        <button id="logout-btn" class="btn btn-outline" style="padding: 8px 18px; font-size: 0.85rem; border-color: rgba(74,55,40,0.3); color: var(--brown);">
+          Log Out Admin
+        </button>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Total Orders</div>
-        <div id="stat-total-orders" class="kpi-value">0</div>
-        <div class="kpi-sub">Submitted online</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Pending Delivery</div>
-        <div id="stat-pending-orders" class="kpi-value" style="color: var(--caramel);">0</div>
-        <div class="kpi-sub">Needs fulfillment</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Total Users</div>
-        <div id="stat-total-users" class="kpi-value">0</div>
-        <div class="kpi-sub">Customer accounts</div>
+
+      <div class="admin-metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon-box">💰</div>
+          <div class="metric-data">
+            <strong id="stat-total-revenue">0 DH</strong>
+            <small>Delivered Revenue</small>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-box">📦</div>
+          <div class="metric-data">
+            <strong id="stat-total-orders">0</strong>
+            <small>Total Orders</small>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-box">⏳</div>
+          <div class="metric-data">
+            <strong id="stat-pending-orders">0</strong>
+            <small>Pending Orders</small>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-box">👥</div>
+          <div class="metric-data">
+            <strong id="stat-total-users">0</strong>
+            <small>Registered Users</small>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Admin Main Content Grid -->
-    <div class="admin-main-grid">
-      
-      <!-- Orders List -->
-      <div class="profile-section-card">
+    <!-- Admin Section Tabs -->
+    <div class="admin-tabs-nav">
+      <button class="tab-btn active" data-tab="orders-pane">
+        <span>📦</span> Orders Management
+      </button>
+      <button class="tab-btn" data-tab="users-pane">
+        <span>👥</span> User Directory
+      </button>
+      <button class="tab-btn" data-tab="reviews-pane">
+        <span>⭐</span> Review Moderation
+      </button>
+    </div>
+
+    <!-- Orders Pane -->
+    <div id="orders-pane" class="admin-section-pane active">
+      <div class="admin-card-container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-          <h3 class="profile-card-title" style="margin: 0;">Orders Management</h3>
-          
-          <div class="admin-filter-tabs">
-            <button class="filter-btn active" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="Processing">Pending</button>
-            <button class="filter-btn" data-filter="Delivered">Delivered</button>
+          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--brown); margin: 0;">Customer Orders</h3>
+          <div class="filter-pills-row" style="margin-bottom: 0;">
+            <button class="filter-btn active" data-order-filter="all">All Orders</button>
+            <button class="filter-btn" data-order-filter="Processing">Processing</button>
+            <button class="filter-btn" data-order-filter="Delivered">Delivered</button>
+            <button class="filter-btn" data-order-filter="Cancelled">Cancelled</button>
           </div>
         </div>
-
         <div id="admin-orders">
-          <p style="color: var(--brown-soft); font-style: italic;">Loading live orders...</p>
+          <p style="color: var(--brown-soft); font-style: italic;">Loading customer orders...</p>
         </div>
       </div>
+    </div>
 
-      <!-- Right Column: Users List & Reviews Management -->
-      <div style="display: flex; flex-direction: column; gap: 25px;">
-        
-        <!-- Customer Directory -->
-        <div class="profile-section-card">
-          <h3 class="profile-card-title">Customer Directory</h3>
-          <div id="admin-users">
-            <p style="color: var(--brown-soft); font-style: italic;">Loading users...</p>
-          </div>
+    <!-- Users Pane -->
+    <div id="users-pane" class="admin-section-pane">
+      <div class="admin-card-container">
+        <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--brown); margin-bottom: 20px;">Registered Customers & Ranks</h3>
+        <div id="admin-users">
+          <p style="color: var(--brown-soft); font-style: italic;">Loading user accounts...</p>
         </div>
-
-        <!-- Reviews Management -->
-        <div class="profile-section-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-            <h3 class="profile-card-title" style="margin: 0;">Reviews Management</h3>
-            
-            <div class="admin-filter-tabs">
-              <button class="filter-btn-review active" data-filter="all">All</button>
-              <button class="filter-btn-review" data-filter="pending">Pending</button>
-              <button class="filter-btn-review" data-filter="approved">Approved</button>
-              <button class="filter-btn-review" data-filter="rejected">Rejected</button>
-            </div>
-          </div>
-
-          <div id="admin-reviews">
-            <p style="color: var(--brown-soft); font-style: italic;">Loading reviews...</p>
-          </div>
-        </div>
-
       </div>
+    </div>
 
+    <!-- Reviews Pane -->
+    <div id="reviews-pane" class="admin-section-pane">
+      <div class="admin-card-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--brown); margin: 0;">Manage Customer Reviews</h3>
+          <div class="filter-pills-row" style="margin-bottom: 0;">
+            <button class="filter-btn filter-btn-review active" data-filter="all">All Reviews</button>
+            <button class="filter-btn filter-btn-review" data-filter="pending">Pending</button>
+            <button class="filter-btn filter-btn-review" data-filter="approved">Approved</button>
+            <button class="filter-btn filter-btn-review" data-filter="rejected">Rejected</button>
+          </div>
+        </div>
+        <div id="admin-reviews">
+          <p style="color: var(--brown-soft); font-style: italic;">Loading reviews...</p>
+        </div>
+      </div>
     </div>
 
   </main>
 
+  <script src="assets/js/main.js"></script>
+  <script type="module" src="assets/js/auth.js"></script>
   <script>
-    // Order filter tabs
-    document.querySelectorAll('.filter-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var status = btn.getAttribute('data-filter');
-        document.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        document.querySelectorAll('.admin-order-card').forEach(function (card) {
-          card.style.display = (status === 'all' || card.getAttribute('data-status') === status) ? '' : 'none';
+    // Tab switching interaction
+    document.addEventListener("DOMContentLoaded", () => {
+      const tabs = document.querySelectorAll(".tab-btn");
+      const panes = document.querySelectorAll(".admin-section-pane");
+
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          tabs.forEach(t => t.classList.remove("active"));
+          panes.forEach(p => p.classList.remove("active"));
+
+          tab.classList.add("active");
+          const targetPane = document.getElementById(tab.getAttribute("data-tab"));
+          if (targetPane) targetPane.classList.add("active");
+        });
+      });
+
+      // Order Filtering interaction
+      document.querySelectorAll("[data-order-filter]").forEach(btn => {
+        btn.addEventListener("click", function() {
+          const filter = this.getAttribute("data-order-filter");
+          document.querySelectorAll("[data-order-filter]").forEach(b => b.classList.remove("active"));
+          this.classList.add("active");
+
+          document.querySelectorAll(".admin-order-card").forEach(card => {
+            const status = card.getAttribute("data-status");
+            if (filter === "all" || status === filter) {
+              card.style.display = "";
+            } else {
+              card.style.display = "none";
+            }
+          });
         });
       });
     });
   </script>
-
-  <script src="assets/js/main.js"></script>
-  <script type="module" src="assets/js/auth.js"></script>
 </body>
 </html>
