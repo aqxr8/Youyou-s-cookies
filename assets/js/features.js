@@ -186,16 +186,27 @@ function initQuiz() {
   showView(startView);
 }
 
-function initNotesWall() {
+async function initNotesWall() {
   const form = document.getElementById("note-form");
   const grid = document.getElementById("notes-grid");
 
-  if (!form || !grid) return;
+  if (!grid) return;
 
-  const savedNotes = JSON.parse(localStorage.getItem("youyou_notes")) || [];
-  savedNotes.forEach(note => createNoteCard(note.name, note.rating, note.text, note.rot, false));
+  // Fetch approved reviews from Firestore
+  if (window.fetchApprovedReviews) {
+    grid.innerHTML = `<p style="text-align: center; color: var(--brown-soft); grid-column: 1/-1;">Loading sweet words...</p>`;
+    const approvedNotes = await window.fetchApprovedReviews();
+    grid.innerHTML = "";
+    if (approvedNotes.length === 0) {
+      grid.innerHTML = `<p style="text-align: center; color: var(--brown-soft); grid-column: 1/-1;">No reviews published yet. Be the first to leave one!</p>`;
+    } else {
+      approvedNotes.forEach(note => createNoteCard(note.name, note.rating, note.text, note.rot, false));
+    }
+  }
 
-  form.addEventListener("submit", function (e) {
+  if (!form) return;
+
+  form.addEventListener("submit", async function (e) {
     e.preventDefault(); 
     const name = document.getElementById("note-name").value.trim();
     const rating = parseInt(document.getElementById("note-rating").value);
@@ -203,26 +214,33 @@ function initNotesWall() {
 
     if (!name || !text) return;
     const rot = (Math.random() * 6 - 3).toFixed(1);
-    createNoteCard(name, rating, text, rot, true);
 
-    savedNotes.unshift({ name, rating, text, rot });
-    localStorage.setItem("youyou_notes", JSON.stringify(savedNotes));
-
-    form.reset();
-    
     const submitBtn = form.querySelector("button[type='submit']");
     const originalText = submitBtn.textContent;
-    submitBtn.textContent = "✓ Posted!";
-    submitBtn.style.backgroundColor = "#57a05f";
-    submitBtn.style.borderColor = "#57a05f";
-    submitBtn.style.color = "#ffffff";
-    
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Submitting...";
+
+    if (window.submitReviewToFirestore) {
+      const success = await window.submitReviewToFirestore({ name, rating, text, rot });
+      if (success) {
+        form.reset();
+        submitBtn.textContent = "✓ Submitted for approval!";
+        submitBtn.style.backgroundColor = "#57a05f";
+        submitBtn.style.borderColor = "#57a05f";
+        submitBtn.style.color = "#ffffff";
+      } else {
+        alert("Failed to submit review. Please try again.");
+        submitBtn.textContent = originalText;
+      }
+    }
+
     setTimeout(() => {
+      submitBtn.disabled = false;
       submitBtn.textContent = originalText;
       submitBtn.style.backgroundColor = ""; 
       submitBtn.style.borderColor = "";
       submitBtn.style.color = "";
-    }, 2000);
+    }, 3000);
   });
 
   function createNoteCard(name, rating, text, rot, isNew) {
@@ -239,7 +257,7 @@ function initNotesWall() {
       <p class="note-text">"${text}"</p>
       <div class="note-by">— ${name}</div>
     `;
-    grid.insertBefore(card, grid.firstChild);
+    grid.appendChild(card);
   }
 }
 
