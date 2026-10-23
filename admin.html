@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <link rel="icon" type="image/png" sizes="48x48" href="assets/images/logo.png">
+  <link rel="apple-touch-icon" href="assets/images/logo1.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | YouYou's Cookies</title>
@@ -251,16 +252,19 @@
   <!-- Site Header -->
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="index.html">
-        <video class="brand-logo logo-light" poster="assets/images/logo.png" autoplay loop muted playsinline>
-          <source data-src="assets/videos/logo-light.mp4" type="video/mp4">
-          <img src="assets/images/logo.png" alt="Youyou Cookies">
-        </video>
+      <!-- Brand Logo & Text -->
+      <a class="brand" href="index.html" aria-label="Youyou's Cookies Home">
+        <div class="brand-logo-wrapper">
+          <video class="brand-logo logo-light" poster="assets/images/logo.png" autoplay loop muted playsinline>
+            <source data-src="assets/videos/logo-light.mp4" type="video/mp4">
+            <img src="assets/images/logo.png" alt="Youyou Cookies Logo">
+          </video>
 
-        <video class="brand-logo logo-dark" poster="assets/images/logo1.png" autoplay loop muted playsinline>
-          <source data-src="assets/videos/logo-dark.mp4" type="video/mp4">
-          <img src="assets/images/logo1.png" alt="Youyou Cookies">
-        </video>
+          <video class="brand-logo logo-dark" poster="assets/images/logo1.png" autoplay loop muted playsinline>
+            <source data-src="assets/videos/logo-dark.mp4" type="video/mp4">
+            <img src="assets/images/logo1.png" alt="Youyou Cookies Logo">
+          </video>
+        </div>
         
         <span class="brand-text">
           <b>Youyou's Cookies</b>
@@ -268,39 +272,47 @@
         </span>
       </a>
 
-      <div class="status-pill" data-status-pill role="status">
+      <!-- Live Order Status Pill -->
+      <div class="status-pill" data-status-pill role="status" title="Morocco Time Status">
         <span class="status-dot"></span>
         <span class="status-text">Closed</span>
       </div>
-      
-      <div class="header-actions" style="display: flex; align-items: center; gap: 18px;">
-        <button class="nav-toggle" aria-label="Toggle Menu">
-          <span></span><span></span><span></span>
-        </button>
-      </div>
 
-      <nav class="main-nav" style="display: flex; align-items: center;">
-        <button class="nav-close" aria-label="Close Menu">&times;</button>
+      <!-- Main Navigation Links / Mobile Drawer -->
+      <nav class="main-nav" id="main-nav" aria-label="Main Navigation">
+        <button class="nav-close" id="nav-close" aria-label="Close Menu">&times;</button>
+        <a href="index.html"><span class="nav-icon">🏠</span> Home</a>
+        <a href="menu.html"><span class="nav-icon">🍪</span> Menu</a>
+        <a href="reviews.html"><span class="nav-icon">⭐</span> Reviews</a>
+        <a href="contact.html"><span class="nav-icon">📍</span> Contact Us</a>
+        <div class="nav-decor">Bakery Management</div>
+      </nav>
 
-        <a href="admin.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; margin-right: 15px; transition: 0.2s;">
-          <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <!-- Admin Account Icon -->
+        <a href="admin.html" id="user-icon-link" aria-label="User Account" title="Admin Portal">
+          <div id="user-icon-wrapper" class="header-action-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
               <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
               <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
             </svg>
           </div>
         </a>
 
-        <a href="index.html"><span class="nav-icon"></span> Home</a>
-        <a href="menu.html"><span class="nav-icon"></span> Menu</a>
-        <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
-        <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
-        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Dark Mode">
+        <!-- Dark / Light Mode Toggle -->
+        <button id="theme-toggle" class="header-action-btn theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Theme">
           <span class="moon-icon" style="display:none;">🌙</span>
           <span class="sun-icon">☀️</span>
         </button>
-        <div class="nav-decor">Bakery Management</div>
-      </nav>
+
+        <!-- Mobile Hamburger Toggle -->
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation Menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
     </div>
   </header>
 
