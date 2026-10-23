@@ -196,7 +196,60 @@ function updateProfileRankBadge(totalSpent) {
 
 // --- GLOBAL SAVE ORDER METHOD WITH MULTI-ADMIN TELEGRAM NOTIFICATION ---
 
-// --- TELEGRAM SERVERLESS NOTIFICATION ---
+window.saveOrderToFirestore = async function (orderData) {
+  try {
+    const user = auth.currentUser;
+    let finalPhone = orderData.phone;
+    if (!finalPhone && window.userDataObj && window.userDataObj.phone) {
+      finalPhone = window.userDataObj.phone;
+    }
+
+    let finalAddress = orderData.address;
+    if ((!finalAddress || finalAddress === "Settat") && window.userDataObj && window.userDataObj.address) {
+      finalAddress = window.userDataObj.address;
+    }
+
+    const items = (Array.isArray(orderData.items) ? orderData.items : [])
+      .slice(0, 50)
+      .map((i) => ({
+        name: String((i && i.name) || "Item").slice(0, 60),
+        price: Math.max(0, Number(i && i.price) || 0),
+        quantity: Math.min(99, Math.max(1, parseInt(i && i.quantity, 10) || 1))
+      }));
+
+    if (items.length === 0) return null;
+
+    const totalAmount = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+    const finalData = {
+      userId: user ? user.uid : "guest",
+      userEmail: user ? user.email : "Guest",
+      customerName: String(
+        orderData.customerName ||
+        (user && user.displayName) ||
+        (window.userDataObj ? window.userDataObj.username : "") ||
+        "Guest"
+      ).slice(0, 80),
+      phone: String(finalPhone || "").slice(0, 30),
+      address: String(finalAddress || "Settat").slice(0, 400),
+      items: items,
+      totalAmount: totalAmount,
+      status: "Processing",
+      date: new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Africa/Casablanca"
+      }),
+      createdAt: serverTimestamp()
+    };
+
+    const docRef = await addDoc(collection(db, "orders"), finalData);
+
+    // --- TELEGRAM MULTI-ADMIN NOTIFICATION ---
+    const TELEGRAM_BOT_TOKEN = "8882054977:AAGihV3wi-XNQLbRBcBn3ExO8pWR4mKwtpM";
     const ADMIN_CHAT_IDS = [
       "7932537222", // Mohamed
       "7523215470"  // Aya
@@ -213,15 +266,30 @@ function updateProfileRankBadge(totalSpent) {
       `🛍️ *Items:*\n${itemsText}\n\n` +
       `💰 *Total:* ${totalAmount} DH`;
 
-    fetch("/api/telegram", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: telegramMsg,
-        chatIds: ADMIN_CHAT_IDS
-      })
-    }).catch(err => console.warn("Telegram alert failed:", err));
+    ADMIN_CHAT_IDS.forEach((chatId) => {
+      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: telegramMsg,
+          parse_mode: "Markdown"
+        })
+      }).catch(err => console.warn(`Telegram alert failed for Chat ID ${chatId}:`, err));
+    });
     // ----------------------------------------
+
+    if (user) {
+      await updateDoc(doc(db, "users", user.uid), { cart: [] });
+    }
+
+    localStorage.removeItem("youyou_cart");
+    return docRef.id;
+  } catch (error) {
+    console.error("Order saving error:", error);
+    return null;
+  }
+};
 
 // --- AUTHENTICATION STATE ---
 
