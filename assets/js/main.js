@@ -43,6 +43,36 @@ document.addEventListener("DOMContentLoaded", () => {
   loadBrandLogos();
 });
 
+// --- GLOBAL SHOW / HIDE PASSWORD TOGGLE ---
+document.addEventListener("click", (e) => {
+  const toggleBtn = e.target.closest(".toggle-password-btn");
+  if (!toggleBtn) return;
+  const targetId = toggleBtn.getAttribute("data-target");
+  const input = document.getElementById(targetId);
+  if (!input) return;
+
+  if (input.type === "password") {
+    input.type = "text";
+    toggleBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
+        <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.536 3.536 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
+        <path d="M3.35 5.47c-.18.158-.353.321-.518.487C1.402 7.21 1 8 1 8s3 5.5 8 5.5c1.026 0 1.996-.23 2.868-.619l.72.72c-.173.102-.348.2-.524.29C10.74 14.49 9.38 15 8 15c-5 0-8-5.5-8-5.5a13.165 13.135 0 0 1 2.408-3.085l.942.942zM13.646 14.354l-12-12 .708-.708 12 12-.708.708z"/>
+      </svg>
+    `;
+    toggleBtn.setAttribute("aria-label", "Hide password");
+  } else {
+    input.type = "password";
+    toggleBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+      </svg>
+    `;
+    toggleBtn.setAttribute("aria-label", "Show password");
+  }
+});
+
 function initHeader() {
   const header = document.querySelector(".site-header");
   if (!header) return;

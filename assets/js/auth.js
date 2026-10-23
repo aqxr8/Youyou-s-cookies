@@ -144,7 +144,7 @@ function getCookieRank(totalSpent) {
 
 function updateProfileRankBadge(totalSpent) {
   const rank = getCookieRank(totalSpent);
-  const rankBadge = document.querySelector(".profile-hero-card .status-pill-badge");
+  const rankBadge = document.querySelector(".cookie-rank-pill, .profile-hero-card .status-pill-badge");
 
   if (rankBadge) {
     rankBadge.innerHTML = `${rank.icon} ${rank.name}`;
@@ -194,7 +194,7 @@ function updateProfileRankBadge(totalSpent) {
   }
 }
 
-// --- GLOBAL SAVE ORDER METHOD WITH SECURE TELEGRAM NOTIFICATION ---
+// --- GLOBAL SAVE ORDER METHOD WITH TELEGRAM NOTIFICATION ---
 
 window.saveOrderToFirestore = async function (orderData) {
   try {
@@ -248,7 +248,6 @@ window.saveOrderToFirestore = async function (orderData) {
 
     const docRef = await addDoc(collection(db, "orders"), finalData);
 
-    // --- SECURE SERVERLESS TELEGRAM NOTIFICATION ---
     const ADMIN_CHAT_IDS = [
       "7932537222", // Mohamed
       "7523215470"  // Aya
@@ -273,7 +272,6 @@ window.saveOrderToFirestore = async function (orderData) {
         chatIds: ADMIN_CHAT_IDS
       })
     }).catch(err => console.warn("Telegram alert failed:", err));
-    // ----------------------------------------------
 
     if (user) {
       await updateDoc(doc(db, "users", user.uid), { cart: [] });
@@ -287,6 +285,51 @@ window.saveOrderToFirestore = async function (orderData) {
   }
 };
 
+// --- PROFILE PICTURE UPLOAD LISTENER ---
+
+const avatarInput = document.getElementById("avatar-input");
+if (avatarInput) {
+  avatarInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Please choose an image file under 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64Image = event.target.result;
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const profilePic = document.getElementById("profile-picture");
+          if (profilePic) profilePic.src = base64Image;
+
+          await updateDoc(doc(db, "users", user.uid), { photoURL: base64Image });
+
+          if (window.userDataObj) {
+            window.userDataObj.photoURL = base64Image;
+          }
+
+          const msg = document.getElementById("info-msg");
+          if (msg) {
+            msg.style.display = "block";
+            msg.style.color = "#57a05f";
+            msg.textContent = "Profile picture updated successfully!";
+            setTimeout(() => { msg.style.display = "none"; }, 4000);
+          }
+        } catch (err) {
+          console.error("Failed to update profile picture:", err);
+          alert("Unable to save profile picture. Please try again.");
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // --- AUTHENTICATION STATE ---
 
 onAuthStateChanged(auth, async (user) => {
@@ -295,17 +338,6 @@ onAuthStateChanged(auth, async (user) => {
   const userIconWrapper = document.getElementById("user-icon-wrapper");
 
   if (user) {
-    if (userIconLink && userIconWrapper) {
-      userIconLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
-      const photoUrl =
-        user.photoURL ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=c1771e&color=fff`;
-
-      userIconWrapper.innerHTML = `
-        <img src="${esc(photoUrl)}" alt="Account" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
-      `;
-    }
-
     let userData = null;
     let userDocExists = false;
 
@@ -322,6 +354,18 @@ onAuthStateChanged(auth, async (user) => {
       }
     } catch (e) {
       console.warn("Unable to retrieve user profile:", e);
+    }
+
+    if (userIconLink && userIconWrapper) {
+      userIconLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
+      const photoUrl =
+        (userData && userData.photoURL) ||
+        user.photoURL ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=c1771e&color=fff`;
+
+      userIconWrapper.innerHTML = `
+        <img src="${esc(photoUrl)}" alt="Account" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+      `;
     }
 
     try {
@@ -350,8 +394,9 @@ onAuthStateChanged(auth, async (user) => {
       const profilePic = document.getElementById("profile-picture");
       if (profilePic) {
         profilePic.src =
+          (userData && userData.photoURL) ||
           user.photoURL ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=c1771e&color=fff&size=128`;
+          `https://ui-avatars.com/api/?name=${encodeURIComponent((userData && userData.username) || user.displayName || user.email)}&background=c1771e&color=fff&size=128`;
         profilePic.style.display = "block";
       }
 
@@ -450,7 +495,7 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   `;
 }
 
-// --- CUSTOMER ORDER HISTORY ---
+// --- CUSTOMER ORDER HISTORY & PROFILE STATS ---
 
 async function loadCustomerOrderHistory(user, db) {
   const historyContainer = document.getElementById("profile-order-history");
@@ -460,9 +505,17 @@ async function loadCustomerOrderHistory(user, db) {
     const ordersQuery = query(collection(db, "orders"), where("userId", "==", user.uid));
     const querySnapshot = await getDocs(ordersQuery);
     let totalSpent = 0;
+    let totalOrdersCount = querySnapshot.size || 0;
+
+    const statOrders = document.getElementById("stat-user-orders");
+    const statSpent = document.getElementById("stat-user-spent");
+    const statLevel = document.getElementById("stat-user-level");
 
     if (querySnapshot.empty) {
       historyContainer.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">No previous order found.</p>`;
+      if (statOrders) statOrders.textContent = "0";
+      if (statSpent) statSpent.textContent = "0 DH";
+      if (statLevel) statLevel.textContent = "Cookie Fan";
       updateProfileRankBadge(0);
       return;
     }
@@ -507,6 +560,10 @@ async function loadCustomerOrderHistory(user, db) {
       `;
     });
 
+    if (statOrders) statOrders.textContent = totalOrdersCount;
+    if (statSpent) statSpent.textContent = `${totalSpent} DH`;
+    if (statLevel) statLevel.textContent = getCookieRank(totalSpent).name;
+
     updateProfileRankBadge(totalSpent);
 
     document.querySelectorAll(".btn-cancel-order").forEach((btn) => {
@@ -539,7 +596,7 @@ async function loadCustomerOrderHistory(user, db) {
   }
 }
 
-// --- ADMIN DASHBOARD ---
+// --- ADMIN DASHBOARD WITH DELIVERED-ONLY REVENUE CALCULATION ---
 
 async function loadAdminDashboard(db) {
   const usersList = document.getElementById("admin-users");
@@ -588,11 +645,10 @@ async function loadAdminDashboard(db) {
         card.style.cssText = "display: flex; align-items: center; gap: 15px; padding: 16px; border: 1px solid rgba(74, 55, 40, 0.1); border-radius: 12px; margin-bottom: 12px; background: transparent; flex-wrap: wrap;";
 
         const initial = (data.username || "A").charAt(0).toUpperCase();
-        const avatarHtml = `
-          <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--caramel); color: white; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: bold; flex-shrink: 0; box-shadow: 0 4px 10px rgba(168, 90, 62, 0.3);">
-            ${initial}
-          </div>
-        `;
+        const avatarSrc = data.photoURL || null;
+        const avatarHtml = avatarSrc
+          ? `<img src="${esc(avatarSrc)}" alt="User" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 10px rgba(168, 90, 62, 0.3);">`
+          : `<div style="width: 44px; height: 44px; border-radius: 50%; background: var(--caramel); color: white; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: bold; flex-shrink: 0; box-shadow: 0 4px 10px rgba(168, 90, 62, 0.3);">${initial}</div>`;
 
         const infoHtml = `
           <div style="flex: 1; min-width: 180px;">
@@ -646,7 +702,8 @@ async function loadAdminDashboard(db) {
         const isProcessing = data.status === "Processing";
         const amount = Number(data.totalAmount) || 0;
 
-        if (!isCancelled) totalRevenue += amount;
+        // ONLY add to revenue if status is "Delivered"
+        if (isDelivered) totalRevenue += amount;
         if (isProcessing) pendingOrdersCount++;
 
         const itemsSummary = Array.isArray(data.items)
@@ -718,6 +775,7 @@ async function loadAdminDashboard(db) {
                 badge.style = "";
               }
             }
+            initAdminDashboard(db); // Re-calculate dashboard metrics live
           } catch (error) {
             console.error("Update error:", error);
             alert("Failed to update status.");

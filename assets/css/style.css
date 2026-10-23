@@ -2814,3 +2814,248 @@ body {
   background: #57a05f;
   box-shadow: 0 0 10px rgba(87, 160, 95, 0.4);
 }
+/* =========================================
+   PASSWORD EYE TOGGLE STYLES
+========================================= */
+/* Hide browser default password reveal icons (Edge / WebKit) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+  width: 0;
+  height: 0;
+}
+
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.password-input-wrapper .auth-input {
+  margin-bottom: 0 !important;
+  padding-right: 48px !important;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--brown-soft);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, transform 0.2s;
+  z-index: 2;
+}
+
+.toggle-password-btn:hover {
+  color: var(--caramel);
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* =========================================
+   NEW PROFILE HERO CARD & STATS DESIGN
+========================================= */
+.profile-hero-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 32px;
+  box-shadow: var(--shadow);
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  border: 1px solid rgba(74, 55, 40, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.profile-avatar-wrapper {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.profile-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--caramel);
+  box-shadow: 0 8px 24px rgba(168, 90, 62, 0.25);
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: var(--caramel);
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, background 0.2s ease;
+  border: 2px solid var(--white);
+}
+
+.avatar-edit-badge:hover {
+  transform: scale(1.15);
+  background: var(--brown);
+}
+
+.profile-user-info {
+  flex: 1;
+  min-width: 250px;
+}
+
+.profile-user-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profile-user-header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem;
+  color: var(--brown);
+  margin: 0;
+}
+
+.profile-email-text {
+  color: var(--brown-soft);
+  margin: 2px 0 12px;
+  font-size: 0.95rem;
+}
+
+.cookie-rank-pill {
+  font-size: 0.85rem;
+  padding: 6px 14px;
+  background: var(--cream);
+  color: var(--brown);
+  border: 1px solid rgba(74, 55, 40, 0.2);
+}
+
+.rank-progress-wrapper {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  background: rgba(74, 55, 40, 0.05);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-top: 8px;
+  border: 1px dashed rgba(74, 55, 40, 0.15);
+}
+
+.rank-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.rank-progress-labels span:first-child {
+  color: var(--brown);
+  font-weight: bold;
+}
+
+.rank-progress-labels span:last-child {
+  color: var(--brown-soft);
+}
+
+.rank-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(74, 55, 40, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+#rank-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--caramel);
+  transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border-radius: 999px;
+}
+
+.logout-btn-hero {
+  padding: 10px 22px;
+  font-size: 0.9rem;
+  align-self: flex-start;
+}
+
+/* Quick Stats Bar */
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  padding-top: 20px;
+  border-top: 1px dashed rgba(74, 55, 40, 0.15);
+}
+
+.profile-stat-box {
+  background: var(--cream-light);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid rgba(74, 55, 40, 0.08);
+}
+
+.profile-stat-box .stat-icon {
+  font-size: 1.8rem;
+}
+
+.profile-stat-box strong {
+  display: block;
+  font-size: 1.25rem;
+  color: var(--caramel);
+  line-height: 1.2;
+}
+
+.profile-stat-box small {
+  font-size: 0.78rem;
+  color: var(--brown-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .profile-hero-card {
+  background: var(--white);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .profile-stat-box {
+  background: var(--cream);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+/* Hide browser default password reveal icons (Edge / WebKit) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none !important;
+  width: 0;
+  height: 0;
+}
