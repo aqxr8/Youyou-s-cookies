@@ -1,13 +1,12 @@
 /* =========================================================
    Youyou's Cookies - main.js
-   Shared helpers + header / nav / theme / status pill
-   (hero carousel lives in features.js)
+   Header / Navigation / Theme / Status Pill / Mobile Drawer
    ========================================================= */
 
 // Delivery window in Morocco time (24h). All week from 15:00 to 20:00.
 window.YOUYOU_HOURS = { open: 15, close: 20 };
 
-// Current time in Morocco, independent of the visitor's device timezone.
+// Current time in Morocco, independent of visitor device timezone.
 window.getMoroccoTime = function () {
   try {
     const parts = new Intl.DateTimeFormat("en-GB", {
@@ -82,27 +81,43 @@ function initHeader() {
 }
 
 function initMobileNav() {
-  const navToggle = document.querySelector(".nav-toggle");
-  const mainNav = document.querySelector(".main-nav");
+  const navToggle = document.getElementById("nav-toggle") || document.querySelector(".nav-toggle");
+  const mainNav = document.getElementById("main-nav") || document.querySelector(".main-nav");
+  const closeBtn = document.getElementById("nav-close") || document.querySelector(".nav-close");
+
   if (!navToggle || !mainNav) return;
+
+  let backdrop = document.querySelector(".nav-backdrop");
+  if (!backdrop) {
+    backdrop = document.createElement("div");
+    backdrop.className = "nav-backdrop";
+    document.body.appendChild(backdrop);
+  }
+
+  const open = () => {
+    mainNav.classList.add("open");
+    backdrop.classList.add("show");
+    navToggle.setAttribute("aria-expanded", "true");
+    document.body.style.overflow = "hidden";
+  };
 
   const close = () => {
     mainNav.classList.remove("open");
+    backdrop.classList.remove("show");
     navToggle.setAttribute("aria-expanded", "false");
+    document.body.style.overflow = "";
   };
 
-  navToggle.setAttribute("aria-expanded", "false");
   navToggle.addEventListener("click", () => {
-    mainNav.classList.add("open");
-    navToggle.setAttribute("aria-expanded", "true");
+    if (mainNav.classList.contains("open")) close();
+    else open();
   });
+
+  if (closeBtn) closeBtn.addEventListener("click", close);
+  backdrop.addEventListener("click", close);
 
   mainNav.addEventListener("click", (e) => {
-    if (e.target.closest("a") || e.target.classList.contains("nav-close")) close();
-  });
-
-  document.addEventListener("click", (e) => {
-    if (mainNav.classList.contains("open") && !mainNav.contains(e.target) && !navToggle.contains(e.target)) close();
+    if (e.target.closest("a")) close();
   });
 
   document.addEventListener("keydown", (e) => {

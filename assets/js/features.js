@@ -192,7 +192,6 @@ async function initNotesWall() {
 
   if (!grid) return;
 
-  // Fetch approved reviews from Firestore
   if (window.fetchApprovedReviews) {
     grid.innerHTML = `<p style="text-align: center; color: var(--brown-soft); grid-column: 1/-1;">Loading sweet words...</p>`;
     const approvedNotes = await window.fetchApprovedReviews();
@@ -406,6 +405,21 @@ function initCart() {
   };
 
   function updateCartUI() {
+    const cartBadge = document.getElementById('cart-badge');
+    let totalItemCount = 0;
+    cart.forEach(item => {
+      totalItemCount += item.quantity;
+    });
+
+    if (cartBadge) {
+      if (totalItemCount > 0) {
+        cartBadge.textContent = totalItemCount;
+        cartBadge.style.display = 'flex';
+      } else {
+        cartBadge.style.display = 'none';
+      }
+    }
+
     if (!cartItemsList) return;
 
     let subtotal = 0;
@@ -413,7 +427,6 @@ function initCart() {
       subtotal += (item.price * item.quantity);
     });
 
-    // Delivery fee logic: Free if subtotal >= 100 DH, otherwise 15 DH standard fee (or change as needed)
     const STANDARD_DELIVERY_FEE = 15;
     const FREE_SHIPPING_THRESHOLD = 100;
     const deliveryFee = subtotal === 0 ? 0 : (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_DELIVERY_FEE);
