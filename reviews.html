@@ -55,11 +55,9 @@
       </div>
 
       <!-- Main Navigation -->
-      <!-- Main Navigation -->
       <nav class="main-nav" style="display: flex; align-items: center;">
         <button class="nav-close" aria-label="Close Menu">&times;</button>
         
-        <!-- CSS to fix ONLY the mobile drawer version without touching PC -->
         <style>
           .mobile-icon-wrapper {
             display: flex; 
@@ -69,20 +67,17 @@
             .mobile-icon-wrapper {
               width: 100%;
               justify-content: center;
-              margin: 20px auto 40px auto; /* Adds clean breathing room above the Home link */
-              gap: 35px; /* Perfect spacing between User and Cart on mobile */
+              margin: 20px auto 40px auto;
+              gap: 35px;
             }
             .mobile-icon-wrapper a {
-              margin-right: 0 !important; /* Removes the PC margins so they center perfectly */
-              transform: scale(1.2); /* Makes them slightly bigger and nicer to tap on phones */
+              margin-right: 0 !important;
+              transform: scale(1.2);
             }
           }
         </style>
 
-        <!-- WRAPPER (Invisible on PC, acts as a layout fixer on Mobile) -->
         <div class="mobile-icon-wrapper">
-          
-          <!-- ORIGINAL USER ICON (PC style preserved) -->
           <a href="login.html" id="user-icon-link" aria-label="User Account" style="color: inherit; display: flex; align-items: center; margin-right: 15px; transition: 0.2s;">
             <div id="user-icon-wrapper" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; border: 1px solid var(--caramel);">
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
@@ -92,13 +87,11 @@
             </div>
           </a>
 
-          <!-- ORIGINAL CART ICON (PC style preserved) -->
           <a href="#" onclick="window.openBoxModal(); return false;" id="nav-cart-icon" aria-label="Open Cart" style="color: inherit; display: flex; align-items: center; margin-right: 20px; position: relative; transition: 0.2s;">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
               <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
             </svg>
           </a>
-          
         </div>
 
         <a href="index.html"><span class="nav-icon"></span> Home</a>
@@ -138,7 +131,7 @@
             <div class="star-rating">★★★★★</div>
             <h3>The Best in Town!</h3>
             <p>"I've tried every bakery in the city, but Aya's chocolate chunk cookies are on another level. The brown butter makes such a difference. I'm officially addicted!"</p>
-            <span class="press-src">—  Malak </span>
+            <span class="press-src">— Malak </span>
           </article>
           
           <article class="press-card reveal">
@@ -161,15 +154,14 @@
     <section class="section">
       <div class="container">
         <div class="section-head reveal">
-          <span class="en">Message Wall</span>
-          <h2>Leave a Review or Note</h2>
+          <span class="en">Leave Your Thoughts</span>
+          <h2>Write a Review or Note</h2>
           <div class="divider"></div>
           <p style="text-align: center; margin-top: 15px; color: #555;">Did you love your cookies? Drop a rating and leave a message for Aya!</p>
         </div>
         
-        <div class="notes-grid" id="notes-grid"></div>
-        
-        <form class="note-form reveal" id="note-form">
+        <!-- REVIEW FORM PLACED AT THE TOP -->
+        <form class="note-form reveal" id="note-form" style="margin-bottom: 50px;">
           <label for="note-name">Your Name / Nickname</label>
           <input id="note-name" name="note-name" maxlength="25" placeholder="e.g. Cookie Monster" required>
           
@@ -187,6 +179,15 @@
           
           <button class="btn btn-dark" type="submit">Post Review</button>
         </form>
+
+        <!-- MESSAGE WALL GRID BELOW FORM -->
+        <div class="section-head reveal" style="margin-top: 20px;">
+          <span class="en">Community Wall</span>
+          <h2>Public Message Wall</h2>
+          <div class="divider"></div>
+        </div>
+        <div class="notes-grid" id="notes-grid"></div>
+
       </div>
     </section>
 
