@@ -194,7 +194,7 @@ function updateProfileRankBadge(totalSpent) {
   }
 }
 
-// --- GLOBAL SAVE ORDER METHOD ---
+// --- GLOBAL SAVE ORDER METHOD WITH MULTI-ADMIN TELEGRAM NOTIFICATION ---
 
 window.saveOrderToFirestore = async function (orderData) {
   try {
@@ -247,9 +247,44 @@ window.saveOrderToFirestore = async function (orderData) {
     };
 
     const docRef = await addDoc(collection(db, "orders"), finalData);
+
+    // --- TELEGRAM MULTI-ADMIN NOTIFICATION ---
+    const TELEGRAM_BOT_TOKEN = "8882054977:AAGihV3wi-XNQLbRBcBn3ExO8pWR4mKwtpM"; // Replace with your token from @BotFather
+    
+    // Configured with Mohamed's and Aya's Telegram Chat IDs
+    const ADMIN_CHAT_IDS = [
+      "7932537222", // Mohamed
+      "7523215470"  // Aya
+    ];
+
+    const itemsText = items
+      .map(i => `• ${i.quantity}x ${i.name} (${i.price * i.quantity} DH)`)
+      .join("\n");
+
+    const telegramMsg = `🚨 *NEW ORDER RECEIVED!* 🚨\n\n` +
+      `👤 *Customer:* ${finalData.customerName}\n` +
+      `📞 *Phone:* ${finalData.phone || "N/A"}\n` +
+      `📍 *Address:* ${finalData.address}\n\n` +
+      `🛍️ *Items:*\n${itemsText}\n\n` +
+      `💰 *Total:* ${totalAmount} DH`;
+
+    ADMIN_CHAT_IDS.forEach((chatId) => {
+      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: telegramMsg,
+          parse_mode: "Markdown"
+        })
+      }).catch(err => console.warn(`Telegram alert failed for Chat ID ${chatId}:`, err));
+    });
+    // ----------------------------------------
+
     if (user) {
       await updateDoc(doc(db, "users", user.uid), { cart: [] });
     }
+
     localStorage.removeItem("youyou_cart");
     return docRef.id;
   } catch (error) {
@@ -651,7 +686,7 @@ async function loadAdminDashboard(db) {
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(74,55,40,0.15);">
-            <div style="font-size: 1.2rem; font-weight: bold; color: ${isCancelled ? "#888; text-decoration: line-through;" : "var(--caramel);"}">
+            <div style="font-size: 1.2rem; font-weight: bold; color: ${isCancelled ? "#888; text-decoration: line-through;" : "var(--caramel);" }">
               ${amount} DH
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
