@@ -450,6 +450,8 @@ function initCart() {
         if(promoMsg) {
             promoMsg.textContent = "Promo removed (minimum amount not met).";
             promoMsg.className = "promo-message error";
+            promoMsg.style.display = "block";
+            promoMsg.style.color = "#c62828";
         }
         if(discountRow) discountRow.style.display = "none";
       } else {
@@ -732,7 +734,8 @@ function initCart() {
         address: address || "Settat",
         items: cart,
         totalAmount: finalTotal,
-        promoCode: window.activePromo ? window.activePromo.code : null
+        promoCode: window.activePromo ? window.activePromo.code : null,
+        discountAmount: totalDiscount
       });
     }
 
@@ -764,6 +767,115 @@ function initCart() {
     cart = [];
     window.activePromo = null;
     saveCart();
+  }
+
+  // Apply a coupon that was created in the admin dashboard.
+  window.applyPromoCode = async function () {
+    const input = document.getElementById("promo-code-input");
+    const message = document.getElementById("promo-message");
+    const button = document.getElementById("btn-apply-promo");
+
+    const showMessage = (text, isError = false) => {
+      if (!message) return;
+      message.textContent = text;
+      message.style.display = "block";
+      message.style.color = isError ? "#c62828" : "#2e7d32";
+      message.setAttribute("role", "status");
+    };
+
+    const code = String(input?.value || "").trim().toUpperCase();
+    if (!code) {
+      showMessage("Enter a promo code first.", true);
+      input?.focus();
+      return;
+    }
+
+    const subtotal = cart.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 0), 0);
+    if (subtotal <= 0) {
+      showMessage("Add something to your box before applying a coupon.", true);
+      return;
+    }
+
+    const originalButtonText = button ? button.textContent : "Apply";
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Checking...";
+    }
+
+    try {
+      const { db, firestore } = await getPromoFirebaseContext();
+      const promoQuery = firestore.query(
+        firestore.collection(db, "promo_codes"),
+        firestore.where("code", "==", code),
+        firestore.where("active", "==", true)
+      );
+      const snapshot = await firestore.getDocs(promoQuery);
+
+      if (snapshot.empty) {
+        showMessage("This promo code does not exist or is currently disabled.", true);
+        return;
+      }
+
+      const matchingDoc = snapshot.docs[0];
+
+      const data = matchingDoc.data();
+      const minAmount = Math.max(0, Number(data.minAmount) || 0);
+      if (subtotal < minAmount) {
+        showMessage(`This coupon requires an order of at least ${minAmount} DH.`, true);
+        return;
+      }
+
+      if (data.type === "discount_percent") {
+        const value = Number(data.value);
+        if (!Number.isFinite(value) || value <= 0 || value > 100) {
+          showMessage("This coupon has an invalid discount. Please contact the store.", true);
+          return;
+        }
+      } else if (data.type === "discount_fixed") {
+        const value = Number(data.value);
+        if (!Number.isFinite(value) || value <= 0) {
+          showMessage("This coupon has an invalid discount. Please contact the store.", true);
+          return;
+        }
+      } else if (data.type === "free_item") {
+        if (!String(data.value || "").trim()) {
+          showMessage("This coupon has an invalid reward. Please contact the store.", true);
+          return;
+        }
+      } else {
+        showMessage("This coupon uses an unsupported reward type.", true);
+        return;
+      }
+
+      window.activePromo = {
+        id: matchingDoc.id,
+        code: String(data.code || code).trim().toUpperCase(),
+        minAmount,
+        type: data.type,
+        value: data.value,
+        active: true
+      };
+      updateCartUI();
+      showMessage(`Coupon ${window.activePromo.code} applied successfully!`);
+    } catch (error) {
+      console.error("Unable to apply promo code:", error);
+      showMessage("Could not verify this coupon. Check your connection or Firebase permissions and try again.", true);
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = originalButtonText;
+      }
+    }
+  };
+
+  const promoInput = document.getElementById("promo-code-input");
+  if (promoInput) {
+    promoInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        window.applyPromoCode();
+      }
+    });
   }
 
   updateCartUI();
@@ -798,268 +910,296 @@ function init3DHoverEffect() {
 }
 
 /* =========================================================
-   ADVANCED ADMIN PROMO CODE ENGINE (UPDATED FOR SEPARATE INPUTS)
+   SHARED FIRESTORE PROMO CODE ENGINE
+   Uses the same modular Firebase SDK as auth.js.
 ========================================================= */
+const YOUYOU_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk",
+  authDomain: "youyous-cookies.firebaseapp.com",
+  projectId: "youyous-cookies",
+  storageBucket: "youyous-cookies.firebasestorage.app",
+  messagingSenderId: "893318787156",
+  appId: "1:893318787156:web:9780bb29b3eb597db97dc1",
+  measurementId: "G-85M038ZLQ2"
+};
+
+let youyouPromoFirebasePromise = null;
+
+async function getPromoFirebaseContext() {
+  if (!youyouPromoFirebasePromise) {
+    youyouPromoFirebasePromise = (async () => {
+      const appSdk = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+      const firestore = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+      const authSdk = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
+      const app = appSdk.getApps().find((candidate) => candidate.name === "[DEFAULT]")
+        || appSdk.initializeApp(YOUYOU_FIREBASE_CONFIG);
+      return { db: firestore.getFirestore(app), firestore, auth: authSdk.getAuth(app), authSdk };
+    })().catch((error) => {
+      youyouPromoFirebasePromise = null;
+      throw error;
+    });
+  }
+  return youyouPromoFirebasePromise;
+}
+
+async function requirePromoAdmin(context) {
+  let user = context.auth.currentUser;
+  if (!user) {
+    user = await new Promise((resolve, reject) => {
+      let unsubscribe = () => {};
+      unsubscribe = context.authSdk.onAuthStateChanged(
+        context.auth,
+        (currentUser) => {
+          unsubscribe();
+          resolve(currentUser);
+        },
+        (error) => {
+          unsubscribe();
+          reject(error);
+        }
+      );
+    });
+  }
+  if (!user || String(user.email || "").toLowerCase() !== "youyouscookies@gmail.com") {
+    throw new Error("Please sign in with the store administrator account before managing coupons.");
+  }
+  return user;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const addPromoForm = document.getElementById("add-promo-form");
   const promoTypeSelect = document.getElementById("new-promo-type");
   const adminPromoList = document.getElementById("admin-promo-list");
-
-  // Separate inputs from the updated admin form
-  const valPercent = document.getElementById("val-percent");
-  const valFixed = document.getElementById("val-fixed");
-  const valFree = document.getElementById("val-free");
-
-  if (addPromoForm && adminPromoList) {
-    const db = firebase.firestore();
-
-    // 1. Load Promos from Firestore
-    function loadAdminPromos() {
-      db.collection('promo_codes').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
-        adminPromoList.innerHTML = "";
-        
-        if(snapshot.empty) {
-          adminPromoList.innerHTML = "<p style='color: var(--brown-soft); padding: 10px;'>No promo codes created yet.</p>";
-          return;
-        }
-
-        snapshot.forEach(doc => {
-          const promo = doc.data();
-          
-          let rewardText = "";
-          if (promo.type === 'discount_percent') rewardText = `${promo.value}% OFF`;
-          else if (promo.type === 'discount_fixed') rewardText = `${promo.value} DH OFF`;
-          else rewardText = `FREE GIFT: ${promo.value}`;
-
-          let conditionText = promo.minAmount > 0 
-            ? `Orders over ${promo.minAmount} DH` 
-            : `No minimum amount required`;
-
-          const statusClass = promo.active ? 'active' : 'disabled';
-          const statusText = promo.active ? 'Active' : 'Disabled';
-          const toggleActionText = promo.active ? 'Disable' : 'Enable';
-
-          adminPromoList.innerHTML += `
-            <div class="admin-promo-item ${!promo.active ? 'disabled' : ''}">
-              <div class="promo-info">
-                <h3>
-                  ${promo.code} 
-                  <span class="promo-status-badge ${statusClass}">${statusText}</span>
-                </h3>
-                <p><strong>Reward:</strong> ${rewardText} &nbsp;|&nbsp; <strong>Condition:</strong> ${conditionText}</p>
-              </div>
-              <div class="promo-actions">
-                <button class="btn-promo-action btn-toggle-promo" onclick="window.togglePromoStatus('${doc.id}', ${promo.active})">${toggleActionText}</button>
-                <button class="btn-promo-action btn-delete-promo" onclick="window.deletePromoCode('${doc.id}')">Delete</button>
-              </div>
-            </div>
-          `;
-        });
-      });
-    }
-
-    // 2. Add New Promo Code to Firestore (Grabbing from the correct visible input)
-    addPromoForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      
-      const code = document.getElementById("new-promo-code").value.trim().toUpperCase();
-      const minAmount = parseFloat(document.getElementById("new-promo-min-amount").value) || 0;
-      const type = promoTypeSelect.value;
-      
-      let finalValue = "";
-      if (type === "discount_percent") {
-        finalValue = parseFloat(valPercent.value);
-        if (!finalValue) return alert("Please enter a valid percentage.");
-      } else if (type === "discount_fixed") {
-        finalValue = parseFloat(valFixed.value);
-        if (!finalValue) return alert("Please enter a valid amount.");
-      } else if (type === "free_item") {
-        finalValue = valFree.value.trim();
-        if (!finalValue) return alert("Please enter the free item name.");
-      }
-
-      const submitBtn = addPromoForm.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = "Saving...";
-
-      try {
-        await db.collection('promo_codes').add({
-          code: code,
-          minAmount: minAmount,
-          type: type,
-          value: finalValue,
-          active: true,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        addPromoForm.reset();
-        if(promoTypeSelect) promoTypeSelect.dispatchEvent(new Event('change'));
-        
-      } catch (error) {
-        alert("Error creating promo code: " + error.message);
-      } finally {
-        submitBtn.textContent = originalText;
-      }
-    });
-
-    // 3. Toggle Enable/Disable
-    window.togglePromoStatus = async function(docId, currentStatus) {
-      try {
-        await db.collection('promo_codes').doc(docId).update({ active: !currentStatus });
-      } catch (error) {
-        alert("Failed to update status.");
-      }
-    };
-
-    // 4. Delete Promo Code
-    window.deletePromoCode = async function(docId) {
-      if(confirm("Permanently delete this promo code?")) {
-        try {
-          await db.collection('promo_codes').doc(docId).delete();
-        } catch (error) {
-          alert("Failed to delete.");
-        }
-      }
-    };
-
-    loadAdminPromos();
-  }
-});
-
-/* =========================================================
-   ADVANCED ADMIN PROMO CODE ENGINE (BULLETPROOF)
-========================================================= */
-document.addEventListener("DOMContentLoaded", () => {
-  const addPromoForm = document.getElementById("add-promo-form");
-  const promoTypeSelect = document.getElementById("new-promo-type");
-  const adminPromoList = document.getElementById("admin-promo-list");
+  if (!addPromoForm || !adminPromoList) return;
 
   const valPercent = document.getElementById("val-percent");
   const valFixed = document.getElementById("val-fixed");
   const valFree = document.getElementById("val-free");
+  let promoSnapshotDocs = [];
 
-  if (addPromoForm && adminPromoList) {
-    const db = firebase.firestore();
+  let feedback = document.getElementById("admin-promo-feedback");
+  if (!feedback) {
+    feedback = document.createElement("p");
+    feedback.id = "admin-promo-feedback";
+    feedback.setAttribute("role", "status");
+    feedback.style.cssText = "display:none; margin:10px 0 16px; font-weight:600; font-size:.9rem;";
+    addPromoForm.insertAdjacentElement("afterend", feedback);
+  }
 
-    // 1. Load Promos from Firestore in Real-Time
-    function loadAdminPromos() {
-      db.collection('promo_codes').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
-        adminPromoList.innerHTML = "";
-        
-        if(snapshot.empty) {
-          adminPromoList.innerHTML = "<p style='color: var(--brown-soft); padding: 10px;'>No promo codes created yet.</p>";
-          return;
-        }
+  const setFeedback = (text, isError = false) => {
+    feedback.textContent = text;
+    feedback.style.display = text ? "block" : "none";
+    feedback.style.color = isError ? "#c62828" : "#2e7d32";
+  };
 
-        snapshot.forEach(doc => {
-          const promo = doc.data();
-          
-          let rewardText = "";
-          if (promo.type === 'discount_percent') rewardText = `${promo.value}% OFF`;
-          else if (promo.type === 'discount_fixed') rewardText = `${promo.value} DH OFF`;
-          else rewardText = `FREE GIFT: ${promo.value}`;
+  const formatReward = (promo) => {
+    if (promo.type === "discount_percent") return `${Number(promo.value)}% OFF`;
+    if (promo.type === "discount_fixed") return `${Number(promo.value)} DH OFF`;
+    return `FREE GIFT: ${String(promo.value || "")}`;
+  };
 
-          let conditionText = promo.minAmount > 0 
-            ? `Orders over ${promo.minAmount} DH` 
-            : `No minimum amount required`;
+  const renderPromos = (docs) => {
+    promoSnapshotDocs = docs;
+    adminPromoList.replaceChildren();
 
-          const statusClass = promo.active ? 'active' : 'disabled';
-          const statusText = promo.active ? 'Active' : 'Disabled';
-          const toggleActionText = promo.active ? 'Disable' : 'Enable';
-
-          adminPromoList.innerHTML += `
-            <div class="admin-promo-item ${!promo.active ? 'disabled' : ''}">
-              <div class="promo-info">
-                <h3>
-                  ${promo.code} 
-                  <span class="promo-status-badge ${statusClass}">${statusText}</span>
-                </h3>
-                <p><strong>Reward:</strong> ${rewardText} &nbsp;|&nbsp; <strong>Condition:</strong> ${conditionText}</p>
-              </div>
-              <div class="promo-actions">
-                <button class="btn-promo-action btn-toggle-promo" onclick="window.togglePromoStatus('${doc.id}', ${promo.active})">${toggleActionText}</button>
-                <button class="btn-promo-action btn-delete-promo" onclick="window.deletePromoCode('${doc.id}')">Delete</button>
-              </div>
-            </div>
-          `;
-        });
-      }, (error) => {
-        console.error("Firestore loading error:", error);
-        adminPromoList.innerHTML = `<p style='color: #d9534f; padding: 10px;'>Error loading coupons. Check Firebase rules.</p>`;
-      });
+    if (!docs.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "No promo codes created yet.";
+      empty.style.cssText = "color:var(--brown-soft); padding:10px;";
+      adminPromoList.appendChild(empty);
+      return;
     }
 
-    // 2. Add New Promo Code to Firestore
-    addPromoForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      
-      const codeInput = document.getElementById("new-promo-code");
-      const minAmountInput = document.getElementById("new-promo-min-amount");
-      
-      const code = codeInput.value.trim().toUpperCase();
-      const minAmount = parseFloat(minAmountInput.value) || 0;
-      const type = promoTypeSelect.value;
-      
-      let finalValue = "";
-      if (type === "discount_percent") {
-        finalValue = parseFloat(valPercent.value);
-        if (isNaN(finalValue)) return alert("Please enter a valid percentage number.");
-      } else if (type === "discount_fixed") {
-        finalValue = parseFloat(valFixed.value);
-        if (isNaN(finalValue)) return alert("Please enter a valid amount number.");
-      } else if (type === "free_item") {
-        finalValue = valFree.value.trim();
-        if (!finalValue) return alert("Please enter the free item name.");
-      }
+    docs.forEach((promoDoc) => {
+      const promo = promoDoc.data();
+      const active = promo.active === true;
+      const card = document.createElement("div");
+      card.className = `admin-promo-item ${active ? "" : "disabled"}`;
 
-      const submitBtn = addPromoForm.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = "Saving...";
+      const info = document.createElement("div");
+      info.className = "promo-info";
+      const title = document.createElement("h3");
+      title.appendChild(document.createTextNode(String(promo.code || "(missing code)")));
+      const badge = document.createElement("span");
+      badge.className = `promo-status-badge ${active ? "active" : "disabled"}`;
+      badge.textContent = active ? "Active" : "Disabled";
+      title.appendChild(badge);
 
-      try {
-        await db.collection('promo_codes').add({
-          code: code,
-          minAmount: minAmount,
-          type: type,
-          value: finalValue,
-          active: true,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        console.log("Promo code successfully saved to Firestore!");
-        addPromoForm.reset();
-        
-        // Reset inputs visibility
-        if(promoTypeSelect) promoTypeSelect.dispatchEvent(new Event('change'));
-        
-      } catch (error) {
-        console.error("Error saving promo code:", error);
-        alert("Failed to save promo code: " + error.message);
-      } finally {
-        submitBtn.textContent = originalText;
-      }
+      const details = document.createElement("p");
+      const minAmount = Math.max(0, Number(promo.minAmount) || 0);
+      details.textContent = `Reward: ${formatReward(promo)} | Condition: ${minAmount > 0 ? `Orders over ${minAmount} DH` : "No minimum amount required"}`;
+      info.append(title, details);
+
+      const actions = document.createElement("div");
+      actions.className = "promo-actions";
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "btn-promo-action btn-toggle-promo";
+      toggle.dataset.promoAction = "toggle";
+      toggle.dataset.id = promoDoc.id;
+      toggle.textContent = active ? "Disable" : "Enable";
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "btn-promo-action btn-delete-promo";
+      remove.dataset.promoAction = "delete";
+      remove.dataset.id = promoDoc.id;
+      remove.textContent = "Delete";
+      actions.append(toggle, remove);
+      card.append(info, actions);
+      adminPromoList.appendChild(card);
     });
+  };
 
-    // 3. Toggle Enable/Disable
-    window.togglePromoStatus = async function(docId, currentStatus) {
-      try {
-        await db.collection('promo_codes').doc(docId).update({ active: !currentStatus });
-      } catch (error) {
-        alert("Failed to update status.");
-      }
-    };
-
-    // 4. Delete Promo Code
-    window.deletePromoCode = async function(docId) {
-      if(confirm("Permanently delete this promo code?")) {
-        try {
-          await db.collection('promo_codes').doc(docId).delete();
-        } catch (error) {
-          alert("Failed to delete.");
+  const startPromoListener = async () => {
+    try {
+      const context = await getPromoFirebaseContext();
+      await requirePromoAdmin(context);
+      const { db, firestore } = context;
+      firestore.onSnapshot(
+        firestore.collection(db, "promo_codes"),
+        (snapshot) => {
+          const docs = [...snapshot.docs].sort((a, b) => {
+            const aTime = a.data().createdAt?.toMillis?.() || 0;
+            const bTime = b.data().createdAt?.toMillis?.() || 0;
+            return bTime - aTime;
+          });
+          renderPromos(docs);
+        },
+        (error) => {
+          console.error("Error loading promo codes:", error);
+          adminPromoList.textContent = "Could not load promo codes. Check Firestore permissions.";
+          adminPromoList.style.color = "#c62828";
         }
-      }
-    };
+      );
+    } catch (error) {
+      console.error("Unable to initialize promo manager:", error);
+      adminPromoList.textContent = "Could not connect to Firebase. Check the browser console for details.";
+      adminPromoList.style.color = "#c62828";
+    }
+  };
 
-    loadAdminPromos();
-  }
+  addPromoForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    setFeedback("");
+
+    const codeInput = document.getElementById("new-promo-code");
+    const minAmountInput = document.getElementById("new-promo-min-amount");
+    const code = String(codeInput?.value || "").trim().toUpperCase();
+    const minAmount = Number(minAmountInput?.value);
+    const type = promoTypeSelect?.value;
+    let value;
+
+    if (!code) {
+      setFeedback("Please enter a promo code.", true);
+      codeInput?.focus();
+      return;
+    }
+    if (!Number.isFinite(minAmount) || minAmount < 0) {
+      setFeedback("Please enter a valid minimum order amount.", true);
+      return;
+    }
+    if (type === "discount_percent") {
+      value = Number(valPercent?.value);
+      if (!Number.isFinite(value) || value < 1 || value > 100) {
+        setFeedback("Enter a percentage between 1 and 100.", true);
+        valPercent?.focus();
+        return;
+      }
+    } else if (type === "discount_fixed") {
+      value = Number(valFixed?.value);
+      if (!Number.isFinite(value) || value <= 0) {
+        setFeedback("Enter a fixed discount greater than 0 DH.", true);
+        valFixed?.focus();
+        return;
+      }
+    } else if (type === "free_item") {
+      value = String(valFree?.value || "").trim();
+      if (!value) {
+        setFeedback("Enter the name of the free gift.", true);
+        valFree?.focus();
+        return;
+      }
+    } else {
+      setFeedback("Please select a valid reward type.", true);
+      return;
+    }
+
+    const submitButton = addPromoForm.querySelector('button[type="submit"]');
+    const originalText = submitButton?.textContent || "Save Promo Code";
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Saving...";
+    }
+
+    try {
+      const context = await getPromoFirebaseContext();
+      await requirePromoAdmin(context);
+      const { db, firestore } = context;
+      const existing = await firestore.getDocs(firestore.collection(db, "promo_codes"));
+      const duplicate = existing.docs.some((promoDoc) =>
+        String(promoDoc.data().code || "").trim().toUpperCase() === code
+      );
+      if (duplicate) {
+        setFeedback(`The promo code ${code} already exists. Choose a different code.`, true);
+        return;
+      }
+
+      await firestore.addDoc(firestore.collection(db, "promo_codes"), {
+        code,
+        minAmount,
+        type,
+        value,
+        active: true,
+        createdAt: firestore.serverTimestamp()
+      });
+
+      addPromoForm.reset();
+      if (promoTypeSelect) promoTypeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      setFeedback(`Promo code ${code} saved successfully. It should now appear in the list below.`);
+    } catch (error) {
+      console.error("Error saving promo code:", error);
+      setFeedback(`Failed to save promo code: ${error.message || "Unknown Firebase error"}`, true);
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
+      }
+    }
+  });
+
+  adminPromoList.addEventListener("click", async (event) => {
+    const button = event.target.closest("button[data-promo-action]");
+    if (!button) return;
+    const id = button.dataset.id;
+    const action = button.dataset.promoAction;
+    if (!id) return;
+    if (action === "delete" && !window.confirm("Permanently delete this promo code?")) return;
+
+    button.disabled = true;
+    try {
+      const context = await getPromoFirebaseContext();
+      await requirePromoAdmin(context);
+      const { db, firestore } = context;
+      if (action === "toggle") {
+        const record = promoSnapshotDocs.find((item) => item.id === id);
+        if (!record) throw new Error("Promo code not found. Refresh the page and try again.");
+        await firestore.updateDoc(firestore.doc(db, "promo_codes", id), {
+          active: record.data().active !== true
+        });
+        setFeedback("Promo status updated.");
+      } else if (action === "delete") {
+        await firestore.deleteDoc(firestore.doc(db, "promo_codes", id));
+        setFeedback("Promo code deleted.");
+      }
+    } catch (error) {
+      console.error("Unable to update promo code:", error);
+      setFeedback(`Promo action failed: ${error.message || "Unknown Firebase error"}`, true);
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  startPromoListener();
 });
+

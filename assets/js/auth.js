@@ -219,7 +219,13 @@ window.saveOrderToFirestore = async function (orderData) {
 
     if (items.length === 0) return null;
 
-    const totalAmount = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const subtotalAmount = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const requestedTotal = Number(orderData.totalAmount);
+    const totalAmount = orderData.totalAmount !== undefined && orderData.totalAmount !== null && Number.isFinite(requestedTotal)
+      ? Math.max(0, requestedTotal)
+      : subtotalAmount;
+    const promoCode = String(orderData.promoCode || "").trim().toUpperCase() || null;
+    const discountAmount = Math.max(0, Number(orderData.discountAmount) || 0);
 
     const finalData = {
       userId: user ? user.uid : "guest",
@@ -233,6 +239,9 @@ window.saveOrderToFirestore = async function (orderData) {
       phone: String(finalPhone || "").slice(0, 30),
       address: String(finalAddress || "Settat").slice(0, 400),
       items: items,
+      subtotalAmount: subtotalAmount,
+      discountAmount: discountAmount,
+      promoCode: promoCode,
       totalAmount: totalAmount,
       status: "Processing",
       date: new Date().toLocaleDateString("en-US", {
@@ -262,6 +271,8 @@ window.saveOrderToFirestore = async function (orderData) {
       `📞 *Phone:* ${finalData.phone || "N/A"}\n` +
       `📍 *Address:* ${finalData.address}\n\n` +
       `🛍️ *Items:*\n${itemsText}\n\n` +
+      `🧾 *Subtotal:* ${subtotalAmount} DH\n` +
+      (promoCode ? `🎟️ *Promo Code:* ${promoCode}\n💸 *Discount:* ${discountAmount} DH\n` : "") +
       `💰 *Total:* ${totalAmount} DH`;
 
     fetch("/api/telegram", {
@@ -745,7 +756,8 @@ async function loadAdminDashboard(db) {
             <strong>Items:</strong> ${itemsSummary}<br>
             <strong>Customer:</strong> ${esc(data.customerName || data.userEmail || "Guest")}<br>
             <strong>Phone:</strong> <span style="color: ${data.phone ? "inherit" : "#d9534f"}">${esc(data.phone || "N/A")}</span><br>
-            <strong>Address:</strong> ${esc(data.address || "Settat")}
+            <strong>Address:</strong> ${esc(data.address || "Settat")}<br>
+            ${data.promoCode ? `<strong>Promo code:</strong> ${esc(data.promoCode)}${Number(data.discountAmount) > 0 ? ` (−${Number(data.discountAmount).toFixed(2)} DH)` : ""}<br>` : ""}
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(74,55,40,0.15);">
