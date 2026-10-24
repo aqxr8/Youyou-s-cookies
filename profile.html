@@ -1,327 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" sizes="48x48" href="assets/images/logo.png">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Profile | YouYou's Cookies</title>
-  <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="assets/css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    @media (max-width: 900px) {
-      .profile-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
-      .section.container { padding-left: 15px !important; padding-right: 15px !important; padding-top: 20px !important; }
-      
-      .profile-hero-card { 
-        padding: 25px 20px !important;
-        border-radius: 20px;
-      }
-      .profile-hero-top {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 15px;
-      }
-      .profile-user-header {
-        justify-content: center;
-      }
-      .profile-stats-grid {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 10px !important;
-        margin-top: 20px !important;
-      }
-      .profile-stat-box {
-        padding: 12px 8px !important;
-        flex-direction: column !important;
-        text-align: center;
-      }
-      .logout-btn-hero {
-        width: 100%;
-        margin-top: 10px;
-      }
-      #rank-progress-container { margin: 15px auto 0 auto !important; }
-      
-      .profile-section-card { padding: 22px 18px !important; border-radius: 20px; }
-      .auth-input { font-size: 16px !important; padding: 14px !important; border-radius: 10px !important; }
-      .profile-card-title { font-size: 1.4rem; text-align: center; margin-bottom: 22px; }
-      
-      .basket-item-row { flex-direction: column !important; align-items: flex-start !important; gap: 12px; padding: 18px 0; }
-      .basket-item-row > div:last-child { align-self: flex-end; font-size: 1.25rem !important; background: var(--cream); padding: 6px 14px; border-radius: 8px; }
-      
-      .order-history-header { flex-direction: column; gap: 8px; }
-      .order-history-header .status-pill-badge { align-self: flex-start; }
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile - Youyou's Cookies</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
   <!-- REDESIGNED SLEEK GLASSMORPHIC HEADER -->
- <!-- REDESIGNED SLEEK GLASSMORPHIC HEADER -->
   <header class="site-header">
     <div class="container header-inner">
-      <!-- Brand Logo & Text -->
-      <a class="brand" href="index.html" aria-label="Youyou's Cookies Home">
+      <a class="brand" href="index.html">
         <div class="brand-logo-wrapper">
           <video class="brand-logo logo-light" poster="assets/images/logo.png" autoplay loop muted playsinline>
             <source data-src="assets/videos/logo-light.mp4" type="video/mp4">
-            <img src="assets/images/logo.png" alt="Youyou Cookies Logo">
+            <img src="assets/images/logo.png" alt="Youyou Cookies">
           </video>
-
           <video class="brand-logo logo-dark" poster="assets/images/logo1.png" autoplay loop muted playsinline>
             <source data-src="assets/videos/logo-dark.mp4" type="video/mp4">
-            <img src="assets/images/logo1.png" alt="Youyou Cookies Logo">
+            <img src="assets/images/logo1.png" alt="Youyou Cookies">
           </video>
         </div>
-        
         <span class="brand-text">
           <b>Youyou's Cookies</b>
           <span class="desktop-only-text">MADE WITH LOVE</span>
         </span>
       </a>
 
-      <!-- Live Order Status Pill -->
-      <div class="status-pill desktop-action" data-status-pill role="status" title="Morocco Time Status">
+      <div class="status-pill desktop-action" data-status-pill>
         <span class="status-dot"></span>
         <span class="status-text">Closed</span>
       </div>
 
-      <!-- Main Navigation Links / Mobile Drawer -->
-      <nav class="main-nav" id="main-nav" aria-label="Main Navigation">
-        <button class="nav-close" id="nav-close" aria-label="Close Menu">&times;</button>
+      <nav class="main-nav" id="main-nav">
+        <button class="nav-close" id="nav-close">&times;</button>
         <a href="index.html"><span class="nav-icon"></span> Home</a>
         <a href="menu.html"><span class="nav-icon"></span> Menu</a>
         <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
         <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
         
-        <!-- NEW: Mobile Only Actions Inside Drawer -->
         <div class="mobile-nav-actions">
-          <a href="login.html" id="mobile-user-link">
-            <span class="nav-icon">👤</span> Account / Login
-          </a>
+          <a href="login.html" id="mobile-user-link" class="active"><span class="nav-icon">👤</span> My Profile</a>
           <button id="mobile-theme-toggle" class="theme-toggle">
             <span class="moon-icon" style="display:none;">🌙 Dark Mode</span>
             <span class="sun-icon">☀️ Light Mode</span>
           </button>
         </div>
-        
         <div class="nav-decor">Baked fresh in Settat</div>
       </nav>
 
-      <!-- Right Header Actions (Profile, Cart, Theme, Mobile Hamburger) -->
       <div class="header-actions">
-        <!-- User Account / Profile Icon (Desktop Only) -->
-        <a href="login.html" id="user-icon-link" class="desktop-action" aria-label="User Account" title="Account / Login">
-          <div id="user-icon-wrapper" class="header-action-btn">
+        <a href="login.html" id="user-icon-link" class="desktop-action active">
+          <div id="user-icon-wrapper" class="header-action-btn" style="background: var(--caramel); color: #fff; border-color: var(--caramel);">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
               <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
               <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
             </svg>
           </div>
         </a>
-
-        <!-- Dark / Light Mode Toggle (Desktop Only) -->
-        <button id="theme-toggle" class="header-action-btn theme-toggle desktop-action" aria-label="Toggle Dark Mode" title="Toggle Theme">
+        <button id="theme-toggle" class="header-action-btn theme-toggle desktop-action">
           <span class="moon-icon" style="display:none;">🌙</span>
           <span class="sun-icon">☀️</span>
         </button>
-
-        <!-- Sweet Box Cart Icon (Visible Everywhere) -->
-        <a href="#" onclick="window.openBoxModal(); return false;" id="nav-cart-icon" class="header-action-btn cart-btn" aria-label="Open Sweet Box Cart" title="View Box">
+        <a href="#" onclick="window.openBoxModal(); return false;" id="nav-cart-icon" class="header-action-btn cart-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
             <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
           </svg>
           <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
         </a>
-
-        <!-- Mobile Menu Toggle Button (Hamburger) -->
-        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation Menu" aria-expanded="false">
-          <span></span>
-          <span></span>
-          <span></span>
+        <button class="nav-toggle" id="nav-toggle">
+          <span></span><span></span><span></span>
         </button>
       </div>
     </div>
   </header>
-
-  <!-- Backdrop overlay for mobile menu -->
   <div class="nav-overlay" id="nav-overlay"></div>
 
-  <main class="section container" style="max-width: 1000px; padding-top: 30px;">
-    
-    <!-- Upgraded Profile Hero Card -->
-    <div class="profile-hero-card">
-      <div class="profile-hero-top">
-        <div class="profile-avatar-wrapper">
-          <img id="profile-picture" src="assets/images/logo.png" alt="Profile" class="profile-avatar">
-          <label for="avatar-input" class="avatar-edit-badge" title="Change Profile Picture">
-            📷
-          </label>
-          <input type="file" id="avatar-input" accept="image/*" style="display: none;">
-        </div>
-
-        <div class="profile-user-info">
-          <div class="profile-user-header">
-            <h1 id="profile-name">Loading...</h1>
-            <span class="status-pill-badge cookie-rank-pill">🍪 Cookie Fan</span>
-          </div>
-          <p id="profile-email" class="profile-email-text"></p>
-          
-          <div id="rank-progress-container" class="rank-progress-wrapper">
-            <div class="rank-progress-labels">
-              <span id="rank-current-text">0 DH spent</span>
-              <span id="rank-next-text">Loading...</span>
-            </div>
-            <div class="rank-progress-bar">
-              <div id="rank-progress-fill"></div>
-            </div>
-          </div>
-        </div>
-
-        <button id="logout-btn" class="btn btn-dark logout-btn-hero">Log Out</button>
-      </div>
-
-      <div class="profile-stats-grid">
-        <div class="profile-stat-box">
-          <span class="stat-icon">🛍️</span>
-          <div>
-            <strong id="stat-user-orders">0</strong>
-            <small>Total Orders</small>
-          </div>
-        </div>
-        <div class="profile-stat-box">
-          <span class="stat-icon">💰</span>
-          <div>
-            <strong id="stat-user-spent">0 DH</strong>
-            <small>Lifetime Spent</small>
-          </div>
-        </div>
-        <div class="profile-stat-box">
-          <span class="stat-icon">⭐</span>
-          <div>
-            <strong id="stat-user-level">Cookie Fan</strong>
-            <small>VIP Status</small>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Profile Grid -->
-    <div class="profile-grid">
+  <!-- PROFILE DASHBOARD MAIN CONTENT -->
+  <main class="section" style="padding-top: 40px; min-height: 80vh;">
+    <div class="container">
       
-      <div style="display: flex; flex-direction: column; gap: 25px;">
-        <div class="profile-section-card">
-          <h3 class="profile-card-title">Personal Details</h3>
-          <form id="profile-info-form">
-            <div class="form-group">
-              <label for="edit-username">Full Name</label>
-              <input type="text" id="edit-username" class="auth-input" required>
+      <!-- Pro Hero Banner -->
+      <div class="pro-hero-banner">
+        <div class="pro-hero-content">
+          <div class="pro-avatar-wrapper">
+            <img src="assets/images/default-avatar.png" id="profile-avatar" class="pro-avatar" alt="Avatar">
+            <div class="pro-rank-badge" id="profile-rank-badge">✨ Cookie Fan</div>
+          </div>
+          <div class="pro-user-details">
+            <h1 id="profile-name-display">Loading User...</h1>
+            <p id="profile-email-display" class="pro-email">loading@youyou.com</p>
+            <p class="pro-join-date">Member since 2024</p>
+          </div>
+        </div>
+        
+        <div class="pro-hero-stats">
+          <div class="pro-stat-box">
+            <span class="pro-stat-val" id="stat-orders-count">-</span>
+            <span class="pro-stat-label">Total Orders</span>
+          </div>
+          <div class="pro-stat-divider"></div>
+          <div class="pro-stat-box">
+            <span class="pro-stat-val">VIP</span>
+            <span class="pro-stat-label">Status</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Grid -->
+      <div class="pro-dashboard-grid">
+        
+        <!-- Left Column: Settings & Security -->
+        <div class="pro-sidebar">
+          
+          <!-- Account Settings Card -->
+          <div class="pro-card">
+            <div class="pro-card-header">
+              <h2 class="pro-card-title">Account Settings</h2>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="color: var(--caramel);">
+                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+              </svg>
             </div>
-            <div class="form-group">
-              <label for="edit-phone">Phone Number (WhatsApp Delivery)</label>
-              <input type="tel" id="edit-phone" class="auth-input" autocomplete="tel" placeholder="+212 6XX-XXXXXX">
+            <form id="profile-form" class="pro-form">
+              <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="profile-name" class="auth-input pro-input" required placeholder="John Doe">
+              </div>
+              <div class="form-group">
+                <label>Phone Number (WhatsApp)</label>
+                <input type="tel" id="profile-phone" class="auth-input pro-input" required placeholder="06XXXXXXXX">
+              </div>
+              <div class="form-group">
+                <label>Default Delivery Address</label>
+                <textarea id="profile-address" class="auth-input pro-input" rows="3" placeholder="Enter your full address in Settat..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-dark pro-btn-full" id="btn-save-profile">
+                Save Details
+              </button>
+            </form>
+          </div>
+
+          <!-- Security / Change Password Card -->
+          <div class="pro-card">
+            <div class="pro-card-header">
+              <h2 class="pro-card-title">Security</h2>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="color: var(--caramel);">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+              </svg>
             </div>
-            <div class="form-group">
-              <label for="edit-address">Default Address (Settat)</label>
-              <textarea id="edit-address" class="auth-input" style="min-height: 80px; resize: vertical;" placeholder="Street address, neighborhood..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-dark" style="width: 100%;">Save Changes</button>
-            <div id="info-msg" style="display: none; margin-top: 10px; font-size: 0.85rem; text-align: center;"></div>
-          </form>
+            <form id="password-form" class="pro-form">
+              <div class="form-group">
+                <label>New Password</label>
+                <div class="password-input-wrapper">
+                  <input type="password" id="profile-new-password" class="auth-input pro-input" placeholder="Enter new password">
+                  <button type="button" class="toggle-password-btn" data-target="profile-new-password" aria-label="Show password">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                      <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline pro-btn-full" id="btn-update-password" style="border: 2px solid var(--caramel); color: var(--caramel); background: transparent;">
+                Update Password
+              </button>
+              <div id="password-msg" style="margin-top: 10px; font-size: 0.85rem; display: none;"></div>
+            </form>
+          </div>
+
+          <button id="btn-logout" class="btn pro-btn-outline-danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+              <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+            </svg>
+            Sign Out
+          </button>
         </div>
 
-        <div class="profile-section-card">
-          <h3 class="profile-card-title">Security</h3>
-          <form id="password-form">
-            <div class="form-group">
-              <label for="new-password">New Password</label>
-              <div class="password-input-wrapper">
-                <input type="password" id="new-password" class="auth-input" placeholder="••••••••" required minlength="6">
-                <button type="button" class="toggle-password-btn" data-target="new-password" aria-label="Show password">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
-                  </svg>
-                </button>
+        <!-- Right Column: Order History -->
+        <div class="pro-main-content">
+          <div class="pro-card">
+            <div class="pro-card-header">
+              <h2 class="pro-card-title">Order History</h2>
+              <span class="pro-badge-light">Recent</span>
+            </div>
+            
+            <div id="user-orders-list" class="pro-orders-container">
+              <!-- Orders injected by JS -->
+              <div class="cart-empty">
+                <span class="cart-empty-icon">🍪</span>
+                <p>Loading your sweet history...</p>
               </div>
             </div>
-            <button type="submit" class="btn btn-outline" style="width: 100%; color: var(--brown); border-color: rgba(74,55,40,0.3);">Update Password</button>
-            <div id="password-msg" style="display: none; margin-top: 10px; font-size: 0.85rem; text-align: center;"></div>
-          </form>
-        </div>
-      </div>
-
-      <div style="display: flex; flex-direction: column; gap: 25px;">
-        <div class="profile-section-card">
-          <h3 class="profile-card-title">Current Cookie Box</h3>
-          <div id="profile-basket-list">
-            <p style="color: var(--brown-soft); font-style: italic;">Loading your box...</p>
           </div>
         </div>
 
-        <div class="profile-section-card">
-          <h3 class="profile-card-title">Order History</h3>
-          <div id="profile-order-history">
-            <p style="color: var(--brown-soft); font-style: italic;">Loading orders...</p>
-          </div>
-        </div>
       </div>
-
     </div>
-
   </main>
 
-  <div id="cart-overlay" class="cart-overlay"></div>
-  <div id="cart-panel" class="cart-drawer">
-    <div class="cart-header">
-      <h3>Your Sweet Box 🍪</h3>
-      <button onclick="window.closeCart()" class="close-cart">&times;</button>
-    </div>
-    <div class="cart-body">
-      <ul id="cart-items" class="cart-items-list"></ul>
-    </div>
-    <div class="cart-footer" id="cart-footer">
-      <div class="cart-total-row">
-        <span>Total:</span>
-        <span><strong style="color: var(--caramel);"><span id="cart-total">0</span> DH</strong></span>
-      </div>
-      <button id="checkout-btn" class="btn btn-whatsapp" style="width: 100%;">Open Box & Checkout</button>
-      <button id="clear-cart-btn" class="btn btn-outline" style="width: 100%; margin-top: 10px; font-size: 0.9rem; padding: 10px; color: var(--brown); border-color: rgba(74,55,40,0.3); background: transparent; transition: 0.2s;">🗑️ Empty Box</button>
-    </div>
-  </div>
-
-  <div id="checkout-confirm-modal" class="confirm-modal-overlay">
-    <div class="confirm-modal-content">
-      <div class="confirm-modal-header">
-        <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--brown); margin: 0;">Confirm Order</h3>
-        <button id="close-confirm-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--brown);">&times;</button>
-      </div>
-
-      <div class="confirm-order-summary">
-        <strong>Items Summary:</strong>
-        <pre id="confirm-items-summary" style="font-family: inherit; white-space: pre-wrap; margin: 8px 0; color: var(--brown);"></pre>
-        <div id="confirm-delivery-summary" style="font-size: 0.85rem; color: var(--brown-soft); margin-top: 5px;"></div>
-        <div style="text-align: right; font-weight: bold; color: var(--caramel); font-size: 1.1rem; border-top: 1px dashed rgba(74,55,40,0.2); padding-top: 10px; margin-top: 10px;">
-          Total: <span id="confirm-total-price">0 DH</span>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="confirm-phone-input">Phone Number (WhatsApp):</label>
-        <input type="tel" id="confirm-phone-input" class="auth-input" autocomplete="tel" inputmode="tel" placeholder="+212 6XX-XXXXXX" required>
-      </div>
-
-      <div class="form-group">
-        <label for="confirm-address-input">Delivery Address in Settat:</label>
-        <textarea id="confirm-address-input" class="auth-input" style="min-height: 60px;" placeholder="Neighborhood, street, building..."></textarea>
-      </div>
-
-      <button id="confirm-submit-order" class="btn btn-whatsapp" style="width: 100%; margin-top: 10px;">Confirm & Send via WhatsApp</button>
-    </div>
-  </div>
-
+  <!-- Include your JS scripts -->
+  <script src="assets/js/firebase-init.js"></script>
+  <script src="assets/js/auth.js"></script>
   <script src="assets/js/main.js"></script>
   <script src="assets/js/features.js"></script>
-  <script type="module" src="assets/js/auth.js"></script>
+
+  <!-- JS to handle order counting and password updates smoothly -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Observer for order counting
+      const ordersList = document.getElementById("user-orders-list");
+      const statCount = document.getElementById("stat-orders-count");
+      
+      if(ordersList && statCount) {
+        const observer = new MutationObserver(() => {
+           const orderCards = ordersList.querySelectorAll('.order-history-card, .pro-order-item');
+           if(orderCards.length > 0) {
+              statCount.textContent = orderCards.length;
+           } else if (ordersList.innerHTML.includes("No orders found")) {
+              statCount.textContent = "0";
+           }
+        });
+        observer.observe(ordersList, { childList: true, subtree: true });
+      }
+
+      // Handle Password Change
+      const btnUpdatePassword = document.getElementById("btn-update-password");
+      const passwordMsg = document.getElementById("password-msg");
+      
+      if(btnUpdatePassword) {
+        btnUpdatePassword.addEventListener("click", () => {
+          const newPassword = document.getElementById("profile-new-password").value;
+          const user = firebase.auth().currentUser;
+          
+          if (!newPassword || newPassword.length < 6) {
+            passwordMsg.style.display = "block";
+            passwordMsg.style.color = "#d9534f";
+            passwordMsg.textContent = "Password must be at least 6 characters long.";
+            return;
+          }
+
+          if (user) {
+            btnUpdatePassword.textContent = "Updating...";
+            user.updatePassword(newPassword).then(() => {
+              document.getElementById("profile-new-password").value = "";
+              passwordMsg.style.display = "block";
+              passwordMsg.style.color = "#57a05f"; // Success green
+              passwordMsg.textContent = "Password updated successfully!";
+              btnUpdatePassword.textContent = "Update Password";
+              setTimeout(() => { passwordMsg.style.display = "none"; }, 3000);
+            }).catch((error) => {
+              passwordMsg.style.display = "block";
+              passwordMsg.style.color = "#d9534f";
+              passwordMsg.textContent = error.message;
+              btnUpdatePassword.textContent = "Update Password";
+            });
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>
