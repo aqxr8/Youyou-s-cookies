@@ -251,3 +251,23 @@ function loadBrandLogos() {
     if (p && p.catch) p.catch(() => {});
   });
 }
+// =======================================================
+// AUTO-INJECT PROFILE LINK INTO MOBILE MENU
+// =======================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const mainNav = document.querySelector('.main-nav');
+  
+  // Find the profile button in the top header
+  const headerProfileBtn = document.querySelector('.header-actions a.header-action-btn:not(.cart-btn)');
+  
+  // If both exist, clone the link into the mobile menu
+  if (mainNav && headerProfileBtn) {
+    const mobileProfileLink = document.createElement('a');
+    mobileProfileLink.href = headerProfileBtn.getAttribute('href') || 'login.html';
+    mobileProfileLink.className = 'mobile-profile-link';
+    mobileProfileLink.innerHTML = '👤 Profile / Login';
+    
+    // Add it to the very bottom of the mobile menu links
+    mainNav.appendChild(mobileProfileLink);
+  }
+});

@@ -3172,3 +3172,40 @@ input[type="password"]::-ms-clear {
     margin-bottom: env(safe-area-inset-bottom, 10px);
   }
 }
+/* =======================================================
+   HEADER CROWDING FIX: MOVE PROFILE TO MOBILE MENU
+   ======================================================= */
+
+/* 1. Free up space by hiding the user icon in the header on mobile */
+@media (max-width: 900px) {
+  /* Hides the profile icon (any action button that isn't the cart) */
+  .header-actions a.header-action-btn:not(.cart-btn) {
+    display: none !important;
+  }
+  
+  /* Reduce gap slightly to give the hamburger menu more breathing room */
+  .header-actions {
+    gap: 8px !important;
+  }
+}
+
+/* 2. Hide the mobile-only profile link on desktop */
+.mobile-profile-link {
+  display: none !important;
+}
+
+/* 3. Show and style the profile link inside the mobile frosted menu */
+@media (max-width: 900px) {
+  .mobile-profile-link {
+    display: flex !important;
+    margin-top: 15px; /* Separates it from the main links */
+    color: var(--caramel) !important;
+    border-top: 1px dashed rgba(168, 90, 62, 0.3);
+    padding-top: 25px !important;
+  }
+  
+  /* Remove the underline hover animation for this specific button */
+  .mobile-profile-link::after {
+    display: none !important;
+  }
+}
