@@ -15,7 +15,6 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
 }
 
 html {
@@ -92,7 +91,7 @@ a {
 .site-header {
   position: sticky;
   top: 0;
-  z-index: 2000 !important; /* Ensures header & drawer sit ABOVE the backdrop */
+  z-index: 1000;
   background: rgba(255, 249, 244, 0.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -155,7 +154,7 @@ video.brand-logo {
   object-fit: cover !important;
   border-radius: 50%;
   display: block;
-  transform: scale(1.08);
+  transform: scale(1.08); /* Subtle zoom to trim video padding without over-expanding */
 }
 
 .brand-text b {
@@ -371,18 +370,15 @@ video.brand-logo {
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1999;
+  z-index: 998;
   opacity: 0;
   visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.35s ease, visibility 0.35s ease;
+  transition: all 0.35s ease;
 }
 
 .nav-backdrop.show {
   opacity: 1;
   visibility: visible;
-  pointer-events: auto;
 }
 
 /* ---------- Hero ---------- */
@@ -1615,6 +1611,167 @@ video.brand-logo {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
 }
 
+/* =======================================================
+   RESPONSIVE MEDIA QUERIES
+   ======================================================= */
+@media (max-width: 900px) {
+  .intro,
+  .story-grid,
+  .contact-grid,
+  .menu-wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid,
+  .press-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .story-grid.reverse .story-media {
+    order: 0;
+  }
+
+  .product-grid,
+  .info-grid,
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .menu-side {
+    position: static;
+  }
+  
+  .nav-toggle { 
+    display: flex; 
+  }
+
+  /* Mobile Navigation Drawer */
+  .main-nav {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: min(320px, 85vw);
+    background: var(--cream-light); 
+    box-shadow: -15px 0 50px rgba(0, 0, 0, 0.2);
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 999;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 22px !important;
+    padding: 80px 30px 40px !important;
+  }
+
+  [data-theme="dark"] .main-nav {
+    background: var(--cream-light);
+  }
+
+  .main-nav.open {
+    transform: translateX(0);
+  }
+
+  .main-nav .nav-close {
+    position: absolute !important;
+    top: 20px !important;
+    right: 25px !important;
+    display: block;
+    background: none;
+    border: none;
+    font-size: 2.5rem;
+    color: var(--brown);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: transform 0.3s;
+  }
+  
+  .main-nav .nav-close:hover {
+    transform: rotate(90deg);
+  }
+
+  .main-nav a {
+    font-family: "Cormorant Garamond", serif !important;
+    font-size: 1.9rem !important;
+    font-weight: 600 !important;
+    color: var(--brown) !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 6px 15px !important;
+    width: auto !important;
+    position: relative;
+    transition: color 0.3s ease;
+  }
+
+  .main-nav a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: var(--caramel);
+    transition: width 0.3s ease;
+    display: block !important;
+  }
+
+  .main-nav a:hover,
+  .main-nav a.active {
+    color: var(--caramel) !important;
+  }
+
+  .main-nav a:hover::after,
+  .main-nav a.active::after {
+    width: 100%;
+  }
+
+  .nav-decor {
+    display: block;
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    color: var(--caramel);
+    font-size: 1.1rem !important;
+    text-align: center;
+    opacity: 0.85;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-inner {
+    height: 70px !important; 
+    padding: 0 12px;
+  }
+  .brand-logo-wrapper,
+  .brand-logo {
+    height: 48px !important; 
+    width: 48px !important;
+  }
+  .brand-text span {
+    display: none !important; 
+  }
+  .brand-text b {
+    font-size: 1rem !important; 
+  }
+}
+
+@media (max-width: 560px) {
+  .brand {
+    gap: 8px !important;
+  }
+  .brand-text b {
+    font-size: 0.9rem !important; 
+  }
+  .brand-logo-wrapper,
+  .brand-logo {
+    width: 42px !important;
+    height: 42px !important; 
+  }
+}
+
 /* =========================================
    REVIEWS & MESSAGE WALL (STICKY NOTES)
 ========================================= */
@@ -2107,7 +2264,7 @@ body {
 }
 
 .site-header .brand-logo {
-  object-fit: cover !important;
+  object-fit: cover !important; /* Changed from contain to cover */
 }
 
 /* =========================================
@@ -2834,378 +2991,5 @@ input[type="password"]::-ms-clear {
   .brand-logo-wrapper {
     width: 38px !important;
     height: 38px !important;
-  }
-}
-
-/* =======================================================
-   ULTRA-PREMIUM MOBILE UX ENHANCEMENTS
-   ======================================================= */
-
-/* 1. Hamburger Menu to "X" Morph Animation */
-@media (max-width: 900px) {
-  .status-pill {
-    display: none !important;
-  }
-
-  .nav-toggle {
-    display: flex !important;
-    width: 42px !important;
-    height: 42px !important;
-    flex-shrink: 0 !important;
-    z-index: 2005 !important; /* Keeps it above the glass menu */
-  }
-
-  .nav-toggle span {
-    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.3s ease;
-    transform-origin: center;
-  }
-
-  /* When clicked, morph into an X */
-  .nav-toggle.open span:nth-child(1),
-  .nav-toggle.active span:nth-child(1),
-  .nav-toggle[aria-expanded="true"] span:nth-child(1) {
-    transform: translateY(7px) rotate(45deg);
-  }
-  .nav-toggle.open span:nth-child(2),
-  .nav-toggle.active span:nth-child(2),
-  .nav-toggle[aria-expanded="true"] span:nth-child(2) {
-    opacity: 0;
-    transform: scaleX(0);
-  }
-  .nav-toggle.open span:nth-child(3),
-  .nav-toggle.active span:nth-child(3),
-  .nav-toggle[aria-expanded="true"] span:nth-child(3) {
-    transform: translateY(-7px) rotate(-45deg);
-  }
-
-  /* 2. Frosted Full-Screen Mobile Nav Menu Dropdown */
-  .main-nav {
-    position: fixed !important;
-    top: 0 !important;
-    right: 0 !important;
-    width: 100vw !important;
-    height: 100dvh !important;
-    background: rgba(253, 251, 247, 0.85) !important;
-    backdrop-filter: blur(25px) !important;
-    -webkit-backdrop-filter: blur(25px) !important;
-    transform: translateY(-100%) !important; /* Drops from top */
-    visibility: hidden !important;
-    pointer-events: none !important;
-    transition: transform 0.5s cubic-bezier(0.25, 1, 0.3, 1), visibility 0.5s !important;
-    z-index: 2002 !important;
-    
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important; /* Center aligns links vertically */
-    gap: 16px !important;
-    padding: 120px 24px 60px !important;
-    border-radius: 0 0 30px 30px !important;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.1) !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  [data-theme="dark"] .main-nav {
-    background: rgba(26, 20, 18, 0.85) !important;
-  }
-
-  .main-nav.open {
-    transform: translateY(0) !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-  }
-
-  /* Hide redundant close button */
-  .main-nav .nav-close {
-    display: none !important;
-  }
-
-  /* Staggered Link Cascade Animation */
-  .main-nav a {
-    font-family: "Cormorant Garamond", serif !important;
-    font-size: 2rem !important;
-    font-weight: 600 !important;
-    color: var(--brown) !important;
-    background: transparent !important;
-    border: none !important;
-    padding: 12px 16px !important;
-    width: auto !important;
-    text-align: center !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 10px !important;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-  }
-
-  .main-nav.open a {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* Delay each link slightly */
-  .main-nav.open a:nth-child(2) { transition-delay: 0.1s; }
-  .main-nav.open a:nth-child(3) { transition-delay: 0.15s; }
-  .main-nav.open a:nth-child(4) { transition-delay: 0.2s; }
-  .main-nav.open a:nth-child(5) { transition-delay: 0.25s; }
-
-  .main-nav a::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 2px;
-    background: var(--caramel);
-    transition: width 0.3s ease;
-    display: block !important;
-  }
-
-  .main-nav a:hover,
-  .main-nav a.active {
-    color: var(--caramel) !important;
-  }
-
-  .main-nav a:hover::after,
-  .main-nav a.active::after {
-    width: 50%;
-  }
-
-  .nav-decor {
-    display: block !important;
-    margin-top: auto !important;
-    font-family: "Cormorant Garamond", serif;
-    font-style: italic;
-    color: var(--caramel);
-    font-size: 1rem !important;
-    text-align: center;
-    opacity: 0.85;
-    padding-top: 15px;
-    transform: translateY(20px);
-    opacity: 0;
-    transition: transform 0.4s ease, opacity 0.4s ease;
-    transition-delay: 0.3s;
-  }
-
-  .main-nav.open .nav-decor {
-    transform: translateY(0);
-    opacity: 0.85;
-  }
-
-  /* Tactile Spring Compression on Tap */
-  .add-to-box-btn:active,
-  .qty-btn:active,
-  .btn-auth:active,
-  .header-action-btn:active,
-  .nav-toggle:active {
-    transform: scale(0.92) !important;
-  }
-}
-
-/* 3. Sleek iOS-Style Frosted Glass Floating Cart */
-.mobile-float-cart {
-  display: none;
-  position: fixed;
-  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1040;
-  width: calc(100% - 32px);
-  max-width: 400px;
-  background: rgba(253, 251, 247, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  color: var(--brown);
-  padding: 14px 24px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 15px 40px rgba(168, 90, 62, 0.2), 0 4px 12px rgba(0,0,0,0.05);
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-  animation: floatCartPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* Dark Mode Cart Override */
-[data-theme="dark"] .mobile-float-cart {
-  background: rgba(36, 28, 26, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--white);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0,0,0,0.3);
-}
-
-.mobile-float-cart:active {
-  transform: translateX(-50%) scale(0.95);
-}
-
-.mobile-float-cart-text {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-.mobile-float-cart-badge {
-  background: var(--caramel);
-  color: #ffffff;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  font-size: 0.9rem;
-  font-weight: 800;
-  box-shadow: 0 4px 10px rgba(168, 90, 62, 0.4);
-}
-
-.mobile-float-cart-price {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--caramel);
-}
-
-@keyframes floatCartPop {
-  0% { transform: translate(-50%, 60px) scale(0.9); opacity: 0; }
-  100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
-}
-
-@media (max-width: 900px) {
-  .mobile-float-cart.show {
-    display: flex;
-  }
-
-  /* Screen Size Layout Optimizations */
-  .hero {
-    min-height: 72vh;
-  }
-
-  .hero-inner {
-    padding: 50px 18px 36px;
-  }
-
-  .hero-tag {
-    font-size: 0.75rem;
-    padding: 6px 16px;
-    margin-bottom: 18px;
-  }
-
-  .hero h1 {
-    font-size: clamp(2.1rem, 8.5vw, 3rem);
-    line-height: 1.15;
-  }
-
-  .hero p.hero-desc {
-    font-size: 0.95rem;
-    line-height: 1.5;
-    margin-bottom: 24px;
-  }
-
-  .btn {
-    padding: 14px 28px;
-    min-height: 48px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-  }
-
-  .new-menu-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
-  .new-menu-card {
-    border-radius: 20px;
-  }
-
-  .card-img {
-    aspect-ratio: 16 / 10;
-  }
-
-  .card-info {
-    padding: 18px 20px 20px;
-  }
-
-  .add-to-box-btn {
-    min-height: 48px;
-    font-size: 1rem;
-    border-radius: 12px;
-  }
-
-  /* Full-width Touch Cart Drawer with Safe Area Support */
-  .cart-drawer {
-    width: 100vw;
-    border-left: none;
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-  }
-
-  .cart-drawer .cart-header {
-    padding: 20px;
-  }
-
-  .cart-drawer .cart-body {
-    padding: 16px 20px;
-  }
-
-  .cart-drawer .cart-footer {
-    padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
-  }
-
-  /* Mobile-first Order Checkout Modal */
-  .confirm-modal-overlay {
-    padding: 12px;
-    align-items: flex-end;
-  }
-
-  .confirm-modal-content {
-    max-height: 86vh;
-    overflow-y: auto;
-    border-radius: 24px 24px 18px 18px;
-    padding: 22px 18px;
-    margin-bottom: env(safe-area-inset-bottom, 10px);
-  }
-}
-/* =======================================================
-   HEADER CROWDING FIX: MOVE PROFILE TO MOBILE MENU
-   ======================================================= */
-
-/* 1. Free up space by hiding the user icon in the header on mobile */
-@media (max-width: 900px) {
-  /* Hides the profile icon (any action button that isn't the cart) */
-  .header-actions a.header-action-btn:not(.cart-btn) {
-    display: none !important;
-  }
-  
-  /* Reduce gap slightly to give the hamburger menu more breathing room */
-  .header-actions {
-    gap: 8px !important;
-  }
-}
-
-/* 2. Hide the mobile-only profile link on desktop */
-.mobile-profile-link {
-  display: none !important;
-}
-
-/* 3. Show and style the profile link inside the mobile frosted menu */
-@media (max-width: 900px) {
-  .mobile-profile-link {
-    display: flex !important;
-    margin-top: 15px; /* Separates it from the main links */
-    color: var(--caramel) !important;
-    border-top: 1px dashed rgba(168, 90, 62, 0.3);
-    padding-top: 25px !important;
-  }
-  
-  /* Remove the underline hover animation for this specific button */
-  .mobile-profile-link::after {
-    display: none !important;
   }
 }
