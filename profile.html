@@ -3,12 +3,249 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Profile - Youyou's Cookies</title>
+  <title>My Account | Youyou's Cookies</title>
+  <meta name="description" content="Manage your Youyou’s Cookies account details, security settings, and order history." />
   <link rel="stylesheet" href="assets/css/style.css" />
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
   <!-- Firebase is initialized by the modular SDK in assets/js/auth.js. -->
+
+  <style>
+    /* Premium, page-scoped profile dashboard refresh */
+    .profile-page {
+      padding: clamp(28px, 4vw, 52px) 0 84px !important;
+    }
+    .profile-page .profile-heading-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      margin: 0 0 26px;
+    }
+    .profile-page .profile-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 10px;
+      color: var(--caramel);
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .19em;
+      text-transform: uppercase;
+    }
+    .profile-page .profile-eyebrow::before {
+      content: "";
+      width: 24px;
+      height: 2px;
+      border-radius: 3px;
+      background: var(--caramel);
+    }
+    .profile-page .profile-heading-title {
+      margin: 0;
+      color: var(--brown);
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -.025em;
+      line-height: 1.06;
+    }
+    .profile-page .profile-heading-description {
+      max-width: 570px;
+      margin: 10px 0 0;
+      color: var(--brown-soft);
+      font-size: .96rem;
+      line-height: 1.7;
+    }
+    .profile-page .profile-menu-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex: 0 0 auto;
+      padding: 12px 17px;
+      border: 1px solid rgba(168, 90, 62, .25);
+      border-radius: 999px;
+      background: rgba(255,255,255,.62);
+      color: var(--caramel);
+      font-size: .87rem;
+      font-weight: 800;
+      text-decoration: none;
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .profile-page .profile-menu-link:hover {
+      transform: translateY(-2px);
+      background: var(--white);
+      box-shadow: 0 8px 22px rgba(74,55,40,.09);
+    }
+    .profile-page .pro-hero-banner {
+      position: relative;
+      isolation: isolate;
+      padding: clamp(24px, 4vw, 42px);
+      gap: 28px;
+      margin-bottom: 28px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 28px;
+      background: linear-gradient(118deg, #382622 0%, #70453d 54%, #a85a3e 100%);
+      box-shadow: 0 18px 44px rgba(74, 41, 34, .18);
+    }
+    .profile-page .pro-hero-banner::before {
+      top: -95px;
+      right: -65px;
+      width: 390px;
+      height: 390px;
+      background: radial-gradient(circle, rgba(255,255,255,.15) 0%, rgba(255,255,255,0) 70%);
+    }
+    .profile-page .pro-hero-banner::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: auto 0 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f4c9a8, #f4e0ce, rgba(255,255,255,0));
+      opacity: .85;
+    }
+    .profile-page .pro-hero-content { gap: 26px; min-width: 0; }
+    .profile-page .pro-avatar {
+      width: 104px;
+      height: 104px;
+      border: 3px solid rgba(255,255,255,.9);
+      box-shadow: 0 10px 28px rgba(0,0,0,.22);
+    }
+    .profile-page .pro-rank-badge {
+      bottom: -11px;
+      padding: 5px 12px;
+      color: #714235;
+      font-size: .68rem;
+      letter-spacing: .055em;
+      text-transform: none;
+    }
+    .profile-page .profile-user-overline {
+      display: block;
+      margin-bottom: 8px;
+      color: rgba(255,255,255,.69);
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .17em;
+      text-transform: uppercase;
+    }
+    .profile-page .pro-user-details h1 {
+      max-width: 620px;
+      overflow-wrap: anywhere;
+      font-size: clamp(2rem, 3.7vw, 2.7rem);
+      letter-spacing: -.02em;
+    }
+    .profile-page .pro-email { overflow-wrap: anywhere; margin-bottom: 10px; }
+    .profile-page .pro-join-date {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin: 0;
+      color: rgba(255,255,255,.7);
+      font-size: .72rem;
+      letter-spacing: .1em;
+    }
+    .profile-page .pro-hero-stats {
+      min-width: 164px;
+      justify-content: center;
+      padding: 22px 27px;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      background: rgba(255,255,255,.105);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .profile-page .pro-stat-box { min-width: 105px; }
+    .profile-page .pro-stat-val { font-size: 2.45rem; }
+    .profile-page .pro-stat-label { color: rgba(255,255,255,.75); font-size: .65rem; letter-spacing: .12em; }
+    .profile-page .pro-dashboard-grid {
+      grid-template-columns: minmax(290px, .88fr) minmax(0, 1.35fr);
+      align-items: start;
+      gap: 26px;
+    }
+    .profile-page .pro-sidebar,
+    .profile-page .pro-main-content { min-width: 0; }
+    .profile-page .pro-card {
+      padding: clamp(21px, 2.6vw, 30px);
+      border: 1px solid rgba(111, 75, 58, .12);
+      border-radius: 23px;
+      box-shadow: 0 12px 32px rgba(74,55,40,.065);
+      transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+    .profile-page .pro-card:hover {
+      border-color: rgba(168,90,62,.23);
+      box-shadow: 0 16px 38px rgba(74,55,40,.09);
+    }
+    .profile-page .pro-card-header {
+      gap: 15px;
+      margin-bottom: 23px;
+      padding-bottom: 17px;
+      border-bottom: 1px solid rgba(111,75,58,.12);
+    }
+    .profile-page .pro-card-title { font-size: 1.7rem; letter-spacing: -.01em; }
+    .profile-page .pro-form label { font-size: .79rem; letter-spacing: .035em; }
+    .profile-page .pro-input {
+      min-height: 48px;
+      border-radius: 13px;
+      padding: 13px 15px;
+      font: inherit;
+      font-size: .92rem;
+    }
+    .profile-page textarea.pro-input { min-height: 100px; resize: vertical; }
+    .profile-page .pro-btn-full { min-height: 49px; border-radius: 13px; }
+    .profile-page .pro-orders-container { min-height: 150px; }
+    .profile-page .pro-badge-light { letter-spacing: .08em; }
+    .profile-page .order-history-card,
+    .profile-page .pro-order-item { border-radius: 17px; }
+    [data-theme="dark"] .profile-page .profile-heading-title { color: #f7eee8; }
+    [data-theme="dark"] .profile-page .profile-heading-description { color: #c6b4ac; }
+    [data-theme="dark"] .profile-page .profile-menu-link {
+      background: rgba(255,255,255,.045);
+      border-color: rgba(255,255,255,.13);
+    }
+    [data-theme="dark"] .profile-page .profile-menu-link:hover { background: rgba(255,255,255,.09); }
+    [data-theme="dark"] .profile-page .pro-hero-banner {
+      background: linear-gradient(118deg, #1d1716 0%, #392724 58%, #643a31 100%);
+      box-shadow: 0 18px 44px rgba(0,0,0,.3);
+    }
+    [data-theme="dark"] .profile-page .pro-card {
+      border-color: rgba(255,255,255,.075);
+      box-shadow: 0 12px 32px rgba(0,0,0,.18);
+    }
+    [data-theme="dark"] .profile-page .pro-card:hover { border-color: rgba(232,160,220,.24); }
+    [data-theme="dark"] .profile-page .pro-card-header { border-bottom-color: rgba(255,255,255,.09); }
+    [data-theme="dark"] .profile-page .pro-card-title { color: #f4e9e3; }
+    [data-theme="dark"] .profile-page .pro-form label { color: #eadbd4; }
+    [data-theme="dark"] .profile-page .pro-input { background: #191311; border-color: rgba(255,255,255,.12); color: #f7eee8; }
+    [data-theme="dark"] .profile-page .pro-input:focus { background: #211916; border-color: var(--caramel); }
+    @media (max-width: 900px) {
+      .profile-page .pro-dashboard-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+      .profile-page .pro-hero-banner { flex-direction: row; text-align: left; }
+      .profile-page .pro-hero-content { flex-direction: row; }
+    }
+    @media (max-width: 620px) {
+      .profile-page .profile-heading-row { align-items: flex-start; flex-direction: column; gap: 17px; }
+      .profile-page .profile-menu-link { align-self: stretch; }
+      .profile-page .pro-hero-banner { flex-direction: column; align-items: stretch; text-align: left; }
+      .profile-page .pro-hero-content { align-items: center; gap: 18px; }
+      .profile-page .pro-avatar { width: 84px; height: 84px; }
+      .profile-page .pro-user-details h1 { font-size: 1.85rem; }
+      .profile-page .pro-email { font-size: .86rem; }
+      .profile-page .pro-hero-stats { width: 100%; min-width: 0; padding: 15px 18px; }
+      .profile-page .pro-stat-box { min-width: 0; }
+      .profile-page .pro-stat-val { font-size: 2rem; }
+      .profile-page .pro-card { padding: 21px 17px; }
+      .profile-page .pro-card-title { font-size: 1.5rem; }
+    }
+    @media (max-width: 400px) {
+      .profile-page .pro-hero-content { align-items: flex-start; flex-direction: column; }
+      .profile-page .pro-avatar-wrapper { margin-bottom: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .profile-page .pro-card,
+      .profile-page .profile-menu-link { transition: none; }
+    }
+  </style>
+
 </head>
 <body>
 
@@ -82,9 +319,18 @@
   <div class="nav-overlay" id="nav-overlay"></div>
 
   <!-- PROFILE DASHBOARD MAIN CONTENT -->
-  <main class="section" style="padding-top: 40px; min-height: 80vh;">
+  <main class="section profile-page" style="min-height: 80vh;">
     <div class="container">
       
+      <div class="profile-heading-row">
+        <div>
+          <span class="profile-eyebrow">Account dashboard</span>
+          <h2 class="profile-heading-title">Your little corner</h2>
+          <p class="profile-heading-description">Manage your details, keep track of your orders, and make your next cookie moment yours.</p>
+        </div>
+        <a class="profile-menu-link" href="menu.html">Explore the menu <span aria-hidden="true">↗</span></a>
+      </div>
+
       <!-- Pro Hero Banner -->
       <div class="pro-hero-banner">
         <div class="pro-hero-content">
@@ -93,21 +339,17 @@
             <div class="pro-rank-badge" id="profile-rank-badge">✨ Cookie Fan</div>
           </div>
           <div class="pro-user-details">
+            <span class="profile-user-overline">Your cookie account</span>
             <h1 id="profile-name-display">Loading User...</h1>
             <p id="profile-email-display" class="pro-email">loading@youyou.com</p>
             <p class="pro-join-date">Member since 2024</p>
           </div>
         </div>
         
-        <div class="pro-hero-stats">
+        <div class="pro-hero-stats" aria-label="Order summary">
           <div class="pro-stat-box">
             <span class="pro-stat-val" id="stat-orders-count">-</span>
-            <span class="pro-stat-label">Total Orders</span>
-          </div>
-          <div class="pro-stat-divider"></div>
-          <div class="pro-stat-box">
-            <span class="pro-stat-val">VIP</span>
-            <span class="pro-stat-label">Status</span>
+            <span class="pro-stat-label">Total orders</span>
           </div>
         </div>
       </div>
