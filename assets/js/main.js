@@ -84,13 +84,13 @@ function initMobileNav() {
   const navToggle = document.getElementById("nav-toggle") || document.querySelector(".nav-toggle");
   const mainNav = document.getElementById("main-nav") || document.querySelector(".main-nav");
   const closeBtn = document.getElementById("nav-close") || document.querySelector(".nav-close");
+  let backdrop = document.getElementById("nav-overlay");
 
   if (!navToggle || !mainNav) return;
 
-  let backdrop = document.querySelector(".nav-backdrop");
   if (!backdrop) {
     backdrop = document.createElement("div");
-    backdrop.className = "nav-backdrop";
+    backdrop.className = "nav-overlay";
     document.body.appendChild(backdrop);
   }
 
@@ -118,13 +118,6 @@ function initMobileNav() {
 
   mainNav.addEventListener("click", (e) => {
     if (e.target.closest("a")) close();
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && mainNav.classList.contains("open")) {
-      close();
-      navToggle.focus();
-    }
   });
 }
 
@@ -188,30 +181,29 @@ function initFaq() {
 }
 
 function initTheme() {
-  const themeToggle = document.getElementById("theme-toggle");
-  if (!themeToggle) return;
-  const moon = themeToggle.querySelector(".moon-icon");
-  const sun = themeToggle.querySelector(".sun-icon");
-
+  const themeToggles = document.querySelectorAll(".theme-toggle");
+  
   const apply = (theme) => {
     if (theme === "dark") {
       document.documentElement.setAttribute("data-theme", "dark");
-      if (moon) moon.style.display = "none";
-      if (sun) sun.style.display = "inline";
+      document.querySelectorAll(".moon-icon").forEach(m => m.style.display = "none");
+      document.querySelectorAll(".sun-icon").forEach(s => s.style.display = "inline");
     } else {
       document.documentElement.removeAttribute("data-theme");
-      if (moon) moon.style.display = "inline";
-      if (sun) sun.style.display = "none";
+      document.querySelectorAll(".moon-icon").forEach(m => m.style.display = "inline");
+      document.querySelectorAll(".sun-icon").forEach(s => s.style.display = "none");
     }
     loadBrandLogos();
   };
 
   apply(window.safeStorage.get("youyou_theme") || "dark");
 
-  themeToggle.addEventListener("click", () => {
-    const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    window.safeStorage.set("youyou_theme", next);
-    apply(next);
+  themeToggles.forEach(toggle => {
+    toggle.addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      window.safeStorage.set("youyou_theme", next);
+      apply(next);
+    });
   });
 }
 

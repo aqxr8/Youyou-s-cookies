@@ -356,8 +356,15 @@ onAuthStateChanged(auth, async (user) => {
       console.warn("Unable to retrieve user profile:", e);
     }
 
+    const mobileUserLink = document.getElementById("mobile-user-link");
+
     if (userIconLink && userIconWrapper) {
       userIconLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
+      
+      if(mobileUserLink) {
+        mobileUserLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
+        mobileUserLink.innerHTML = `<span class="nav-icon">👤</span> My Profile`;
+      }
       const photoUrl =
         (userData && userData.photoURL) ||
         user.photoURL ||
@@ -427,6 +434,11 @@ onAuthStateChanged(auth, async (user) => {
     }
   } else {
     if (userIconLink) userIconLink.href = "login.html";
+    const mobileUserLink = document.getElementById("mobile-user-link");
+    if(mobileUserLink) {
+       mobileUserLink.href = "login.html";
+       mobileUserLink.innerHTML = `<span class="nav-icon">👤</span> Account / Login`;
+    }
     if (PAGE === "profile" || PAGE === "admin") {
       window.location.href = "login.html";
     }

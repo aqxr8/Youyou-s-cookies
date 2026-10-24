@@ -51,6 +51,7 @@
 <body>
 
   <!-- REDESIGNED SLEEK GLASSMORPHIC HEADER -->
+  <!-- REDESIGNED SLEEK GLASSMORPHIC HEADER -->
   <header class="site-header">
     <div class="container header-inner">
       <!-- Brand Logo & Text -->
@@ -69,12 +70,12 @@
         
         <span class="brand-text">
           <b>Youyou's Cookies</b>
-          <span>MADE WITH LOVE</span>
+          <span class="desktop-only-text">MADE WITH LOVE</span>
         </span>
       </a>
 
       <!-- Live Order Status Pill -->
-      <div class="status-pill" data-status-pill role="status" title="Morocco Time Status">
+      <div class="status-pill desktop-action" data-status-pill role="status" title="Morocco Time Status">
         <span class="status-dot"></span>
         <span class="status-text">Closed</span>
       </div>
@@ -86,13 +87,25 @@
         <a href="menu.html"><span class="nav-icon"></span> Menu</a>
         <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
         <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
+        
+        <!-- NEW: Mobile Only Actions Inside Drawer -->
+        <div class="mobile-nav-actions">
+          <a href="login.html" id="mobile-user-link">
+            <span class="nav-icon">👤</span> Account / Login
+          </a>
+          <button id="mobile-theme-toggle" class="theme-toggle">
+            <span class="moon-icon" style="display:none;">🌙 Dark Mode</span>
+            <span class="sun-icon">☀️ Light Mode</span>
+          </button>
+        </div>
+        
         <div class="nav-decor">Baked fresh in Settat</div>
       </nav>
 
       <!-- Right Header Actions (Profile, Cart, Theme, Mobile Hamburger) -->
       <div class="header-actions">
-        <!-- User Account / Profile Icon -->
-        <a href="login.html" id="user-icon-link" aria-label="User Account" title="Account / Login">
+        <!-- User Account / Profile Icon (Desktop Only) -->
+        <a href="login.html" id="user-icon-link" class="desktop-action" aria-label="User Account" title="Account / Login">
           <div id="user-icon-wrapper" class="header-action-btn">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
               <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
@@ -101,7 +114,13 @@
           </div>
         </a>
 
-        <!-- Sweet Box Cart Icon with Live Count Badge -->
+        <!-- Dark / Light Mode Toggle (Desktop Only) -->
+        <button id="theme-toggle" class="header-action-btn theme-toggle desktop-action" aria-label="Toggle Dark Mode" title="Toggle Theme">
+          <span class="moon-icon" style="display:none;">🌙</span>
+          <span class="sun-icon">☀️</span>
+        </button>
+
+        <!-- Sweet Box Cart Icon (Visible Everywhere) -->
         <a href="#" onclick="window.openBoxModal(); return false;" id="nav-cart-icon" class="header-action-btn cart-btn" aria-label="Open Sweet Box Cart" title="View Box">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
             <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
@@ -109,13 +128,7 @@
           <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
         </a>
 
-        <!-- Dark / Light Mode Toggle -->
-        <button id="theme-toggle" class="header-action-btn theme-toggle" aria-label="Toggle Dark Mode" title="Toggle Theme">
-          <span class="moon-icon" style="display:none;">🌙</span>
-          <span class="sun-icon">☀️</span>
-        </button>
-
-        <!-- Mobile Menu Toggle Button -->
+        <!-- Mobile Menu Toggle Button (Hamburger) -->
         <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation Menu" aria-expanded="false">
           <span></span>
           <span></span>
@@ -124,6 +137,9 @@
       </div>
     </div>
   </header>
+
+  <!-- Backdrop overlay for mobile menu -->
+  <div class="nav-overlay" id="nav-overlay"></div>
 
   <div class="ticker" aria-label="Latest Announcements">
     <ul class="ticker-track">
