@@ -420,8 +420,6 @@ function initCart() {
       }
     }
 
-    if (!cartItemsList) return;
-
     let subtotal = 0;
     cart.forEach(item => {
       subtotal += (item.price * item.quantity);
@@ -431,6 +429,36 @@ function initCart() {
     const FREE_SHIPPING_THRESHOLD = 100;
     const deliveryFee = subtotal === 0 ? 0 : (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_DELIVERY_FEE);
     const finalTotal = subtotal + deliveryFee;
+
+    // --- SYNC FLOATING MOBILE CART BAR ---
+    let floatCart = document.getElementById('mobile-float-cart');
+    if (!floatCart) {
+      floatCart = document.createElement('div');
+      floatCart.id = 'mobile-float-cart';
+      floatCart.className = 'mobile-float-cart';
+      floatCart.onclick = function() { window.openBoxModal(); };
+      floatCart.innerHTML = `
+        <div class="mobile-float-cart-text">
+          <span class="mobile-float-cart-badge" id="float-cart-count">0</span>
+          <span>View Sweet Box 🍪</span>
+        </div>
+        <div class="mobile-float-cart-price" id="float-cart-total">0 DH</div>
+      `;
+      document.body.appendChild(floatCart);
+    }
+
+    const floatCount = document.getElementById('float-cart-count');
+    const floatTotal = document.getElementById('float-cart-total');
+
+    if (totalItemCount > 0) {
+      if (floatCount) floatCount.textContent = totalItemCount;
+      if (floatTotal) floatTotal.textContent = `${finalTotal} DH`;
+      floatCart.classList.add('show');
+    } else {
+      floatCart.classList.remove('show');
+    }
+
+    if (!cartItemsList) return;
 
     let tracker = document.getElementById('shipping-tracker');
     
