@@ -108,16 +108,30 @@ function initMobileNav() {
     document.body.style.overflow = "";
   };
 
-  navToggle.addEventListener("click", () => {
+  navToggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (mainNav.classList.contains("open")) close();
     else open();
   });
 
-  if (closeBtn) closeBtn.addEventListener("click", close);
-  backdrop.addEventListener("click", close);
+  if (closeBtn) {
+    closeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+    });
+  }
 
-  mainNav.addEventListener("click", (e) => {
-    if (e.target.closest("a")) close();
+  backdrop.addEventListener("click", (e) => {
+    e.preventDefault();
+    close();
+  });
+
+  mainNav.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", () => {
+      close();
+    });
   });
 
   document.addEventListener("keydown", (e) => {
@@ -236,4 +250,78 @@ function loadBrandLogos() {
     const p = video.play();
     if (p && p.catch) p.catch(() => {});
   });
+}
+/* =======================================================
+   MOBILE HEADER & HAMBURGER MENU (3 LINES) FIX
+   ======================================================= */
+@media (max-width: 768px) {
+  .header-inner {
+    height: 66px !important;
+    padding: 0 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  /* Prevent brand title from taking too much horizontal space */
+  .brand {
+    gap: 8px !important;
+    max-width: 52% !important;
+    overflow: hidden !important;
+  }
+
+  .brand-text b {
+    font-size: 0.92rem !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !overflow;
+    overflow: hidden !important;
+  }
+
+  /* Hide Theme Toggle from header bar on mobile to make room for Hamburger */
+  .site-header .header-actions .theme-toggle {
+    display: none !important;
+  }
+
+  /* Header action buttons row */
+  .header-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Compact button styling for mobile top bar */
+  .header-action-btn,
+  .nav-toggle {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+  }
+
+  /* 3-Line Hamburger Toggle Button */
+  .nav-toggle {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 4px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 50% !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+    z-index: 2003 !important;
+  }
+
+  /* The 3 horizontal bars inside the button */
+  .nav-toggle span {
+    display: block !important;
+    width: 18px !important;
+    height: 2px !important;
+    background: var(--brown) !important;
+    border-radius: 2px !important;
+    transition: all 0.3s ease !important;
+  }
 }

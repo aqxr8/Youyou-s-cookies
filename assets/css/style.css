@@ -1614,96 +1614,123 @@ video.brand-logo {
 /* =======================================================
    RESPONSIVE MEDIA QUERIES
    ======================================================= */
+/* ---------- Header Stacking Context Fix ---------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 2000 !important; /* Ensures header & drawer sit ABOVE the backdrop */
+  background: rgba(255, 249, 244, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(74, 55, 40, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---------- Backdrop Overlay ---------- */
+.nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1999;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+
+.nav-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* =======================================================
+   MOBILE NAVIGATION DRAWER (<= 900px)
+   ======================================================= */
 @media (max-width: 900px) {
-  .intro,
-  .story-grid,
-  .contact-grid,
-  .menu-wrap {
-    grid-template-columns: 1fr;
+  .status-pill {
+    display: none !important;
   }
 
-  .stats-grid,
-  .press-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .story-grid.reverse .story-media {
-    order: 0;
-  }
-
-  .product-grid,
-  .info-grid,
-  .footer-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .menu-side {
-    position: static;
-  }
-  
   .nav-toggle { 
-    display: flex; 
+    display: flex !important; 
+    width: 42px !important;
+    height: 42px !important;
+    flex-shrink: 0 !important;
+    z-index: 2003 !important;
   }
 
-  /* Mobile Navigation Drawer */
   .main-nav {
-    position: fixed;
-    top: 0;
-    right: 0;
-    height: 100vh;
-    height: 100dvh;
-    width: min(320px, 85vw);
-    background: var(--cream-light); 
-    box-shadow: -15px 0 50px rgba(0, 0, 0, 0.2);
-    transform: translateX(100%);
-    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-    z-index: 999;
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    width: min(300px, 82vw) !important;
+    background: var(--cream-light) !important; 
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.3) !important;
+    transform: translateX(100%) !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s !important;
+    z-index: 2002 !important;
+    
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    justify-content: center !important;
-    gap: 22px !important;
-    padding: 80px 30px 40px !important;
+    justify-content: flex-start !important;
+    gap: 16px !important;
+    padding: 85px 24px 30px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   [data-theme="dark"] .main-nav {
-    background: var(--cream-light);
+    background: var(--cream-light) !important;
   }
 
   .main-nav.open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
 
   .main-nav .nav-close {
     position: absolute !important;
-    top: 20px !important;
-    right: 25px !important;
-    display: block;
+    top: 18px !important;
+    right: 20px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
     background: none;
     border: none;
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     color: var(--brown);
     cursor: pointer;
-    line-height: 1;
-    padding: 0;
-    transition: transform 0.3s;
-  }
-  
-  .main-nav .nav-close:hover {
-    transform: rotate(90deg);
+    z-index: 2004 !important;
   }
 
   .main-nav a {
     font-family: "Cormorant Garamond", serif !important;
-    font-size: 1.9rem !important;
+    font-size: 1.6rem !important;
     font-weight: 600 !important;
     color: var(--brown) !important;
     background: transparent !important;
     border: none !important;
-    padding: 6px 15px !important;
-    width: auto !important;
+    padding: 10px 16px !important;
+    width: 100% !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
     position: relative;
-    transition: color 0.3s ease;
+    z-index: 2003 !important;
+    pointer-events: auto !important;
   }
 
   .main-nav a::after {
@@ -1726,17 +1753,19 @@ video.brand-logo {
 
   .main-nav a:hover::after,
   .main-nav a.active::after {
-    width: 100%;
+    width: 50%;
   }
 
   .nav-decor {
-    display: block;
+    display: block !important;
+    margin-top: auto !important;
     font-family: "Cormorant Garamond", serif;
     font-style: italic;
     color: var(--caramel);
-    font-size: 1.1rem !important;
+    font-size: 1rem !important;
     text-align: center;
     opacity: 0.85;
+    padding-top: 15px;
   }
 }
 
