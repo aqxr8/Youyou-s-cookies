@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -36,7 +36,10 @@ const firebaseConfig = {
   measurementId: "G-85M038ZLQ2"
 };
 
-const app = initializeApp(firebaseConfig);
+// Reuse the default Firebase app if another page script already initialized it.
+// This avoids app/duplicate-app errors that can stop authentication and profile loading.
+const existingDefaultApp = getApps().find((item) => item.name === "[DEFAULT]");
+const app = existingDefaultApp || initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
@@ -55,7 +58,8 @@ const esc = (v) =>
   }[c]));
 
 const PAGE = (window.location.pathname.split("/").pop() || "index")
-  .replace(/\.html$/, "");
+  .replace(/\.html$/i, "")
+  .toLowerCase();
 
 const createdMs = (d) => {
   const t = d.data().createdAt;
@@ -352,19 +356,44 @@ onAuthStateChanged(auth, async (user) => {
     let userData = null;
     let userDocExists = false;
 
+    const userDocRef = doc(db, "users", user.uid);
     try {
-      const userDocSnap = await getDoc(doc(db, "users", user.uid));
+      const userDocSnap = await getDoc(userDocRef);
       if (userDocSnap.exists()) {
-        userData = userDocSnap.data();
-        window.userDataObj = userData;
+        userData = userDocSnap.data() || {};
         userDocExists = true;
-        const cartAddressInput = document.getElementById("cart-address");
-        if (cartAddressInput && userData.address) {
-          cartAddressInput.value = userData.address;
+      } else {
+        // Recover gracefully for accounts created before the users/{uid} record existed.
+        userData = {
+          username: user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover"),
+          email: user.email || "",
+          role: user.email === ADMIN_EMAIL ? "admin" : "customer",
+          joinedAt: new Date(),
+          cart: []
+        };
+        try {
+          await setDoc(userDocRef, userData, { merge: true });
+          userDocExists = true;
+        } catch (createErr) {
+          // The profile can still render from Auth data even if Firestore rules block creation.
+          console.warn("Unable to initialize missing user profile document:", createErr);
         }
+      }
+      window.userDataObj = userData;
+      const cartAddressInput = document.getElementById("cart-address");
+      if (cartAddressInput && userData.address) {
+        cartAddressInput.value = userData.address;
       }
     } catch (e) {
       console.warn("Unable to retrieve user profile:", e);
+      // Keep the profile page usable even when the profile document cannot be read.
+      userData = {
+        username: user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover"),
+        email: user.email || "",
+        role: user.email === ADMIN_EMAIL ? "admin" : "customer",
+        cart: []
+      };
+      window.userDataObj = userData;
     }
 
     const mobileUserLink = document.getElementById("mobile-user-link");
@@ -418,7 +447,7 @@ onAuthStateChanged(auth, async (user) => {
         profilePic.style.display = "block";
       }
 
-      if (userDocExists && userData) {
+      if (userData) {
         const displayName = userData.username || user.displayName || "Cookie Lover";
         const nameEl = document.getElementById("profile-name");
         if (nameEl) nameEl.textContent = displayName;
