@@ -265,7 +265,6 @@ function initCart() {
   let rawCart = JSON.parse(localStorage.getItem('youyou_cart')) || [];
   let cart = [];
   
-  // Make window.cart accessible globally for the promo code logic
   window.cart = cart;
   
   rawCart.forEach(item => {
@@ -409,7 +408,6 @@ function initCart() {
     saveCart();
   };
 
-  // Expose to window so the Promo logic can trigger UI re-renders
   window.updateCartUI = function() {
     const cartBadge = document.getElementById('cart-badge');
     let totalItemCount = 0;
@@ -447,7 +445,6 @@ function initCart() {
 
     if (window.activePromo) {
       if (window.activePromo.minAmount && subtotal < window.activePromo.minAmount) {
-        // Did not meet minimum
         window.activePromo = null;
         const promoMsg = document.getElementById('promo-message');
         if(promoMsg) {
@@ -456,7 +453,6 @@ function initCart() {
         }
         if(discountRow) discountRow.style.display = "none";
       } else {
-        // Valid promo
         if(discountRow) discountRow.style.display = "flex";
         if(appliedPromoNameEl) appliedPromoNameEl.textContent = window.activePromo.code;
         
@@ -478,7 +474,6 @@ function initCart() {
 
     let finalTotal = (subtotal - totalDiscount) + deliveryFee;
     if (finalTotal < 0) finalTotal = 0;
-    // ==========================================
 
     let tracker = document.getElementById('shipping-tracker');
     
@@ -633,7 +628,6 @@ function initCart() {
         subtotal += itemTotal;
       });
 
-      // Calculate Promo for Confirmation Modal
       let totalDiscount = 0;
       let freeItemText = "";
       if (window.activePromo && (!window.activePromo.minAmount || subtotal >= window.activePromo.minAmount)) {
@@ -714,7 +708,6 @@ function initCart() {
     let subtotal = 0;
     cart.forEach(i => subtotal += (i.price * i.quantity));
     
-    // Recalculate Promo for final WhatsApp send and Firestore
     let totalDiscount = 0;
     let freeItemText = "";
     if (window.activePromo && (!window.activePromo.minAmount || subtotal >= window.activePromo.minAmount)) {
@@ -739,7 +732,7 @@ function initCart() {
         address: address || "Settat",
         items: cart,
         totalAmount: finalTotal,
-        promoCode: window.activePromo ? window.activePromo.code : null // Save promo code string if used
+        promoCode: window.activePromo ? window.activePromo.code : null
       });
     }
 
@@ -754,7 +747,6 @@ function initCart() {
     
     message += `\nSubtotal : ${subtotal} DH\n`;
     
-    // Add promo logic to WhatsApp message
     if (window.activePromo && (!window.activePromo.minAmount || subtotal >= window.activePromo.minAmount)) {
         message += `*Promo Applied:* ${window.activePromo.code}\n`;
         if (window.activePromo.type === 'free_item') {
@@ -770,11 +762,11 @@ function initCart() {
     window.location.href = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 
     cart = [];
-    window.activePromo = null; // Reset promo after purchase
+    window.activePromo = null;
     saveCart();
   }
 
-  updateCartUI(); // Initial run
+  updateCartUI();
 }
 
 function init3DHoverEffect() {
@@ -806,38 +798,22 @@ function init3DHoverEffect() {
 }
 
 /* =========================================================
-   ADVANCED ADMIN PROMO CODE ENGINE
+   ADVANCED ADMIN PROMO CODE ENGINE (UPDATED FOR SEPARATE INPUTS)
 ========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
   const addPromoForm = document.getElementById("add-promo-form");
   const promoTypeSelect = document.getElementById("new-promo-type");
-  const promoValueInput = document.getElementById("new-promo-value");
-  const promoValueLabel = document.getElementById("reward-value-label");
   const adminPromoList = document.getElementById("admin-promo-list");
 
-  // Only run this script if we are on the admin page where these elements exist
+  // Separate inputs from the updated admin form
+  const valPercent = document.getElementById("val-percent");
+  const valFixed = document.getElementById("val-fixed");
+  const valFree = document.getElementById("val-free");
+
   if (addPromoForm && adminPromoList) {
     const db = firebase.firestore();
 
-    // 1. Dynamic Form Label/Input adjustments
-    promoTypeSelect.addEventListener("change", (e) => {
-      const type = e.target.value;
-      if (type === "free_item") {
-        promoValueLabel.textContent = "What Free Item(s)?";
-        promoValueInput.type = "text";
-        promoValueInput.placeholder = "e.g. 2 Free Lotus Cookies";
-      } else if (type === "discount_percent") {
-        promoValueLabel.textContent = "Discount Value (%)";
-        promoValueInput.type = "number";
-        promoValueInput.placeholder = "e.g. 20";
-      } else {
-        promoValueLabel.textContent = "Discount Amount (MAD)";
-        promoValueInput.type = "number";
-        promoValueInput.placeholder = "e.g. 30";
-      }
-    });
-
-    // 2. Load Promos from Firestore
+    // 1. Load Promos from Firestore
     function loadAdminPromos() {
       db.collection('promo_codes').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
         adminPromoList.innerHTML = "";
@@ -850,15 +826,13 @@ document.addEventListener("DOMContentLoaded", () => {
         snapshot.forEach(doc => {
           const promo = doc.data();
           
-          // Format the reward text
           let rewardText = "";
           if (promo.type === 'discount_percent') rewardText = `${promo.value}% OFF`;
-          else if (promo.type === 'discount_fixed') rewardText = `${promo.value} MAD OFF`;
-          else rewardText = `FREE: ${promo.value}`;
+          else if (promo.type === 'discount_fixed') rewardText = `${promo.value} DH OFF`;
+          else rewardText = `FREE GIFT: ${promo.value}`;
 
-          // Format the condition text
           let conditionText = promo.minAmount > 0 
-            ? `Orders over ${promo.minAmount} MAD` 
+            ? `Orders over ${promo.minAmount} DH` 
             : `No minimum amount required`;
 
           const statusClass = promo.active ? 'active' : 'disabled';
@@ -884,7 +858,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // 3. Add New Promo Code to Firestore
+    // 2. Add New Promo Code to Firestore (Grabbing from the correct visible input)
     addPromoForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       
@@ -892,10 +866,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const minAmount = parseFloat(document.getElementById("new-promo-min-amount").value) || 0;
       const type = promoTypeSelect.value;
       
-      // Value can be text (for free item) or number (for discount)
-      let value = promoValueInput.value; 
-      if (type !== "free_item") {
-        value = parseFloat(value);
+      let finalValue = "";
+      if (type === "discount_percent") {
+        finalValue = parseFloat(valPercent.value);
+        if (!finalValue) return alert("Please enter a valid percentage.");
+      } else if (type === "discount_fixed") {
+        finalValue = parseFloat(valFixed.value);
+        if (!finalValue) return alert("Please enter a valid amount.");
+      } else if (type === "free_item") {
+        finalValue = valFree.value.trim();
+        if (!finalValue) return alert("Please enter the free item name.");
       }
 
       const submitBtn = addPromoForm.querySelector('button[type="submit"]');
@@ -907,14 +887,13 @@ document.addEventListener("DOMContentLoaded", () => {
           code: code,
           minAmount: minAmount,
           type: type,
-          value: value,
-          active: true, // Active by default
+          value: finalValue,
+          active: true,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
         addPromoForm.reset();
-        // Trigger the change event to reset the label based on the default select option
-        promoTypeSelect.dispatchEvent(new Event('change')); 
+        if(promoTypeSelect) promoTypeSelect.dispatchEvent(new Event('change'));
         
       } catch (error) {
         alert("Error creating promo code: " + error.message);
@@ -923,29 +902,26 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // 4. Toggle Enable/Disable
+    // 3. Toggle Enable/Disable
     window.togglePromoStatus = async function(docId, currentStatus) {
       try {
-        await db.collection('promo_codes').doc(docId).update({
-          active: !currentStatus
-        });
+        await db.collection('promo_codes').doc(docId).update({ active: !currentStatus });
       } catch (error) {
-        alert("Failed to update status: " + error.message);
+        alert("Failed to update status.");
       }
     };
 
-    // 5. Delete Promo Code
+    // 4. Delete Promo Code
     window.deletePromoCode = async function(docId) {
-      if(confirm("Are you sure you want to permanently delete this promo code?")) {
+      if(confirm("Permanently delete this promo code?")) {
         try {
           await db.collection('promo_codes').doc(docId).delete();
         } catch (error) {
-          alert("Failed to delete: " + error.message);
+          alert("Failed to delete.");
         }
       }
     };
 
-    // Initialize list on load
     loadAdminPromos();
   }
 });
@@ -954,7 +930,6 @@ document.addEventListener("DOMContentLoaded", () => {
 //  CUSTOMER CART PROMO VALIDATION
 // =========================================================
 
-// Global state for active promo (so Cart UI knows about it)
 window.activePromo = null;
 
 window.applyPromoCode = async function() {
@@ -967,7 +942,6 @@ window.applyPromoCode = async function() {
     return;
   }
 
-  // 1. Calculate current subtotal from your cart array
   let currentSubtotal = 0;
   if (window.cart && window.cart.length > 0) {
     currentSubtotal = window.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -996,18 +970,16 @@ window.applyPromoCode = async function() {
     } else {
       const promoData = snapshot.docs[0].data();
       
-      // 2. Check if they meet the Minimum Order Amount
       if (promoData.minAmount && currentSubtotal < promoData.minAmount) {
-        msgEl.textContent = `This code requires a minimum order of ${promoData.minAmount} MAD.`;
+        msgEl.textContent = `This code requires a minimum order of ${promoData.minAmount} DH.`;
         msgEl.className = "promo-message error";
         window.activePromo = null;
       } else {
-        // 3. Success! Save it to global state
         window.activePromo = promoData;
         
         let successText = "";
         if(promoData.type === 'discount_percent') successText = `-${promoData.value}% applied!`;
-        else if(promoData.type === 'discount_fixed') successText = `-${promoData.value} MAD applied!`;
+        else if(promoData.type === 'discount_fixed') successText = `-${promoData.value} DH applied!`;
         else successText = `Gift unlocked: ${promoData.value}!`;
 
         msgEl.textContent = `Success! ${successText}`;
@@ -1015,7 +987,6 @@ window.applyPromoCode = async function() {
       }
     }
     
-    // 4. Force the cart UI to re-calculate the math
     if(typeof window.updateCartUI === 'function') window.updateCartUI();
     
   } catch (error) {

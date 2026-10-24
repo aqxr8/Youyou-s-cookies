@@ -9,6 +9,12 @@
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="assets/css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <style>
     /* Admin Dashboard Specific Styles */
     .admin-hero-banner {
@@ -165,6 +171,7 @@
       padding: 25px;
       box-shadow: var(--shadow);
       border: 1px solid rgba(74, 55, 40, 0.08);
+      margin-bottom: 25px;
     }
 
     .admin-order-card {
@@ -216,6 +223,83 @@
       color: white;
     }
 
+    /* Promo Item List Styles */
+    .admin-promo-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--white);
+      border: 1px solid rgba(74, 55, 40, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      transition: all 0.3s ease;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .admin-promo-item.disabled {
+      opacity: 0.7;
+      background: var(--cream-light);
+    }
+    .promo-info h3 {
+      font-family: 'Cormorant Garamond', serif;
+      color: var(--caramel);
+      font-size: 1.3rem;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .promo-info p {
+      font-size: 0.85rem;
+      color: var(--brown-soft);
+      margin: 0;
+      font-weight: 500;
+    }
+    .promo-status-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .promo-status-badge.active {
+      background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;
+    }
+    .promo-status-badge.disabled {
+      background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;
+    }
+    .promo-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-promo-action {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      transition: 0.2s;
+    }
+    .btn-toggle-promo {
+      background: var(--cream);
+      color: var(--brown);
+      border: 1px solid rgba(74,55,40,0.2);
+    }
+    .btn-toggle-promo:hover {
+      background: var(--brown);
+      color: var(--white);
+    }
+    .btn-delete-promo {
+      background: transparent;
+      color: #c62828;
+      border: 1px solid rgba(198, 40, 40, 0.3);
+    }
+    .btn-delete-promo:hover {
+      background: #ffebee;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
@@ -239,47 +323,35 @@
         font-size: 1.25rem;
       }
     }
-
-    @media (max-width: 500px) {
-      .admin-metrics-grid {
-        grid-template-columns: 1fr !important;
-      }
-    }
   </style>
 </head>
 <body>
 
   <!-- Site Header -->
-  <!-- REDESIGNED SLEEK GLASSMORPHIC HEADER -->
   <header class="site-header">
     <div class="container header-inner">
-      <!-- Brand Logo & Text -->
       <a class="brand" href="index.html" aria-label="Youyou's Cookies Home">
         <div class="brand-logo-wrapper">
           <video class="brand-logo logo-light" poster="assets/images/logo.png" autoplay loop muted playsinline>
             <source data-src="assets/videos/logo-light.mp4" type="video/mp4">
             <img src="assets/images/logo.png" alt="Youyou Cookies Logo">
           </video>
-
           <video class="brand-logo logo-dark" poster="assets/images/logo1.png" autoplay loop muted playsinline>
             <source data-src="assets/videos/logo-dark.mp4" type="video/mp4">
             <img src="assets/images/logo1.png" alt="Youyou Cookies Logo">
           </video>
         </div>
-        
         <span class="brand-text">
           <b>Youyou's Cookies</b>
           <span class="desktop-only-text">MADE WITH LOVE</span>
         </span>
       </a>
 
-      <!-- Live Order Status Pill -->
       <div class="status-pill desktop-action" data-status-pill role="status" title="Morocco Time Status">
         <span class="status-dot"></span>
         <span class="status-text">Closed</span>
       </div>
 
-      <!-- Main Navigation Links / Mobile Drawer -->
       <nav class="main-nav" id="main-nav" aria-label="Main Navigation">
         <button class="nav-close" id="nav-close" aria-label="Close Menu">&times;</button>
         <a href="index.html"><span class="nav-icon"></span> Home</a>
@@ -287,7 +359,6 @@
         <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
         <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
         
-        <!-- NEW: Mobile Only Actions Inside Drawer -->
         <div class="mobile-nav-actions">
           <a href="login.html" id="mobile-user-link">
             <span class="nav-icon">👤</span> Account / Login
@@ -297,13 +368,10 @@
             <span class="sun-icon">☀️ Light Mode</span>
           </button>
         </div>
-        
         <div class="nav-decor">Baked fresh in Settat</div>
       </nav>
 
-      <!-- Right Header Actions (Profile, Cart, Theme, Mobile Hamburger) -->
       <div class="header-actions">
-        <!-- User Account / Profile Icon (Desktop Only) -->
         <a href="login.html" id="user-icon-link" class="desktop-action" aria-label="User Account" title="Account / Login">
           <div id="user-icon-wrapper" class="header-action-btn">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
@@ -313,13 +381,11 @@
           </div>
         </a>
 
-        <!-- Dark / Light Mode Toggle (Desktop Only) -->
         <button id="theme-toggle" class="header-action-btn theme-toggle desktop-action" aria-label="Toggle Dark Mode" title="Toggle Theme">
           <span class="moon-icon" style="display:none;">🌙</span>
           <span class="sun-icon">☀️</span>
         </button>
 
-        <!-- Sweet Box Cart Icon (Visible Everywhere) -->
         <a href="#" onclick="window.openBoxModal(); return false;" id="nav-cart-icon" class="header-action-btn cart-btn" aria-label="Open Sweet Box Cart" title="View Box">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
             <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
@@ -327,17 +393,13 @@
           <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
         </a>
 
-        <!-- Mobile Menu Toggle Button (Hamburger) -->
         <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation Menu" aria-expanded="false">
-          <span></span>
-          <span></span>
-          <span></span>
+          <span></span><span></span><span></span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Backdrop overlay for mobile menu -->
   <div class="nav-overlay" id="nav-overlay"></div>
 
   <main class="section container" style="max-width: 1100px; padding-top: 30px;">
@@ -345,14 +407,11 @@
     <!-- Admin Hero Banner & Live Stats -->
     <div class="admin-hero-banner">
       <div class="admin-title-row">
-        <h1>
-          <span>⚡ Bakery Control Panel</span>
-        </h1>
+        <h1><span>⚡ Bakery Control Panel</span></h1>
         <button id="logout-btn" class="btn btn-outline" style="padding: 8px 18px; font-size: 0.85rem; border-color: rgba(74,55,40,0.3); color: var(--brown);">
           Log Out Admin
         </button>
       </div>
-      
 
       <div class="admin-metrics-grid">
         <div class="metric-card">
@@ -391,15 +450,10 @@
 
     <!-- Admin Section Tabs -->
     <div class="admin-tabs-nav">
-      <button class="tab-btn active" data-tab="orders-pane">
-        <span>📦</span> Orders Management
-      </button>
-      <button class="tab-btn" data-tab="users-pane">
-        <span>👥</span> User Directory
-      </button>
-      <button class="tab-btn" data-tab="reviews-pane">
-        <span>⭐</span> Review Moderation
-      </button>
+      <button class="tab-btn active" data-tab="orders-pane"><span>📦</span> Orders Management</button>
+      <button class="tab-btn" data-tab="users-pane"><span>👥</span> User Directory</button>
+      <button class="tab-btn" data-tab="reviews-pane"><span>⭐</span> Review Moderation</button>
+      <button class="tab-btn" data-tab="promo-pane"><span>🎟️</span> Promo Codes</button>
     </div>
 
     <!-- Orders Pane -->
@@ -447,57 +501,77 @@
         </div>
       </div>
     </div>
-        <!-- ADVANCED PROMO CODES MANAGEMENT CARD -->
-        <div class="admin-order-card" style="border-top: 4px solid var(--caramel); margin-top: 20px;">
-          <div class="order-history-header">
-            <strong style="font-size: 1.3rem;">🎟️ Advanced Promo Code Manager</strong>
+
+    <!-- Promo Codes Pane -->
+    <div id="promo-pane" class="admin-section-pane">
+      <div class="admin-card-container" style="border-top: 4px solid var(--caramel);">
+        <div class="pro-card-header" style="margin-bottom: 20px;">
+          <h2 class="pro-card-title" style="font-size: 1.6rem;">🎟️ Advanced Promo Code Manager</h2>
+        </div>
+        
+        <!-- ADD NEW PROMO FORM WITH CONDITIONAL INPUT FIELDS -->
+        <form id="add-promo-form" class="pro-form" style="background: var(--cream-light); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(74, 55, 40, 0.1);">
+          <h4 style="margin-bottom: 15px; color: var(--brown); font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">Create a New Campaign</h4>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Promo Code Text</label>
+              <input type="text" id="new-promo-code" class="auth-input pro-input" placeholder="e.g. SUMMER20" required style="text-transform: uppercase; font-weight: bold;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Min. Order Amount (DH)</label>
+              <input type="number" id="new-promo-min-amount" class="auth-input pro-input" placeholder="0 for no minimum" required min="0">
+            </div>
           </div>
           
-          <!-- Add New Code Form -->
-          <form id="add-promo-form" class="pro-form" style="background: var(--cream-light); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(74, 55, 40, 0.1);">
-            <h4 style="margin-bottom: 15px; color: var(--brown); font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">Create a New Campaign</h4>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
-              <div class="form-group" style="margin-bottom: 0;">
-                <label>Promo Code</label>
-                <input type="text" id="new-promo-code" class="auth-input pro-input" placeholder="e.g. YUMMY20" required style="text-transform: uppercase; font-weight: bold;">
-              </div>
-              <div class="form-group" style="margin-bottom: 0;">
-                <label>Min. Order Amount (MAD)</label>
-                <input type="number" id="new-promo-min-amount" class="auth-input pro-input" placeholder="e.g. 150 (put 0 for no min)" required min="0">
-              </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Reward Type</label>
+              <select id="new-promo-type" class="auth-input pro-input">
+                <option value="discount_percent">Percentage Discount (%)</option>
+                <option value="discount_fixed">Fixed Amount Discount (DH)</option>
+                <option value="free_item">Free Cookies / Gift</option>
+              </select>
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
-              <div class="form-group" style="margin-bottom: 0;">
-                <label>What's the Reward?</label>
-                <select id="new-promo-type" class="auth-input pro-input">
-                  <option value="discount_percent">Percentage Discount (%)</option>
-                  <option value="discount_fixed">Fixed Discount (MAD)</option>
-                  <option value="free_item">Free Cookies / Gift</option>
-                </select>
-              </div>
-              <div class="form-group" style="margin-bottom: 0;">
-                <label id="reward-value-label">Discount Value (%)</label>
-                <input type="text" id="new-promo-value" class="auth-input pro-input" placeholder="e.g. 20" required>
-              </div>
+            <!-- PERCENTAGE INPUT (Shown by default) -->
+            <div class="form-group" id="input-group-percent" style="margin-bottom: 0;">
+              <label>Discount Percentage (%)</label>
+              <input type="number" id="val-percent" class="auth-input pro-input" placeholder="e.g. 20" min="1" max="100">
             </div>
-            <button type="submit" class="btn btn-dark" style="padding: 12px 24px; width: auto;">Save Promo Code</button>
-          </form>
+            
+            <!-- FIXED AMOUNT INPUT (Hidden by default) -->
+            <div class="form-group" id="input-group-fixed" style="margin-bottom: 0; display: none;">
+              <label>Discount Amount (DH)</label>
+              <input type="number" id="val-fixed" class="auth-input pro-input" placeholder="e.g. 30" min="1">
+            </div>
 
-          <!-- List of Created Codes -->
-          <h4 style="margin-bottom: 15px; color: var(--brown); font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">Existing Promo Codes</h4>
-          <div id="admin-promo-list" style="display: flex; flex-direction: column; gap: 12px;">
-            <!-- Codes will be loaded here via JS -->
+            <!-- FREE ITEM INPUT (Hidden by default) -->
+            <div class="form-group" id="input-group-free" style="margin-bottom: 0; display: none;">
+              <label>What Free Item(s)?</label>
+              <input type="text" id="val-free" class="auth-input pro-input" placeholder="e.g. 2 Free Lotus Cookies">
+            </div>
           </div>
-        </div>    
+
+          <button type="submit" class="btn btn-dark" style="padding: 12px 24px;">Save Promo Code</button>
+        </form>
+
+        <!-- PROMO CODES LIST -->
+        <h4 style="margin-bottom: 15px; color: var(--brown); font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">Active & Past Coupons</h4>
+        <div id="admin-promo-list" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Coupons will appear here automatically via JS -->
+        </div>
+      </div>
+    </div>
 
   </main>
 
   <script src="assets/js/main.js"></script>
   <script type="module" src="assets/js/auth.js"></script>
+  <script src="assets/js/features.js"></script>
+  
   <script>
-    // Tab switching interaction
+    // Tab switching interaction & dynamic field toggle
     document.addEventListener("DOMContentLoaded", () => {
       const tabs = document.querySelectorAll(".tab-btn");
       const panes = document.querySelectorAll(".admin-section-pane");
@@ -530,6 +604,41 @@
           });
         });
       });
+
+      // Toggle input fields in the promo form based on reward type dropdown
+      const promoTypeSelect = document.getElementById("new-promo-type");
+      const groupPercent = document.getElementById("input-group-percent");
+      const groupFixed = document.getElementById("input-group-fixed");
+      const groupFree = document.getElementById("input-group-free");
+
+      const valPercent = document.getElementById("val-percent");
+      const valFixed = document.getElementById("val-fixed");
+      const valFree = document.getElementById("val-free");
+
+      if (promoTypeSelect) {
+        promoTypeSelect.addEventListener("change", (e) => {
+          const type = e.target.value;
+          
+          // Hide all input groups first
+          groupPercent.style.display = "none";
+          groupFixed.style.display = "none";
+          groupFree.style.display = "none";
+
+          // Clear values
+          valPercent.value = "";
+          valFixed.value = "";
+          valFree.value = "";
+
+          // Show only the selected input group
+          if (type === "discount_percent") {
+            groupPercent.style.display = "block";
+          } else if (type === "discount_fixed") {
+            groupFixed.style.display = "block";
+          } else if (type === "free_item") {
+            groupFree.style.display = "block";
+          }
+        });
+      }
     });
   </script>
 </body>
