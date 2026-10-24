@@ -435,30 +435,43 @@ onAuthStateChanged(auth, async (user) => {
         window.location.href = "admin.html";
         return;
       }
-      const emailEl = document.getElementById("profile-email");
-      if (emailEl) emailEl.textContent = user.email;
+      // Render both the current redesigned profile markup and the older profile markup.
+      const emailText = user.email || "";
+      ["profile-email-display", "profile-email"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = emailText;
+      });
 
-      const profilePic = document.getElementById("profile-picture");
-      if (profilePic) {
-        profilePic.src =
-          (userData && userData.photoURL) ||
-          user.photoURL ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent((userData && userData.username) || user.displayName || user.email)}&background=c1771e&color=fff&size=128`;
-        profilePic.style.display = "block";
-      }
+      const displayName = (userData && userData.username) || user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover");
+      const avatar =
+        (userData && userData.photoURL) ||
+        user.photoURL ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=c1771e&color=fff&size=128`;
+      ["profile-avatar", "profile-picture"].forEach((id) => {
+        const img = document.getElementById(id);
+        if (img) {
+          img.src = avatar;
+          img.style.display = "block";
+        }
+      });
 
-      if (userData) {
-        const displayName = userData.username || user.displayName || "Cookie Lover";
-        const nameEl = document.getElementById("profile-name");
-        if (nameEl) nameEl.textContent = displayName;
+      ["profile-name-display", "profile-name"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if ("value" in el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) el.value = displayName;
+        else el.textContent = displayName;
+      });
 
-        const editUsername = document.getElementById("edit-username");
-        const editAddress = document.getElementById("edit-address");
-        const editPhone = document.getElementById("edit-phone");
+      const addressInput = document.getElementById("profile-address") || document.getElementById("edit-address");
+      const phoneInput = document.getElementById("profile-phone") || document.getElementById("edit-phone");
+      if (addressInput) addressInput.value = (userData && userData.address) || "";
+      if (phoneInput) phoneInput.value = (userData && userData.phone) || "";
 
-        if (editUsername) editUsername.value = displayName;
-        if (editAddress) editAddress.value = userData.address || "";
-        if (editPhone) editPhone.value = userData.phone || "";
+      const joinDate = document.querySelector(".pro-join-date");
+      if (joinDate) {
+        const joined = userData && userData.joinedAt;
+        const joinedDate = joined && typeof joined.toDate === "function" ? joined.toDate() : (joined instanceof Date ? joined : null);
+        joinDate.textContent = `Member since ${joinedDate ? joinedDate.getFullYear() : 2024}`;
       }
 
       syncAndRenderProfileCart(user, db, userData, userDocExists);
@@ -550,7 +563,7 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
 // --- CUSTOMER ORDER HISTORY & PROFILE STATS ---
 
 async function loadCustomerOrderHistory(user, db) {
-  const historyContainer = document.getElementById("profile-order-history");
+  const historyContainer = document.getElementById("profile-order-history") || document.getElementById("user-orders-list");
   if (!historyContainer) return;
 
   try {
@@ -559,12 +572,12 @@ async function loadCustomerOrderHistory(user, db) {
     let totalSpent = 0;
     let totalOrdersCount = querySnapshot.size || 0;
 
-    const statOrders = document.getElementById("stat-user-orders");
+    const statOrders = document.getElementById("stat-user-orders") || document.getElementById("stat-orders-count");
     const statSpent = document.getElementById("stat-user-spent");
     const statLevel = document.getElementById("stat-user-level");
 
     if (querySnapshot.empty) {
-      historyContainer.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">No previous order found.</p>`;
+      historyContainer.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">No orders found yet. Your cookie orders will appear here.</p>`;
       if (statOrders) statOrders.textContent = "0";
       if (statSpent) statSpent.textContent = "0 DH";
       if (statLevel) statLevel.textContent = "Cookie Fan";
@@ -980,44 +993,74 @@ if (forgotPasswordForm) {
 
 // --- PROFILE INFORMATION UPDATE ---
 
-const infoForm = document.getElementById("profile-info-form");
+const infoForm = document.getElementById("profile-info-form") || document.getElementById("profile-form");
 if (infoForm) {
   infoForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const newUsername = document.getElementById("edit-username").value;
-    const newAddress = document.getElementById("edit-address").value;
-    const newPhone = document.getElementById("edit-phone")
-      ? document.getElementById("edit-phone").value
-      : "";
-    const msg = document.getElementById("info-msg");
+    const usernameInput = document.getElementById("profile-name") || document.getElementById("edit-username");
+    const addressInput = document.getElementById("profile-address") || document.getElementById("edit-address");
+    const phoneInput = document.getElementById("profile-phone") || document.getElementById("edit-phone");
+    const newUsername = String(usernameInput?.value || "").trim();
+    const newAddress = String(addressInput?.value || "").trim();
+    const newPhone = String(phoneInput?.value || "").trim();
+    const msg = document.getElementById("profile-msg") || document.getElementById("info-msg");
+    const saveButton = infoForm.querySelector('button[type="submit"]');
+    const originalButtonText = saveButton ? saveButton.textContent : "Save Details";
+
+    if (!newUsername) {
+      if (msg) {
+        msg.style.display = "block";
+        msg.style.color = "#d9534f";
+        msg.textContent = "Please enter your full name.";
+      }
+      return;
+    }
 
     try {
       const user = auth.currentUser;
-      if (user) {
-        await updateDoc(doc(db, "users", user.uid), {
-          username: newUsername,
-          address: newAddress,
-          phone: newPhone
-        });
+      if (!user) throw new Error("Your session has expired. Please sign in again.");
+      if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = "Saving...";
+      }
+      await setDoc(doc(db, "users", user.uid), {
+        username: newUsername,
+        email: user.email || "",
+        address: newAddress,
+        phone: newPhone,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
 
-        if (window.userDataObj) {
-          window.userDataObj.username = newUsername;
-          window.userDataObj.address = newAddress;
-          window.userDataObj.phone = newPhone;
-        }
+      window.userDataObj = {
+        ...(window.userDataObj || {}),
+        username: newUsername,
+        address: newAddress,
+        phone: newPhone
+      };
 
-        const nameEl = document.getElementById("profile-name");
-        if (nameEl) nameEl.textContent = newUsername;
+      const displayName = document.getElementById("profile-name-display");
+      if (displayName) displayName.textContent = newUsername;
+      const legacyName = document.getElementById("profile-name");
+      if (legacyName && !/(INPUT|TEXTAREA|SELECT)/.test(legacyName.tagName)) legacyName.textContent = newUsername;
 
+      if (msg) {
         msg.style.display = "block";
         msg.style.color = "#57a05f";
         msg.textContent = "Profile updated successfully!";
         setTimeout(() => { msg.style.display = "none"; }, 4000);
       }
     } catch (error) {
-      msg.style.display = "block";
-      msg.style.color = "#d9534f";
-      msg.textContent = "Error saving changes.";
+      console.error("Error saving profile details:", error);
+      if (msg) {
+        msg.style.display = "block";
+        msg.style.color = "#d9534f";
+        msg.textContent = error.message || "Error saving changes. Please try again.";
+      }
+    } finally {
+      if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.textContent = originalButtonText;
+      }
     }
   });
 }
@@ -1025,26 +1068,61 @@ if (infoForm) {
 // --- PASSWORD UPDATE ---
 
 const passwordForm = document.getElementById("password-form");
-if (passwordForm) {
-  passwordForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const newPassword = document.getElementById("new-password").value;
-    const msg = document.getElementById("password-msg");
+const passwordButton = document.getElementById("btn-update-password");
+async function handlePasswordUpdate(event) {
+  if (event) event.preventDefault();
+  const passwordInput = document.getElementById("profile-new-password") || document.getElementById("new-password");
+  const msg = document.getElementById("password-msg");
+  const newPassword = String(passwordInput?.value || "");
 
-    try {
-      await updatePassword(auth.currentUser, newPassword);
+  if (!newPassword || newPassword.length < 6) {
+    if (msg) {
+      msg.style.display = "block";
+      msg.style.color = "#d9534f";
+      msg.textContent = "Password must be at least 6 characters long.";
+    }
+    return;
+  }
+  if (!auth.currentUser) {
+    if (msg) {
+      msg.style.display = "block";
+      msg.style.color = "#d9534f";
+      msg.textContent = "Please sign in again before changing your password.";
+    }
+    return;
+  }
+
+  const originalButtonText = passwordButton ? passwordButton.textContent : "Update Password";
+  if (passwordButton) {
+    passwordButton.disabled = true;
+    passwordButton.textContent = "Updating...";
+  }
+  try {
+    await updatePassword(auth.currentUser, newPassword);
+    if (passwordInput) passwordInput.value = "";
+    if (passwordForm) passwordForm.reset();
+    if (msg) {
       msg.style.display = "block";
       msg.style.color = "#57a05f";
       msg.textContent = "Password updated successfully!";
-      passwordForm.reset();
       setTimeout(() => { msg.style.display = "none"; }, 4000);
-    } catch (error) {
+    }
+  } catch (error) {
+    console.error("Password update failed:", error);
+    if (msg) {
       msg.style.display = "block";
       msg.style.color = "#d9534f";
-      msg.textContent = authMessage(error);
+      msg.textContent = authMessage(error, "Could not update password. You may need to sign in again first.");
     }
-  });
+  } finally {
+    if (passwordButton) {
+      passwordButton.disabled = false;
+      passwordButton.textContent = originalButtonText;
+    }
+  }
 }
+if (passwordButton) passwordButton.addEventListener("click", handlePasswordUpdate);
+if (passwordForm) passwordForm.addEventListener("submit", handlePasswordUpdate);
 
 // --- USER ROUTING ---
 
@@ -1140,7 +1218,7 @@ if (googleBtn) {
 
 // --- LOGOUT ---
 
-const logoutBtn = document.getElementById("logout-btn");
+const logoutBtn = document.getElementById("logout-btn") || document.getElementById("btn-logout");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
     signOut(auth).then(() => {

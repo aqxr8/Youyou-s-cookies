@@ -8,10 +8,7 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <!-- Firebase is initialized by the modular SDK in assets/js/auth.js. -->
 </head>
 <body>
 
@@ -143,6 +140,7 @@
                 <label>Default Delivery Address</label>
                 <textarea id="profile-address" class="auth-input pro-input" rows="3" placeholder="Enter your full address in Settat..."></textarea>
               </div>
+              <div id="profile-msg" role="status" aria-live="polite" style="display:none; margin: 10px 0; font-size: 0.9rem;"></div>
               <button type="submit" class="btn btn-dark pro-btn-full" id="btn-save-profile">
                 Save Details
               </button>
@@ -239,65 +237,30 @@
     </div>   
   </main>
 
-  <!-- Include your JS scripts -->
-  <script src="assets/js/firebase-init.js"></script>
-  <script src="assets/js/auth.js"></script>
+  <!-- Firebase auth uses ES modules; loading auth.js as a classic script prevents it from running. -->
+  <script type="module" src="assets/js/auth.js"></script>
   <script src="assets/js/main.js"></script>
   <script src="assets/js/features.js"></script>
 
-  <!-- JS to handle order counting and password updates smoothly -->
+  <!-- Keep the order counter in sync as order cards are rendered by auth.js. -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // Observer for order counting
       const ordersList = document.getElementById("user-orders-list");
       const statCount = document.getElementById("stat-orders-count");
-      
-      if(ordersList && statCount) {
-        const observer = new MutationObserver(() => {
-           const orderCards = ordersList.querySelectorAll('.order-history-card, .pro-order-item');
-           if(orderCards.length > 0) {
-              statCount.textContent = orderCards.length;
-           } else if (ordersList.innerHTML.includes("No orders found")) {
-              statCount.textContent = "0";
-           }
-        });
-        observer.observe(ordersList, { childList: true, subtree: true });
-      }
+      if (!ordersList || !statCount) return;
 
-      // Handle Password Change
-      const btnUpdatePassword = document.getElementById("btn-update-password");
-      const passwordMsg = document.getElementById("password-msg");
-      
-      if(btnUpdatePassword) {
-        btnUpdatePassword.addEventListener("click", () => {
-          const newPassword = document.getElementById("profile-new-password").value;
-          const user = firebase.auth().currentUser;
-          
-          if (!newPassword || newPassword.length < 6) {
-            passwordMsg.style.display = "block";
-            passwordMsg.style.color = "#d9534f";
-            passwordMsg.textContent = "Password must be at least 6 characters long.";
-            return;
-          }
+      const updateCount = () => {
+        const orderCards = ordersList.querySelectorAll(".order-history-card, .pro-order-item");
+        if (orderCards.length > 0) {
+          statCount.textContent = String(orderCards.length);
+        } else if (ordersList.textContent.toLowerCase().includes("no orders found")) {
+          statCount.textContent = "0";
+        }
+      };
 
-          if (user) {
-            btnUpdatePassword.textContent = "Updating...";
-            user.updatePassword(newPassword).then(() => {
-              document.getElementById("profile-new-password").value = "";
-              passwordMsg.style.display = "block";
-              passwordMsg.style.color = "#57a05f"; // Success green
-              passwordMsg.textContent = "Password updated successfully!";
-              btnUpdatePassword.textContent = "Update Password";
-              setTimeout(() => { passwordMsg.style.display = "none"; }, 3000);
-            }).catch((error) => {
-              passwordMsg.style.display = "block";
-              passwordMsg.style.color = "#d9534f";
-              passwordMsg.textContent = error.message;
-              btnUpdatePassword.textContent = "Update Password";
-            });
-          }
-        });
-      }
+      const observer = new MutationObserver(updateCount);
+      observer.observe(ordersList, { childList: true, subtree: true });
+      updateCount();
     });
   </script>
 </body>
