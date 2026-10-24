@@ -134,8 +134,20 @@
       overflow-wrap: anywhere;
       font-size: clamp(2rem, 3.7vw, 2.7rem);
       letter-spacing: -.02em;
+      /* Keep the dynamically loaded customer name readable over the hero gradient in both themes. */
+      color: #fff !important;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, .28);
     }
-    .profile-page .pro-email { overflow-wrap: anywhere; margin-bottom: 10px; }
+    .profile-page .pro-email {
+      overflow-wrap: anywhere;
+      margin-bottom: 10px;
+      color: rgba(255, 255, 255, .9) !important;
+    }
+    [data-theme="dark"] .profile-page .pro-user-details h1 {
+      color: #fff !important;
+      text-shadow: 0 2px 16px rgba(0, 0, 0, .42);
+    }
+    [data-theme="dark"] .profile-page .pro-email { color: #f5e9e4 !important; }
     .profile-page .pro-join-date {
       display: inline-flex;
       align-items: center;
@@ -342,16 +354,10 @@
             <span class="profile-user-overline">Your cookie account</span>
             <h1 id="profile-name-display">Loading User...</h1>
             <p id="profile-email-display" class="pro-email">loading@youyou.com</p>
-            <p class="pro-join-date">Member since 2024</p>
+            <p class="pro-join-date">Member since 2026</p>
           </div>
         </div>
         
-        <div class="pro-hero-stats" aria-label="Order summary">
-          <div class="pro-stat-box">
-            <span class="pro-stat-val" id="stat-orders-count">-</span>
-            <span class="pro-stat-label">Total orders</span>
-          </div>
-        </div>
       </div>
 
       <!-- Dashboard Grid -->
