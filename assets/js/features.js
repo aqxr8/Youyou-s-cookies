@@ -265,6 +265,9 @@ function initCart() {
   let rawCart = JSON.parse(localStorage.getItem('youyou_cart')) || [];
   let cart = [];
   
+  // Make window.cart accessible globally for the promo code logic
+  window.cart = cart;
+  
   rawCart.forEach(item => {
     if (item.quantity) {
       cart.push(item);
@@ -306,9 +309,11 @@ function initCart() {
     try {
       cart = syncedCartRaw ? JSON.parse(syncedCartRaw) : [];
       if (!Array.isArray(cart)) cart = [];
+      window.cart = cart;
       updateCartUI();
     } catch(e) {
       cart = [];
+      window.cart = cart;
       updateCartUI();
     }
   });
@@ -404,7 +409,8 @@ function initCart() {
     saveCart();
   };
 
-  function updateCartUI() {
+  // Expose to window so the Promo logic can trigger UI re-renders
+  window.updateCartUI = function() {
     const cartBadge = document.getElementById('cart-badge');
     let totalItemCount = 0;
     cart.forEach(item => {
@@ -430,7 +436,49 @@ function initCart() {
     const STANDARD_DELIVERY_FEE = 15;
     const FREE_SHIPPING_THRESHOLD = 100;
     const deliveryFee = subtotal === 0 ? 0 : (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_DELIVERY_FEE);
-    const finalTotal = subtotal + deliveryFee;
+    
+    // ====== PROMO CODE MATH INTEGRATION ======
+    let totalDiscount = 0;
+    let freeItemText = "";
+    
+    const discountRow = document.getElementById("cart-discount-row");
+    const discountAmountEl = document.getElementById("cart-discount-amount");
+    const appliedPromoNameEl = document.getElementById("applied-promo-name");
+
+    if (window.activePromo) {
+      if (window.activePromo.minAmount && subtotal < window.activePromo.minAmount) {
+        // Did not meet minimum
+        window.activePromo = null;
+        const promoMsg = document.getElementById('promo-message');
+        if(promoMsg) {
+            promoMsg.textContent = "Promo removed (minimum amount not met).";
+            promoMsg.className = "promo-message error";
+        }
+        if(discountRow) discountRow.style.display = "none";
+      } else {
+        // Valid promo
+        if(discountRow) discountRow.style.display = "flex";
+        if(appliedPromoNameEl) appliedPromoNameEl.textContent = window.activePromo.code;
+        
+        if (window.activePromo.type === 'discount_percent') {
+          totalDiscount = subtotal * (parseFloat(window.activePromo.value) / 100);
+          if(discountAmountEl) discountAmountEl.textContent = "-" + totalDiscount.toFixed(2) + " DH";
+        } else if (window.activePromo.type === 'discount_fixed') {
+          totalDiscount = parseFloat(window.activePromo.value);
+          if (totalDiscount > subtotal) totalDiscount = subtotal; 
+          if(discountAmountEl) discountAmountEl.textContent = "-" + totalDiscount.toFixed(2) + " DH";
+        } else if (window.activePromo.type === 'free_item') {
+          freeItemText = window.activePromo.value;
+          if(discountAmountEl) discountAmountEl.textContent = "🎁 " + freeItemText;
+        }
+      }
+    } else {
+      if(discountRow) discountRow.style.display = "none";
+    }
+
+    let finalTotal = (subtotal - totalDiscount) + deliveryFee;
+    if (finalTotal < 0) finalTotal = 0;
+    // ==========================================
 
     let tracker = document.getElementById('shipping-tracker');
     
@@ -516,7 +564,7 @@ function initCart() {
       }
     }
     
-    if (cartTotal) cartTotal.textContent = finalTotal;
+    if (cartTotal) cartTotal.textContent = finalTotal.toFixed(2);
   }
 
   if (clearBtn) {
@@ -542,6 +590,9 @@ function initCart() {
         <div class="confirm-order-summary">
           <strong style="color: var(--brown);">Items Summary:</strong>
           <pre id="confirm-items-summary" style="font-family: inherit; white-space: pre-wrap; margin: 8px 0; color: var(--brown); font-size: 0.95rem; line-height: 1.4;"></pre>
+          
+          <div id="confirm-promo-summary" style="font-size: 0.95rem; color: #57a05f; font-weight: bold; display: none;"></div>
+          
           <div id="confirm-delivery-summary" style="font-size: 0.85rem; color: var(--brown-soft); margin-top: 5px;"></div>
           <div style="text-align: right; font-weight: bold; color: var(--caramel); font-size: 1.1rem; border-top: 1px dashed rgba(74,55,40,0.2); padding-top: 10px; margin-top: 10px;">
             Total: <span id="confirm-total-price">0 DH</span>
@@ -562,6 +613,7 @@ function initCart() {
   }
 
   const confirmList = document.getElementById('confirm-items-summary');
+  const confirmPromoSummary = document.getElementById('confirm-promo-summary');
   const confirmDeliverySummary = document.getElementById('confirm-delivery-summary');
   const confirmTotal = document.getElementById('confirm-total-price');
   const confirmCloseBtn = document.getElementById('close-confirm-modal');
@@ -581,14 +633,40 @@ function initCart() {
         subtotal += itemTotal;
       });
 
+      // Calculate Promo for Confirmation Modal
+      let totalDiscount = 0;
+      let freeItemText = "";
+      if (window.activePromo && (!window.activePromo.minAmount || subtotal >= window.activePromo.minAmount)) {
+         if (window.activePromo.type === 'discount_percent') {
+            totalDiscount = subtotal * (parseFloat(window.activePromo.value) / 100);
+         } else if (window.activePromo.type === 'discount_fixed') {
+            totalDiscount = parseFloat(window.activePromo.value);
+            if (totalDiscount > subtotal) totalDiscount = subtotal;
+         } else if (window.activePromo.type === 'free_item') {
+            freeItemText = window.activePromo.value;
+         }
+      }
+
       const deliveryFee = subtotal >= 100 ? 0 : 15;
-      const finalTotal = subtotal + deliveryFee;
+      let finalTotal = (subtotal - totalDiscount) + deliveryFee;
+      if (finalTotal < 0) finalTotal = 0;
 
       if (confirmList) confirmList.textContent = summaryText;
+      
+      if (confirmPromoSummary) {
+        if (window.activePromo) {
+          confirmPromoSummary.style.display = "block";
+          if(freeItemText) confirmPromoSummary.textContent = `Promo Gift: 🎁 ${freeItemText}`;
+          else confirmPromoSummary.textContent = `Promo Discount: -${totalDiscount.toFixed(2)} DH`;
+        } else {
+          confirmPromoSummary.style.display = "none";
+        }
+      }
+      
       if (confirmDeliverySummary) {
         confirmDeliverySummary.textContent = deliveryFee === 0 ? "Delivery Fee: Free (Order ≥ 100 DH)" : `Delivery Fee: ${deliveryFee} DH`;
       }
-      if (confirmTotal) confirmTotal.textContent = `${finalTotal} DH`;
+      if (confirmTotal) confirmTotal.textContent = `${finalTotal.toFixed(2)} DH`;
 
       if (window.currentUserObj && window.userDataObj) {
          if (confirmAddressInput) confirmAddressInput.value = window.userDataObj.address || "";
@@ -635,8 +713,24 @@ function initCart() {
   async function processFinalCheckout(phone = "", address = "") {
     let subtotal = 0;
     cart.forEach(i => subtotal += (i.price * i.quantity));
+    
+    // Recalculate Promo for final WhatsApp send and Firestore
+    let totalDiscount = 0;
+    let freeItemText = "";
+    if (window.activePromo && (!window.activePromo.minAmount || subtotal >= window.activePromo.minAmount)) {
+       if (window.activePromo.type === 'discount_percent') {
+          totalDiscount = subtotal * (parseFloat(window.activePromo.value) / 100);
+       } else if (window.activePromo.type === 'discount_fixed') {
+          totalDiscount = parseFloat(window.activePromo.value);
+          if (totalDiscount > subtotal) totalDiscount = subtotal;
+       } else if (window.activePromo.type === 'free_item') {
+          freeItemText = window.activePromo.value;
+       }
+    }
+
     const deliveryFee = subtotal >= 100 ? 0 : 15;
-    const finalTotal = subtotal + deliveryFee;
+    let finalTotal = (subtotal - totalDiscount) + deliveryFee;
+    if (finalTotal < 0) finalTotal = 0;
 
     if (window.saveOrderToFirestore) {
       await window.saveOrderToFirestore({
@@ -644,7 +738,8 @@ function initCart() {
         phone: phone,
         address: address || "Settat",
         items: cart,
-        totalAmount: finalTotal
+        totalAmount: finalTotal,
+        promoCode: window.activePromo ? window.activePromo.code : null // Save promo code string if used
       });
     }
 
@@ -657,16 +752,29 @@ function initCart() {
       message += `- ${item.quantity}x ${item.name} (${item.price * item.quantity} DH)\n`;
     });
     
-    message += `\nSubtotal : ${subtotal} DH\nDelivery : ${deliveryFee === 0 ? 'Free' : deliveryFee + ' DH'}\nTotal : ${finalTotal} DH\nPhone : ${phone}\nAddress : ${address || "Settat"}`;
+    message += `\nSubtotal : ${subtotal} DH\n`;
+    
+    // Add promo logic to WhatsApp message
+    if (window.activePromo && (!window.activePromo.minAmount || subtotal >= window.activePromo.minAmount)) {
+        message += `*Promo Applied:* ${window.activePromo.code}\n`;
+        if (window.activePromo.type === 'free_item') {
+            message += `*🎁 Free Gift:* ${freeItemText}\n`;
+        } else {
+            message += `*Discount:* -${totalDiscount.toFixed(2)} DH\n`;
+        }
+    }
+    
+    message += `Delivery : ${deliveryFee === 0 ? 'Free' : deliveryFee + ' DH'}\nTotal : ${finalTotal.toFixed(2)} DH\nPhone : ${phone}\nAddress : ${address || "Settat"}`;
     
     const targetPhone = "212789233029"; 
     window.location.href = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 
     cart = [];
+    window.activePromo = null; // Reset promo after purchase
     saveCart();
   }
 
-  updateCartUI();
+  updateCartUI(); // Initial run
 }
 
 function init3DHoverEffect() {
@@ -696,3 +804,223 @@ function init3DHoverEffect() {
     });
   });
 }
+
+/* =========================================================
+   ADVANCED ADMIN PROMO CODE ENGINE
+========================================================= */
+document.addEventListener("DOMContentLoaded", () => {
+  const addPromoForm = document.getElementById("add-promo-form");
+  const promoTypeSelect = document.getElementById("new-promo-type");
+  const promoValueInput = document.getElementById("new-promo-value");
+  const promoValueLabel = document.getElementById("reward-value-label");
+  const adminPromoList = document.getElementById("admin-promo-list");
+
+  // Only run this script if we are on the admin page where these elements exist
+  if (addPromoForm && adminPromoList) {
+    const db = firebase.firestore();
+
+    // 1. Dynamic Form Label/Input adjustments
+    promoTypeSelect.addEventListener("change", (e) => {
+      const type = e.target.value;
+      if (type === "free_item") {
+        promoValueLabel.textContent = "What Free Item(s)?";
+        promoValueInput.type = "text";
+        promoValueInput.placeholder = "e.g. 2 Free Lotus Cookies";
+      } else if (type === "discount_percent") {
+        promoValueLabel.textContent = "Discount Value (%)";
+        promoValueInput.type = "number";
+        promoValueInput.placeholder = "e.g. 20";
+      } else {
+        promoValueLabel.textContent = "Discount Amount (MAD)";
+        promoValueInput.type = "number";
+        promoValueInput.placeholder = "e.g. 30";
+      }
+    });
+
+    // 2. Load Promos from Firestore
+    function loadAdminPromos() {
+      db.collection('promo_codes').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
+        adminPromoList.innerHTML = "";
+        
+        if(snapshot.empty) {
+          adminPromoList.innerHTML = "<p style='color: var(--brown-soft); padding: 10px;'>No promo codes created yet.</p>";
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const promo = doc.data();
+          
+          // Format the reward text
+          let rewardText = "";
+          if (promo.type === 'discount_percent') rewardText = `${promo.value}% OFF`;
+          else if (promo.type === 'discount_fixed') rewardText = `${promo.value} MAD OFF`;
+          else rewardText = `FREE: ${promo.value}`;
+
+          // Format the condition text
+          let conditionText = promo.minAmount > 0 
+            ? `Orders over ${promo.minAmount} MAD` 
+            : `No minimum amount required`;
+
+          const statusClass = promo.active ? 'active' : 'disabled';
+          const statusText = promo.active ? 'Active' : 'Disabled';
+          const toggleActionText = promo.active ? 'Disable' : 'Enable';
+
+          adminPromoList.innerHTML += `
+            <div class="admin-promo-item ${!promo.active ? 'disabled' : ''}">
+              <div class="promo-info">
+                <h3>
+                  ${promo.code} 
+                  <span class="promo-status-badge ${statusClass}">${statusText}</span>
+                </h3>
+                <p><strong>Reward:</strong> ${rewardText} &nbsp;|&nbsp; <strong>Condition:</strong> ${conditionText}</p>
+              </div>
+              <div class="promo-actions">
+                <button class="btn-promo-action btn-toggle-promo" onclick="window.togglePromoStatus('${doc.id}', ${promo.active})">${toggleActionText}</button>
+                <button class="btn-promo-action btn-delete-promo" onclick="window.deletePromoCode('${doc.id}')">Delete</button>
+              </div>
+            </div>
+          `;
+        });
+      });
+    }
+
+    // 3. Add New Promo Code to Firestore
+    addPromoForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const code = document.getElementById("new-promo-code").value.trim().toUpperCase();
+      const minAmount = parseFloat(document.getElementById("new-promo-min-amount").value) || 0;
+      const type = promoTypeSelect.value;
+      
+      // Value can be text (for free item) or number (for discount)
+      let value = promoValueInput.value; 
+      if (type !== "free_item") {
+        value = parseFloat(value);
+      }
+
+      const submitBtn = addPromoForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Saving...";
+
+      try {
+        await db.collection('promo_codes').add({
+          code: code,
+          minAmount: minAmount,
+          type: type,
+          value: value,
+          active: true, // Active by default
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        addPromoForm.reset();
+        // Trigger the change event to reset the label based on the default select option
+        promoTypeSelect.dispatchEvent(new Event('change')); 
+        
+      } catch (error) {
+        alert("Error creating promo code: " + error.message);
+      } finally {
+        submitBtn.textContent = originalText;
+      }
+    });
+
+    // 4. Toggle Enable/Disable
+    window.togglePromoStatus = async function(docId, currentStatus) {
+      try {
+        await db.collection('promo_codes').doc(docId).update({
+          active: !currentStatus
+        });
+      } catch (error) {
+        alert("Failed to update status: " + error.message);
+      }
+    };
+
+    // 5. Delete Promo Code
+    window.deletePromoCode = async function(docId) {
+      if(confirm("Are you sure you want to permanently delete this promo code?")) {
+        try {
+          await db.collection('promo_codes').doc(docId).delete();
+        } catch (error) {
+          alert("Failed to delete: " + error.message);
+        }
+      }
+    };
+
+    // Initialize list on load
+    loadAdminPromos();
+  }
+});
+
+// =========================================================
+//  CUSTOMER CART PROMO VALIDATION
+// =========================================================
+
+// Global state for active promo (so Cart UI knows about it)
+window.activePromo = null;
+
+window.applyPromoCode = async function() {
+  const codeInput = document.getElementById('promo-code-input').value.trim().toUpperCase();
+  const msgEl = document.getElementById('promo-message');
+  
+  if (!codeInput) {
+    msgEl.textContent = "Please enter a code.";
+    msgEl.className = "promo-message error";
+    return;
+  }
+
+  // 1. Calculate current subtotal from your cart array
+  let currentSubtotal = 0;
+  if (window.cart && window.cart.length > 0) {
+    currentSubtotal = window.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  }
+  
+  if (currentSubtotal === 0) {
+    msgEl.textContent = "Your cart is empty.";
+    msgEl.className = "promo-message error";
+    return;
+  }
+
+  msgEl.textContent = "Verifying...";
+  msgEl.className = "promo-message success";
+
+  try {
+    const db = firebase.firestore();
+    const snapshot = await db.collection('promo_codes')
+      .where('code', '==', codeInput)
+      .where('active', '==', true)
+      .get();
+
+    if (snapshot.empty) {
+      msgEl.textContent = "Invalid or inactive promo code.";
+      msgEl.className = "promo-message error";
+      window.activePromo = null;
+    } else {
+      const promoData = snapshot.docs[0].data();
+      
+      // 2. Check if they meet the Minimum Order Amount
+      if (promoData.minAmount && currentSubtotal < promoData.minAmount) {
+        msgEl.textContent = `This code requires a minimum order of ${promoData.minAmount} MAD.`;
+        msgEl.className = "promo-message error";
+        window.activePromo = null;
+      } else {
+        // 3. Success! Save it to global state
+        window.activePromo = promoData;
+        
+        let successText = "";
+        if(promoData.type === 'discount_percent') successText = `-${promoData.value}% applied!`;
+        else if(promoData.type === 'discount_fixed') successText = `-${promoData.value} MAD applied!`;
+        else successText = `Gift unlocked: ${promoData.value}!`;
+
+        msgEl.textContent = `Success! ${successText}`;
+        msgEl.className = "promo-message success";
+      }
+    }
+    
+    // 4. Force the cart UI to re-calculate the math
+    if(typeof window.updateCartUI === 'function') window.updateCartUI();
+    
+  } catch (error) {
+    console.error("Promo error:", error);
+    msgEl.textContent = "Error verifying code.";
+    msgEl.className = "promo-message error";
+  }
+};

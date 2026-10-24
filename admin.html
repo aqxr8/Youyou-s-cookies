@@ -352,6 +352,7 @@
           Log Out Admin
         </button>
       </div>
+      
 
       <div class="admin-metrics-grid">
         <div class="metric-card">
@@ -446,6 +447,50 @@
         </div>
       </div>
     </div>
+        <!-- ADVANCED PROMO CODES MANAGEMENT CARD -->
+        <div class="admin-order-card" style="border-top: 4px solid var(--caramel); margin-top: 20px;">
+          <div class="order-history-header">
+            <strong style="font-size: 1.3rem;">🎟️ Advanced Promo Code Manager</strong>
+          </div>
+          
+          <!-- Add New Code Form -->
+          <form id="add-promo-form" class="pro-form" style="background: var(--cream-light); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(74, 55, 40, 0.1);">
+            <h4 style="margin-bottom: 15px; color: var(--brown); font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">Create a New Campaign</h4>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Promo Code</label>
+                <input type="text" id="new-promo-code" class="auth-input pro-input" placeholder="e.g. YUMMY20" required style="text-transform: uppercase; font-weight: bold;">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Min. Order Amount (MAD)</label>
+                <input type="number" id="new-promo-min-amount" class="auth-input pro-input" placeholder="e.g. 150 (put 0 for no min)" required min="0">
+              </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>What's the Reward?</label>
+                <select id="new-promo-type" class="auth-input pro-input">
+                  <option value="discount_percent">Percentage Discount (%)</option>
+                  <option value="discount_fixed">Fixed Discount (MAD)</option>
+                  <option value="free_item">Free Cookies / Gift</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label id="reward-value-label">Discount Value (%)</label>
+                <input type="text" id="new-promo-value" class="auth-input pro-input" placeholder="e.g. 20" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-dark" style="padding: 12px 24px; width: auto;">Save Promo Code</button>
+          </form>
+
+          <!-- List of Created Codes -->
+          <h4 style="margin-bottom: 15px; color: var(--brown); font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">Existing Promo Codes</h4>
+          <div id="admin-promo-list" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Codes will be loaded here via JS -->
+          </div>
+        </div>    
 
   </main>
 

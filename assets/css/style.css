@@ -2642,3 +2642,93 @@ html[data-theme="dark"] .site-header .brand-logo-wrapper > video.logo-dark {
 .password-input-wrapper .auth-input { margin-bottom: 0 !important; padding-right: 48px !important; }
 .toggle-password-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--brown-soft); padding: 6px; display: flex; align-items: center; justify-content: center; z-index: 2; }
 .toggle-password-btn:hover { color: var(--caramel); transform: translateY(-50%) scale(1.1); }
+/* =========================================
+   ADMIN PROMO CODE DASHBOARD STYLES
+========================================= */
+.admin-promo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--white);
+  border: 1px solid rgba(74, 55, 40, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  transition: all 0.3s ease;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+.admin-promo-item:hover {
+  border-color: rgba(193, 119, 30, 0.4);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.06);
+}
+.admin-promo-item.disabled {
+  opacity: 0.7;
+  background: var(--cream-light);
+}
+.promo-info h3 {
+  font-family: 'Cormorant Garamond', serif;
+  color: var(--caramel);
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.promo-info p {
+  font-size: 0.85rem;
+  color: var(--brown-soft);
+  margin: 0;
+  font-weight: 500;
+}
+.promo-status-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.promo-status-badge.active {
+  background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;
+}
+.promo-status-badge.disabled {
+  background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;
+}
+.promo-actions {
+  display: flex;
+  gap: 8px;
+}
+.btn-promo-action {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: 0.2s;
+}
+.btn-toggle-promo {
+  background: var(--cream);
+  color: var(--brown);
+  border: 1px solid rgba(74,55,40,0.2);
+}
+.btn-toggle-promo:hover {
+  background: var(--brown);
+  color: var(--white);
+}
+.btn-delete-promo {
+  background: transparent;
+  color: #c62828;
+  border: 1px solid rgba(198, 40, 40, 0.3);
+}
+.btn-delete-promo:hover {
+  background: #ffebee;
+}
+
+[data-theme="dark"] .admin-promo-item {
+  background: #1A1412;
+  border-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .admin-promo-item.disabled {
+  background: #110d0b;
+}
