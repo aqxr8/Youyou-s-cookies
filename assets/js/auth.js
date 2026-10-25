@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -23,8 +23,6 @@ import {
   updateDoc,
   addDoc,
   deleteDoc,
-  arrayUnion,
-  increment,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -38,7 +36,10 @@ const firebaseConfig = {
   measurementId: "G-85M038ZLQ2"
 };
 
-const app = initializeApp(firebaseConfig);
+// Reuse the default Firebase app if another page script already initialized it.
+// This avoids app/duplicate-app errors that can stop authentication and profile loading.
+const existingDefaultApp = getApps().find((item) => item.name === "[DEFAULT]");
+const app = existingDefaultApp || initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
@@ -57,7 +58,8 @@ const esc = (v) =>
   }[c]));
 
 const PAGE = (window.location.pathname.split("/").pop() || "index")
-  .replace(/\.html$/, "");
+  .replace(/\.html$/i, "")
+  .toLowerCase();
 
 const createdMs = (d) => {
   const t = d.data().createdAt;
@@ -69,10 +71,8 @@ const sortNewestFirst = (docs) =>
 
 function normalizePhone(raw) {
   let d = String(raw || "").replace(/\D/g, "");
-
   if (d.startsWith("00")) d = d.slice(2);
   if (d.startsWith("0") && d.length === 10) d = "212" + d.slice(1);
-
   return d;
 }
 
@@ -86,9 +86,50 @@ function authMessage(err, fallback) {
     "auth/weak-password": "The password must contain at least 6 characters.",
     "auth/too-many-requests": "Too many attempts. Please try again later."
   };
-
   return map[err && err.code] || fallback || "An error occurred.";
 }
+
+// --- REVIEWS FIRESTORE HELPERS ---
+
+window.submitReviewToFirestore = async function ({ name, rating, text, rot }) {
+  try {
+    await addDoc(collection(db, "reviews"), {
+      name: String(name || "Anonymous").slice(0, 30),
+      rating: Math.min(5, Math.max(1, Number(rating) || 5)),
+      text: String(text || "").slice(0, 250),
+      rot: rot || "0",
+      status: "pending",
+      createdAt: serverTimestamp()
+    });
+    return true;
+  } catch (e) {
+    console.error("Error submitting review:", e);
+    return false;
+  }
+};
+
+window.fetchApprovedReviews = async function () {
+  try {
+    const q = query(
+      collection(db, "reviews"),
+      where("status", "==", "approved")
+    );
+    const snap = await getDocs(q);
+    const reviews = [];
+    snap.forEach((docSnap) => {
+      reviews.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    reviews.sort((a, b) => {
+      const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return tB - tA;
+    });
+    return reviews;
+  } catch (e) {
+    console.error("Error fetching approved reviews:", e);
+    return [];
+  }
+};
 
 // --- RANKING SYSTEM HELPERS ---
 
@@ -107,7 +148,7 @@ function getCookieRank(totalSpent) {
 
 function updateProfileRankBadge(totalSpent) {
   const rank = getCookieRank(totalSpent);
-  const rankBadge = document.querySelector(".profile-hero-card .status-pill-badge");
+  const rankBadge = document.querySelector(".cookie-rank-pill, .profile-hero-card .status-pill-badge");
 
   if (rankBadge) {
     rankBadge.innerHTML = `${rank.icon} ${rank.name}`;
@@ -130,11 +171,17 @@ function updateProfileRankBadge(totalSpent) {
     let nextRankName = "";
 
     if (totalSpent < 150) {
-      nextThreshold = 150; currentBase = 0; nextRankName = "🤎 Cookie Lover";
+      nextThreshold = 150;
+      currentBase = 0;
+      nextRankName = "🤎 Cookie Lover";
     } else if (totalSpent < 400) {
-      nextThreshold = 400; currentBase = 150; nextRankName = "🧁 Sugar Boss";
+      nextThreshold = 400;
+      currentBase = 150;
+      nextRankName = "🧁 Sugar Boss";
     } else if (totalSpent < 800) {
-      nextThreshold = 800; currentBase = 400; nextRankName = "👑 Cookie Legend";
+      nextThreshold = 800;
+      currentBase = 400;
+      nextRankName = "👑 Cookie Legend";
     }
 
     if (totalSpent >= 800) {
@@ -151,12 +198,11 @@ function updateProfileRankBadge(totalSpent) {
   }
 }
 
-// --- GLOBAL SAVE ORDER METHOD & PROMO CODE USAGE RECORDING ---
+// --- GLOBAL SAVE ORDER METHOD WITH TELEGRAM NOTIFICATION ---
 
 window.saveOrderToFirestore = async function (orderData) {
   try {
     const user = auth.currentUser;
-
     let finalPhone = orderData.phone;
     if (!finalPhone && window.userDataObj && window.userDataObj.phone) {
       finalPhone = window.userDataObj.phone;
@@ -167,23 +213,23 @@ window.saveOrderToFirestore = async function (orderData) {
       finalAddress = window.userDataObj.address;
     }
 
-    const MENU_PRICES = {
-      "10 Mini Cookies Box": 15, "15 Mini Cookies Box": 20, "20 Mini Cookies Box": 27, "30 Mini Cookies Box": 40,
-      "Classic Cookie": 7, "Extra Chocolate": 10, "Kinder Cookie": 13, "KitKat Cookie": 15,
-      "Lemon Cookie": 13, "Loaded Fudge Brownie": 15, "Lotus Cookie": 15, "Monster Cookie": 15,
-      "Oreo Cookie": 12, "Red Velvet": 12
-    };
-
     const items = (Array.isArray(orderData.items) ? orderData.items : [])
       .slice(0, 50)
-      .filter(i => i && typeof i.name === "string" && Object.prototype.hasOwnProperty.call(MENU_PRICES, i.name))
-      .map(i => ({
-        name: i.name,
-        price: MENU_PRICES[i.name],
-        quantity: Math.min(99, Math.max(1, parseInt(i.quantity, 10) || 1))
+      .map((i) => ({
+        name: String((i && i.name) || "Item").slice(0, 60),
+        price: Math.max(0, Number(i && i.price) || 0),
+        quantity: Math.min(99, Math.max(1, parseInt(i && i.quantity, 10) || 1))
       }));
 
     if (items.length === 0) return null;
+
+    const subtotalAmount = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const requestedTotal = Number(orderData.totalAmount);
+    const totalAmount = orderData.totalAmount !== undefined && orderData.totalAmount !== null && Number.isFinite(requestedTotal)
+      ? Math.max(0, requestedTotal)
+      : subtotalAmount;
+    const promoCode = String(orderData.promoCode || "").trim().toUpperCase() || null;
+    const discountAmount = Math.max(0, Number(orderData.discountAmount) || 0);
 
     const finalData = {
       userId: user ? user.uid : "guest",
@@ -197,37 +243,56 @@ window.saveOrderToFirestore = async function (orderData) {
       phone: String(finalPhone || "").slice(0, 30),
       address: String(finalAddress || "Settat").slice(0, 400),
       items: items,
-      totalAmount: Number(orderData.totalAmount) || 0,
-      promoCode: orderData.promoCode || null,
+      subtotalAmount: subtotalAmount,
+      discountAmount: discountAmount,
+      promoCode: promoCode,
+      totalAmount: totalAmount,
       status: "Processing",
       date: new Date().toLocaleDateString("en-US", {
-        month: "short", day: "numeric", year: "numeric",
-        hour: "2-digit", minute: "2-digit", timeZone: "Africa/Casablanca"
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Africa/Casablanca"
       }),
       createdAt: serverTimestamp()
     };
 
     const docRef = await addDoc(collection(db, "orders"), finalData);
 
-    // If a promo code was applied and user is logged in, record usage
-    if (orderData.promoCode && user) {
-      try {
-        const promoRef = doc(db, "promoCodes", orderData.promoCode);
-        await updateDoc(promoRef, {
-          usedBy: arrayUnion(user.uid),
-          usageCount: increment(1)
-        });
-      } catch (err) {
-        console.warn("Could not record promo code usage on Firestore:", err);
-      }
-    }
+    const ADMIN_CHAT_IDS = [
+      "7932537222", // Mohamed
+      "7523215470"  // Aya
+    ];
+
+    const itemsText = items
+      .map(i => `• ${i.quantity}x ${i.name} (${i.price * i.quantity} DH)`)
+      .join("\n");
+
+    const telegramMsg = `🚨 *NEW ORDER RECEIVED!* 🚨\n\n` +
+      `👤 *Customer:* ${finalData.customerName}\n` +
+      `📞 *Phone:* ${finalData.phone || "N/A"}\n` +
+      `📍 *Address:* ${finalData.address}\n\n` +
+      `🛍️ *Items:*\n${itemsText}\n\n` +
+      `🧾 *Subtotal:* ${subtotalAmount} DH\n` +
+      (promoCode ? `🎟️ *Promo Code:* ${promoCode}\n💸 *Discount:* ${discountAmount} DH\n` : "") +
+      `💰 *Total:* ${totalAmount} DH`;
+
+    fetch("/api/telegram", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: telegramMsg,
+        chatIds: ADMIN_CHAT_IDS
+      })
+    }).catch(err => console.warn("Telegram alert failed:", err));
 
     if (user) {
       await updateDoc(doc(db, "users", user.uid), { cart: [] });
     }
 
     localStorage.removeItem("youyou_cart");
-
     return docRef.id;
   } catch (error) {
     console.error("Order saving error:", error);
@@ -235,60 +300,178 @@ window.saveOrderToFirestore = async function (orderData) {
   }
 };
 
+// --- PROFILE PICTURE UPLOAD LISTENER ---
+
+const avatarInput = document.getElementById("avatar-input");
+if (avatarInput) {
+  avatarInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Please choose an image file under 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64Image = event.target.result;
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const profilePic = document.getElementById("profile-picture");
+          if (profilePic) profilePic.src = base64Image;
+
+          await updateDoc(doc(db, "users", user.uid), { photoURL: base64Image });
+
+          if (window.userDataObj) {
+            window.userDataObj.photoURL = base64Image;
+          }
+
+          const msg = document.getElementById("info-msg");
+          if (msg) {
+            msg.style.display = "block";
+            msg.style.color = "#57a05f";
+            msg.textContent = "Profile picture updated successfully!";
+            setTimeout(() => { msg.style.display = "none"; }, 4000);
+          }
+        } catch (err) {
+          console.error("Failed to update profile picture:", err);
+          alert("Unable to save profile picture. Please try again.");
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // --- AUTHENTICATION STATE ---
 
 onAuthStateChanged(auth, async (user) => {
   window.currentUserObj = user;
-
   const userIconLink = document.getElementById("user-icon-link");
   const userIconWrapper = document.getElementById("user-icon-wrapper");
 
   if (user) {
+    let userData = null;
+    let userDocExists = false;
+
+    const userDocRef = doc(db, "users", user.uid);
+    try {
+      const userDocSnap = await getDoc(userDocRef);
+      if (userDocSnap.exists()) {
+        userData = userDocSnap.data() || {};
+        userDocExists = true;
+      } else {
+        // Recover gracefully for accounts created before the users/{uid} record existed.
+        userData = {
+          username: user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover"),
+          email: user.email || "",
+          role: user.email === ADMIN_EMAIL ? "admin" : "customer",
+          joinedAt: new Date(),
+          cart: []
+        };
+        try {
+          await setDoc(userDocRef, userData, { merge: true });
+          userDocExists = true;
+        } catch (createErr) {
+          // The profile can still render from Auth data even if Firestore rules block creation.
+          console.warn("Unable to initialize missing user profile document:", createErr);
+        }
+      }
+      window.userDataObj = userData;
+      const cartAddressInput = document.getElementById("cart-address");
+      if (cartAddressInput && userData.address) {
+        cartAddressInput.value = userData.address;
+      }
+    } catch (e) {
+      console.warn("Unable to retrieve user profile:", e);
+      // Keep the profile page usable even when the profile document cannot be read.
+      userData = {
+        username: user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover"),
+        email: user.email || "",
+        role: user.email === ADMIN_EMAIL ? "admin" : "customer",
+        cart: []
+      };
+      window.userDataObj = userData;
+    }
+
+    const mobileUserLink = document.getElementById("mobile-user-link");
+
     if (userIconLink && userIconWrapper) {
       userIconLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
-      const photoUrl = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=c1771e&color=fff`;
+      
+      if(mobileUserLink) {
+        mobileUserLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
+        mobileUserLink.innerHTML = `<span class="nav-icon">👤</span> My Profile`;
+      }
+      const photoUrl =
+        (userData && userData.photoURL) ||
+        user.photoURL ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=c1771e&color=fff`;
 
       userIconWrapper.innerHTML = `
         <img src="${esc(photoUrl)}" alt="Account" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
       `;
     }
 
-    let userData = null;
-    let userDocExists = false;
-
     try {
-      const userDocSnap = await getDoc(doc(db, "users", user.uid));
-      if (userDocSnap.exists()) {
-        userData = userDocSnap.data();
-        window.userDataObj = userData;
-        userDocExists = true;
+      if (userDocExists && Array.isArray(userData.cart)) {
+        localStorage.setItem("youyou_cart", JSON.stringify(userData.cart));
+        window.dispatchEvent(new Event("cart-synced"));
+      } else {
+        const localCartRaw = localStorage.getItem("youyou_cart");
+        const localCart = localCartRaw ? JSON.parse(localCartRaw) : [];
+        if (localCart.length > 0 && userDocExists) {
+          await updateDoc(doc(db, "users", user.uid), { cart: localCart });
+        }
       }
-    } catch (e) { console.warn("Unable to retrieve user profile:", e); }
+    } catch (cartSyncErr) {
+      console.warn("Cart sync error:", cartSyncErr);
+    }
 
     if (PAGE === "profile") {
-      if (user.email === ADMIN_EMAIL) { window.location.href = "admin.html"; return; }
-
-      const emailEl = document.getElementById("profile-email");
-      if (emailEl) emailEl.textContent = user.email;
-
-      const profilePic = document.getElementById("profile-picture");
-      if (profilePic) {
-        profilePic.src = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=c1771e&color=fff&size=128`;
-        profilePic.style.display = "block";
+      if (user.email === ADMIN_EMAIL) {
+        window.location.href = "admin.html";
+        return;
       }
+      // Render both the current redesigned profile markup and the older profile markup.
+      const emailText = user.email || "";
+      ["profile-email-display", "profile-email"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = emailText;
+      });
 
-      if (userDocExists && userData) {
-        const displayName = userData.username || user.displayName || "Cookie Lover";
-        const nameEl = document.getElementById("profile-name");
-        if (nameEl) nameEl.textContent = displayName;
+      const displayName = (userData && userData.username) || user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover");
+      const avatar =
+        (userData && userData.photoURL) ||
+        user.photoURL ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=c1771e&color=fff&size=128`;
+      ["profile-avatar", "profile-picture"].forEach((id) => {
+        const img = document.getElementById(id);
+        if (img) {
+          img.src = avatar;
+          img.style.display = "block";
+        }
+      });
 
-        const editUsername = document.getElementById("edit-username");
-        const editAddress = document.getElementById("edit-address");
-        const editPhone = document.getElementById("edit-phone");
+      ["profile-name-display", "profile-name"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if ("value" in el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) el.value = displayName;
+        else el.textContent = displayName;
+      });
 
-        if (editUsername) editUsername.value = displayName;
-        if (editAddress) editAddress.value = userData.address || "";
-        if (editPhone) editPhone.value = userData.phone || "";
+      const addressInput = document.getElementById("profile-address") || document.getElementById("edit-address");
+      const phoneInput = document.getElementById("profile-phone") || document.getElementById("edit-phone");
+      if (addressInput) addressInput.value = (userData && userData.address) || "";
+      if (phoneInput) phoneInput.value = (userData && userData.phone) || "";
+
+      const joinDate = document.querySelector(".pro-join-date");
+      if (joinDate) {
+        const joined = userData && userData.joinedAt;
+        const joinedDate = joined && typeof joined.toDate === "function" ? joined.toDate() : (joined instanceof Date ? joined : null);
+        joinDate.textContent = `Member since ${joinedDate ? joinedDate.getFullYear() : 2024}`;
       }
 
       syncAndRenderProfileCart(user, db, userData, userDocExists);
@@ -296,12 +479,22 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     if (PAGE === "admin") {
-      if (user.email !== ADMIN_EMAIL) { window.location.href = "profile.html"; return; }
+      if (user.email !== ADMIN_EMAIL) {
+        window.location.href = "profile.html";
+        return;
+      }
       initAdminDashboard(db);
     }
   } else {
     if (userIconLink) userIconLink.href = "login.html";
-    if (PAGE === "profile" || PAGE === "admin") window.location.href = "login.html";
+    const mobileUserLink = document.getElementById("mobile-user-link");
+    if(mobileUserLink) {
+       mobileUserLink.href = "login.html";
+       mobileUserLink.innerHTML = `<span class="nav-icon">👤</span> Account / Login`;
+    }
+    if (PAGE === "profile" || PAGE === "admin") {
+      window.location.href = "login.html";
+    }
   }
 });
 
@@ -320,13 +513,19 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
         if (!Array.isArray(activeCart)) activeCart = Object.values(activeCart);
       }
     }
-  } catch (err) { console.warn("Error displaying profile cart:", err); }
+  } catch (err) {
+    console.warn("Error displaying profile cart:", err);
+  }
 
   const basketList = document.getElementById("profile-basket-list");
   if (!basketList) return;
 
   if (activeCart.length === 0) {
-    basketList.innerHTML = `<p style="color: var(--brown-soft); font-style: italic; text-align: center; padding: 20px 0;">Your cookie box is currently empty.</p>`;
+    basketList.innerHTML = `
+      <p style="color: var(--brown-soft); font-style: italic; text-align: center; padding: 20px 0;">
+        Your cookie box is currently empty.
+      </p>
+    `;
     return;
   }
 
@@ -361,30 +560,35 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
   `;
 }
 
-// --- CUSTOMER ORDER HISTORY ---
+// --- CUSTOMER ORDER HISTORY & PROFILE STATS ---
 
 async function loadCustomerOrderHistory(user, db) {
-  const historyContainer = document.getElementById("profile-order-history");
+  const historyContainer = document.getElementById("profile-order-history") || document.getElementById("user-orders-list");
   if (!historyContainer) return;
 
   try {
     const ordersQuery = query(collection(db, "orders"), where("userId", "==", user.uid));
     const querySnapshot = await getDocs(ordersQuery);
-
     let totalSpent = 0;
+    let totalOrdersCount = querySnapshot.size || 0;
+
+    const statOrders = document.getElementById("stat-user-orders") || document.getElementById("stat-orders-count");
+    const statSpent = document.getElementById("stat-user-spent");
+    const statLevel = document.getElementById("stat-user-level");
 
     if (querySnapshot.empty) {
-      historyContainer.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">No previous order found.</p>`;
+      historyContainer.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">No orders found yet. Your cookie orders will appear here.</p>`;
+      if (statOrders) statOrders.textContent = "0";
+      if (statSpent) statSpent.textContent = "0 DH";
+      if (statLevel) statLevel.textContent = "Cookie Fan";
       updateProfileRankBadge(0);
       return;
     }
 
     historyContainer.innerHTML = "";
-
     sortNewestFirst(querySnapshot.docs).forEach((docSnap) => {
       const data = docSnap.data();
       const orderId = docSnap.id;
-
       const isDelivered = data.status === "Delivered";
       const isCancelled = data.status === "Cancelled";
       const isProcessing = data.status === "Processing";
@@ -406,137 +610,63 @@ async function loadCustomerOrderHistory(user, db) {
               <strong style="color: var(--brown);">Order #${orderId.slice(-6).toUpperCase()}</strong>
               <div style="font-size: 0.8rem; color: var(--brown-soft);">${esc(data.date || "Recently")}</div>
             </div>
-            <span class="status-pill-badge ${statusClass}" id="customer-status-${orderId}">
+            <span class="status-pill-badge ${statusClass}" id="customer-status-${orderId}" ${isCancelled ? 'style="background:#ffebee; color:#c62828;"' : ""}>
               ${esc(data.status || "Processing")}
             </span>
           </div>
-
           <div style="font-size: 0.9rem; margin: 10px 0; color: var(--brown-soft);">${itemsList}</div>
-
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
             <div style="font-weight: bold; color: ${isCancelled ? "#888; text-decoration: line-through;" : "var(--caramel);"}">
               ${Number(data.totalAmount) || 0} DH
             </div>
-            ${isProcessing ? `<button class="btn-cancel-order" data-id="${orderId}">Cancel</button>` : ""}
+            ${isProcessing ? `<button class="btn-cancel-order" data-id="${orderId}" style="background: transparent; border: 1px solid #d9534f; color: #d9534f; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Cancel</button>` : ""}
           </div>
         </div>
       `;
     });
 
+    if (statOrders) statOrders.textContent = totalOrdersCount;
+    if (statSpent) statSpent.textContent = `${totalSpent} DH`;
+    if (statLevel) statLevel.textContent = getCookieRank(totalSpent).name;
+
     updateProfileRankBadge(totalSpent);
 
+    document.querySelectorAll(".btn-cancel-order").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        const orderId = e.target.getAttribute("data-id");
+        if (confirm("Are you sure you want to cancel this order?")) {
+          try {
+            e.target.disabled = true;
+            e.target.textContent = "Cancelling...";
+            await updateDoc(doc(db, "orders", orderId), { status: "Cancelled" });
+            e.target.style.display = "none";
+            const statusBadge = document.getElementById(`customer-status-${orderId}`);
+            if (statusBadge) {
+              statusBadge.textContent = "Cancelled";
+              statusBadge.className = "status-pill-badge cancelled";
+              statusBadge.style = "background:#ffebee; color:#c62828;";
+            }
+          } catch (err) {
+            console.error("Cancellation failed", err);
+            alert("Unable to cancel the order.");
+            e.target.disabled = false;
+            e.target.textContent = "Cancel";
+          }
+        }
+      });
+    });
   } catch (err) {
     console.warn("Unable to load order history:", err);
     historyContainer.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">Unable to load order history.</p>`;
   }
 }
 
-// --- ADMIN DASHBOARD & PROMO CODE MANAGEMENT ---
-
-let promoTimerInterval = null;
-
-async function loadAdminPromoCodes(db) {
-  const promosContainer = document.getElementById("admin-promos-list");
-  const statActivePromos = document.getElementById("stat-active-promos");
-  if (!promosContainer) return;
-
-  try {
-    const promoSnap = await getDocs(collection(db, "promoCodes"));
-    if (promoSnap.empty) {
-      promosContainer.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">No promo codes created yet.</p>`;
-      if (statActivePromos) statActivePromos.textContent = "0";
-      return;
-    }
-
-    let activeCount = 0;
-    promosContainer.innerHTML = "";
-
-    promoSnap.forEach((docSnap) => {
-      const data = docSnap.data();
-      const codeId = docSnap.id;
-      const isExpired = data.expiresAt && Date.now() > data.expiresAt;
-      const isActive = data.status === "active" && !isExpired;
-
-      if (isActive) activeCount++;
-
-      const usedCount = Array.isArray(data.usedBy) ? data.usedBy.length : (data.usageCount || 0);
-
-      const card = document.createElement("div");
-      card.className = `admin-promo-card ${isActive ? "" : "disabled"}`;
-
-      let timerText = "No Expiry";
-      if (data.expiresAt) {
-        if (isExpired) {
-          timerText = "EXPIRED";
-        } else {
-          const diff = data.expiresAt - Date.now();
-          const hours = Math.floor(diff / (1000 * 60 * 60));
-          const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-          const secs = Math.floor((diff % (1000 * 60)) / 1000);
-          timerText = `${hours}h ${mins}m ${secs}s left`;
-        }
-      }
-
-      card.innerHTML = `
-        <div>
-          <strong style="font-size: 1.1rem; color: var(--brown);">${esc(data.code || codeId)}</strong>
-          <span class="promo-badge ${isActive ? 'active' : (isExpired ? 'expired' : 'disabled')}">
-            ${isActive ? 'Active' : (isExpired ? 'Expired' : 'Disabled')}
-          </span>
-          <div style="font-size: 0.85rem; color: var(--brown-soft); margin-top: 4px;">
-            Discount: <strong>${data.discountValue} ${data.discountType === 'percent' ? '%' : 'DH'}</strong> |
-            Timer: <span class="timer-tag">${timerText}</span>
-          </div>
-          <div style="font-size: 0.8rem; color: var(--caramel); margin-top: 2px;">
-            👥 Used by: <strong>${usedCount} user(s)</strong>
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-toggle-promo" data-id="${codeId}" data-status="${data.status}" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--brown); background: transparent; cursor: pointer;">
-            ${data.status === 'active' ? 'Disable' : 'Enable'}
-          </button>
-          <button class="btn-delete-promo" data-id="${codeId}" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; border: none; background: #d9534f; color: white; cursor: pointer;">
-            Delete
-          </button>
-        </div>
-      `;
-
-      promosContainer.appendChild(card);
-    });
-
-    if (statActivePromos) statActivePromos.textContent = activeCount;
-
-    // Toggle Status listener
-    document.querySelectorAll(".btn-toggle-promo").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        const id = e.target.getAttribute("data-id");
-        const current = e.target.getAttribute("data-status");
-        const nextStatus = current === "active" ? "disabled" : "active";
-        await updateDoc(doc(db, "promoCodes", id), { status: nextStatus });
-        loadAdminPromoCodes(db);
-      });
-    });
-
-    // Delete listener
-    document.querySelectorAll(".btn-delete-promo").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        const id = e.target.getAttribute("data-id");
-        if (confirm(`Delete promo code "${id}" permanently?`)) {
-          await deleteDoc(doc(db, "promoCodes", id));
-          loadAdminPromoCodes(db);
-        }
-      });
-    });
-
-  } catch (err) {
-    console.error("Error loading promo codes:", err);
-  }
-}
+// --- ADMIN DASHBOARD WITH DELIVERED-ONLY REVENUE CALCULATION ---
 
 async function loadAdminDashboard(db) {
   const usersList = document.getElementById("admin-users");
   const ordersList = document.getElementById("admin-orders");
+  const reviewsList = document.getElementById("admin-reviews");
   const statRevenue = document.getElementById("stat-total-revenue");
   const statOrders = document.getElementById("stat-total-orders");
   const statPending = document.getElementById("stat-pending-orders");
@@ -552,7 +682,6 @@ async function loadAdminDashboard(db) {
   ]);
 
   const userSpent = {};
-
   if (!ordersSnapshot.empty) {
     ordersSnapshot.forEach((docSnap) => {
       const data = docSnap.data();
@@ -562,12 +691,14 @@ async function loadAdminDashboard(db) {
     });
   }
 
-  // Admin User Directory
+  // --- ADMIN USER DIRECTORY ---
   if (usersList) {
     usersList.innerHTML = "";
     if (statUsers) statUsers.textContent = usersSnapshot.size;
 
-    if (!usersSnapshot.empty) {
+    if (usersSnapshot.empty) {
+      usersList.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">No registered users.</p>`;
+    } else {
       usersSnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         const userId = docSnap.id;
@@ -579,49 +710,65 @@ async function loadAdminDashboard(db) {
         card.style.cssText = "display: flex; align-items: center; gap: 15px; padding: 16px; border: 1px solid rgba(74, 55, 40, 0.1); border-radius: 12px; margin-bottom: 12px; background: transparent; flex-wrap: wrap;";
 
         const initial = (data.username || "A").charAt(0).toUpperCase();
+        const avatarSrc = data.photoURL || null;
+        const avatarHtml = avatarSrc
+          ? `<img src="${esc(avatarSrc)}" alt="User" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 10px rgba(168, 90, 62, 0.3);">`
+          : `<div style="width: 44px; height: 44px; border-radius: 50%; background: var(--caramel); color: white; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: bold; flex-shrink: 0; box-shadow: 0 4px 10px rgba(168, 90, 62, 0.3);">${initial}</div>`;
 
-        card.innerHTML = `
-          <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--caramel); color: white; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: bold; flex-shrink: 0;">
-            ${initial}
-          </div>
+        const infoHtml = `
           <div style="flex: 1; min-width: 180px;">
             <strong style="display: block; color: var(--brown); font-size: 1.05rem;">${esc(data.username || "Anonymous")}</strong>
             <span style="display: block; color: var(--brown-soft); font-size: 0.85rem;">${esc(data.email || "No email")}</span>
           </div>
-          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-left: auto;">
-            ${isCustomer ? `
-              <div style="text-align: right;">
-                <span style="display: block; font-size: 0.7rem; color: var(--brown-soft); font-weight: bold;">SPENT</span>
-                <strong style="color: var(--caramel); font-size: 1.1rem;">${spent} DH</strong>
-              </div>
-              <span style="font-size: 0.75rem; padding: 6px 14px; border-radius: 999px; font-weight: 700; background: ${rank.bg}; color: ${rank.color};">
-                ${rank.icon} ${rank.name}
-              </span>
-            ` : ""}
-            <span class="role-badge ${data.role || 'customer'}">${data.role || "customer"}</span>
-          </div>
         `;
+
+        let badgesHtml = `<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-left: auto;">`;
+        if (isCustomer) {
+          badgesHtml += `
+            <div style="text-align: right; min-width: 70px;">
+              <span style="display: block; font-size: 0.7rem; color: var(--brown-soft); text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold;">Total Spent</span>
+              <strong style="color: var(--caramel); font-size: 1.1rem; line-height: 1;">${spent} DH</strong>
+            </div>
+            <div style="width: 1px; height: 30px; background: rgba(74, 55, 40, 0.1); margin: 0 5px;"></div>
+            <span style="white-space: nowrap; font-size: 0.75rem; padding: 6px 14px; border-radius: 999px; font-weight: 700; background: ${rank.bg}; color: ${rank.color}; border: 1px solid ${rank.color}40; display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+              ${rank.icon} ${rank.name}
+            </span>
+          `;
+        }
+
+        const roleBg = data.role === "admin" ? "var(--brown)" : "var(--cream)";
+        const roleColor = data.role === "admin" ? "white" : "var(--brown)";
+
+        badgesHtml += `
+          <span style="white-space: nowrap; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; font-weight: 600; background: ${roleBg}; color: ${roleColor};">
+            ${data.role || "customer"}
+          </span>
+        </div>`;
+
+        card.innerHTML = avatarHtml + infoHtml + badgesHtml;
         usersList.appendChild(card);
       });
     }
   }
 
-  // Admin Orders List
+  // --- ADMIN ORDER LIST ---
   if (ordersList) {
     ordersList.innerHTML = "";
     totalOrdersCount = ordersSnapshot.size;
 
-    if (!ordersSnapshot.empty) {
+    if (ordersSnapshot.empty) {
+      ordersList.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">No orders placed yet.</p>`;
+    } else {
       sortNewestFirst(ordersSnapshot.docs).forEach((docSnap) => {
         const data = docSnap.data();
         const orderId = docSnap.id;
-
         const isDelivered = data.status === "Delivered";
         const isCancelled = data.status === "Cancelled";
         const isProcessing = data.status === "Processing";
-
         const amount = Number(data.totalAmount) || 0;
-        if (!isCancelled) totalRevenue += amount;
+
+        // ONLY add to revenue if status is "Delivered"
+        if (isDelivered) totalRevenue += amount;
         if (isProcessing) pendingOrdersCount++;
 
         const itemsSummary = Array.isArray(data.items)
@@ -634,6 +781,7 @@ async function loadAdminDashboard(db) {
 
         const orderCard = document.createElement("div");
         orderCard.className = `admin-order-card ${isDelivered ? "is-delivered" : isCancelled ? "is-cancelled" : "is-pending"}`;
+        orderCard.setAttribute("data-status", data.status || "Processing");
 
         orderCard.innerHTML = `
           <div class="admin-order-header">
@@ -641,26 +789,26 @@ async function loadAdminDashboard(db) {
               <strong style="font-size: 1.1rem; color: var(--brown);">Order #${orderId.slice(-6).toUpperCase()}</strong>
               <span style="font-size: 0.8rem; color: var(--brown-soft); margin-left: 8px;">(${esc(data.date || "Today")})</span>
             </div>
-            <span id="badge-status-${esc(orderId)}" class="status-pill-badge ${statusClass}">
+            <span id="badge-status-${esc(orderId)}" class="status-pill-badge ${statusClass}" ${isCancelled ? 'style="background:#ffebee; color:#c62828;"' : ""}>
               ${esc(data.status || "Processing")}
             </span>
           </div>
 
           <div style="margin: 10px 0; font-size: 0.9rem; line-height: 1.5; color: var(--brown-soft);">
             <strong>Items:</strong> ${itemsSummary}<br>
-            ${data.promoCode ? `<strong>Promo Code Used:</strong> <span style="color:var(--caramel); font-weight:bold;">${esc(data.promoCode)}</span><br>` : ""}
             <strong>Customer:</strong> ${esc(data.customerName || data.userEmail || "Guest")}<br>
-            <strong>Phone:</strong> ${esc(data.phone || "N/A")}<br>
-            <strong>Address:</strong> ${esc(data.address || "Settat")}
+            <strong>Phone:</strong> <span style="color: ${data.phone ? "inherit" : "#d9534f"}">${esc(data.phone || "N/A")}</span><br>
+            <strong>Address:</strong> ${esc(data.address || "Settat")}<br>
+            ${data.promoCode ? `<strong>Promo code:</strong> ${esc(data.promoCode)}${Number(data.discountAmount) > 0 ? ` (−${Number(data.discountAmount).toFixed(2)} DH)` : ""}<br>` : ""}
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(74,55,40,0.15);">
-            <div style="font-size: 1.2rem; font-weight: bold; color: ${isCancelled ? "#888; text-decoration: line-through;" : "var(--caramel);"}" >
+            <div style="font-size: 1.2rem; font-weight: bold; color: ${isCancelled ? "#888; text-decoration: line-through;" : "var(--caramel);" }">
               ${amount} DH
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
               ${data.phone ? `<a href="https://wa.me/${esc(normalizePhone(data.phone))}" target="_blank" rel="noopener" class="btn-whatsapp-sm">WhatsApp</a>` : ""}
-              <select class="admin-status-dropdown" data-id="${esc(orderId)}" style="padding:5px; border-radius:5px;">
+              <select class="admin-status-dropdown" data-id="${esc(orderId)}" style="padding:5px; border-radius:5px; border:1px solid #ccc; background:#fff; font-size:0.85rem; cursor:pointer;">
                 <option value="Processing" ${isProcessing ? "selected" : ""}>Processing</option>
                 <option value="Delivered" ${isDelivered ? "selected" : ""}>Delivered</option>
                 <option value="Cancelled" ${isCancelled ? "selected" : ""}>Cancelled</option>
@@ -668,7 +816,6 @@ async function loadAdminDashboard(db) {
             </div>
           </div>
         `;
-
         ordersList.appendChild(orderCard);
       });
 
@@ -676,8 +823,29 @@ async function loadAdminDashboard(db) {
         dropdown.addEventListener("change", async (e) => {
           const orderId = e.target.getAttribute("data-id");
           const newStatus = e.target.value;
-          await updateDoc(doc(db, "orders", orderId), { status: newStatus });
-          loadAdminDashboard(db);
+          const badge = document.getElementById(`badge-status-${orderId}`);
+
+          try {
+            await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+            e.target.closest(".admin-order-card").setAttribute("data-status", newStatus);
+            if (badge) {
+              badge.textContent = newStatus;
+              if (newStatus === "Delivered") {
+                badge.className = "status-pill-badge delivered";
+                badge.style = "";
+              } else if (newStatus === "Cancelled") {
+                badge.className = "status-pill-badge cancelled";
+                badge.style = "background:#ffebee; color:#c62828;";
+              } else {
+                badge.className = "status-pill-badge processing";
+                badge.style = "";
+              }
+            }
+            initAdminDashboard(db); // Re-calculate dashboard metrics live
+          } catch (error) {
+            console.error("Update error:", error);
+            alert("Failed to update status.");
+          }
         });
       });
     }
@@ -686,81 +854,277 @@ async function loadAdminDashboard(db) {
     if (statOrders) statOrders.textContent = totalOrdersCount;
     if (statPending) statPending.textContent = pendingOrdersCount;
   }
+
+  // --- ADMIN REVIEWS MANAGEMENT ---
+  if (reviewsList) {
+    reviewsList.innerHTML = "";
+    try {
+      const reviewsSnap = await getDocs(collection(db, "reviews"));
+      if (reviewsSnap.empty) {
+        reviewsList.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">No reviews submitted yet.</p>`;
+      } else {
+        const reviewsDocs = sortNewestFirst(reviewsSnap.docs);
+        reviewsDocs.forEach((docSnap) => {
+          const data = docSnap.data();
+          const reviewId = docSnap.id;
+          const status = data.status || "pending";
+
+          const card = document.createElement("div");
+          card.className = "admin-review-card";
+          card.setAttribute("data-status", status);
+          card.style.cssText = "border: 1px solid rgba(74, 55, 40, 0.15); border-radius: 12px; padding: 16px; margin-bottom: 12px; background: var(--white);";
+
+          const fullStar = "★";
+          const emptyStar = "☆";
+          const ratingNum = Math.min(5, Math.max(1, Number(data.rating) || 5));
+          const stars = fullStar.repeat(ratingNum) + emptyStar.repeat(5 - ratingNum);
+
+          let badgeColor = "#ffa000";
+          let badgeBg = "#fff8e1";
+          if (status === "approved") { badgeColor = "#2e7d32"; badgeBg = "#e8f5e9"; }
+          if (status === "rejected") { badgeColor = "#c62828"; badgeBg = "#ffebee"; }
+
+          card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+              <div>
+                <strong style="color: var(--brown); font-size: 1.05rem;">${esc(data.name || "Anonymous")}</strong>
+                <div style="color: #FFD166; font-size: 1.1rem; margin: 2px 0;">${stars}</div>
+              </div>
+              <span id="review-badge-${reviewId}" class="status-pill-badge" style="background: ${badgeBg}; color: ${badgeColor}; text-transform: capitalize;">
+                ${esc(status)}
+              </span>
+            </div>
+            <p style="color: var(--brown-soft); font-size: 0.95rem; margin: 10px 0; font-style: italic;">"${esc(data.text || "")}"</p>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; border-top: 1px dashed rgba(74,55,40,0.1); padding-top: 10px;">
+              <button class="btn-approve-review" data-id="${reviewId}" style="background: #2e7d32; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: bold;">Approve</button>
+              <button class="btn-reject-review" data-id="${reviewId}" style="background: #e65100; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: bold;">Reject</button>
+              <button class="btn-delete-review" data-id="${reviewId}" style="background: transparent; border: 1px solid #d9534f; color: #d9534f; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: bold;">Delete</button>
+            </div>
+          `;
+          reviewsList.appendChild(card);
+        });
+
+        reviewsList.querySelectorAll(".btn-approve-review").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const id = e.target.getAttribute("data-id");
+            await updateDoc(doc(db, "reviews", id), { status: "approved" });
+            const badge = document.getElementById(`review-badge-${id}`);
+            if (badge) {
+              badge.textContent = "approved";
+              badge.style.background = "#e8f5e9";
+              badge.style.color = "#2e7d32";
+            }
+            e.target.closest(".admin-review-card").setAttribute("data-status", "approved");
+          });
+        });
+
+        reviewsList.querySelectorAll(".btn-reject-review").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const id = e.target.getAttribute("data-id");
+            await updateDoc(doc(db, "reviews", id), { status: "rejected" });
+            const badge = document.getElementById(`review-badge-${id}`);
+            if (badge) {
+              badge.textContent = "rejected";
+              badge.style.background = "#ffebee";
+              badge.style.color = "#c62828";
+            }
+            e.target.closest(".admin-review-card").setAttribute("data-status", "rejected");
+          });
+        });
+
+        reviewsList.querySelectorAll(".btn-delete-review").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const id = e.target.getAttribute("data-id");
+            if (confirm("Are you sure you want to delete this review permanently?")) {
+              await deleteDoc(doc(db, "reviews", id));
+              e.target.closest(".admin-review-card").remove();
+            }
+          });
+        });
+
+        document.querySelectorAll(".filter-btn-review").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const filter = btn.getAttribute("data-filter");
+            document.querySelectorAll(".filter-btn-review").forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            document.querySelectorAll(".admin-review-card").forEach((card) => {
+              card.style.display = (filter === "all" || card.getAttribute("data-status") === filter) ? "" : "none";
+            });
+          });
+        });
+      }
+    } catch (err) {
+      console.error("Error loading reviews for admin:", err);
+      reviewsList.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">Unable to load reviews.</p>`;
+    }
+  }
 }
 
 async function initAdminDashboard(db) {
   try {
     await loadAdminDashboard(db);
-    await loadAdminPromoCodes(db);
-
-    // Live countdown timer for promo codes in Admin section
-    if (promoTimerInterval) clearInterval(promoTimerInterval);
-    promoTimerInterval = setInterval(() => {
-      loadAdminPromoCodes(db);
-    }, 1000);
-
-    // Form Listener to Create Promo Code
-    const createPromoForm = document.getElementById("admin-create-promo-form");
-    if (createPromoForm) {
-      createPromoForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const codeInput = document.getElementById("promo-code-input").value.trim().toUpperCase();
-        const typeInput = document.getElementById("promo-type-select").value;
-        const valInput = Number(document.getElementById("promo-value-input").value) || 0;
-        const timerVal = document.getElementById("promo-timer-select").value;
-        const msg = document.getElementById("admin-promo-msg");
-
-        if (!codeInput || valInput <= 0) return;
-
-        let expiresAt = null;
-        if (timerVal !== "none") {
-          const now = Date.now();
-          const msMap = {
-            "15m": 15 * 60 * 1000,
-            "1h": 60 * 60 * 1000,
-            "3h": 3 * 60 * 60 * 1000,
-            "6h": 6 * 60 * 60 * 1000,
-            "12h": 12 * 60 * 60 * 1000,
-            "24h": 24 * 60 * 60 * 1000,
-            "48h": 48 * 60 * 60 * 1000
-          };
-          expiresAt = now + (msMap[timerVal] || 0);
-        }
-
-        try {
-          await setDoc(doc(db, "promoCodes", codeInput), {
-            code: codeInput,
-            discountType: typeInput,
-            discountValue: valInput,
-            status: "active",
-            expiresAt: expiresAt,
-            usedBy: [],
-            usageCount: 0,
-            createdAt: serverTimestamp()
-          });
-
-          msg.style.display = "block";
-          msg.style.color = "#2e7d32";
-          msg.textContent = `✓ Promo Code "${codeInput}" created successfully!`;
-          createPromoForm.reset();
-
-          loadAdminPromoCodes(db);
-
-          setTimeout(() => { msg.style.display = "none"; }, 3000);
-        } catch (err) {
-          msg.style.display = "block";
-          msg.style.color = "#d9534f";
-          msg.textContent = "Failed to create promo code.";
-        }
-      });
-    }
-
   } catch (err) {
     console.error("Admin dashboard error:", err);
   }
 }
 
-// --- USER ROUTING & AUTH HANDLERS ---
+// --- PASSWORD RESET ---
+
+const forgotPasswordForm = document.getElementById("forgot-password-form");
+if (forgotPasswordForm) {
+  forgotPasswordForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const resetEmail = document.getElementById("reset-email").value;
+    const msg = document.getElementById("reset-msg");
+
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      msg.style.display = "block";
+      msg.style.color = "#57a05f";
+      msg.textContent = "Password reset email sent! Check your inbox.";
+      forgotPasswordForm.reset();
+    } catch (error) {
+      msg.style.display = "block";
+      msg.style.color = "#d9534f";
+      msg.textContent = authMessage(error);
+    }
+  });
+}
+
+// --- PROFILE INFORMATION UPDATE ---
+
+const infoForm = document.getElementById("profile-info-form") || document.getElementById("profile-form");
+if (infoForm) {
+  infoForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const usernameInput = document.getElementById("profile-name") || document.getElementById("edit-username");
+    const addressInput = document.getElementById("profile-address") || document.getElementById("edit-address");
+    const phoneInput = document.getElementById("profile-phone") || document.getElementById("edit-phone");
+    const newUsername = String(usernameInput?.value || "").trim();
+    const newAddress = String(addressInput?.value || "").trim();
+    const newPhone = String(phoneInput?.value || "").trim();
+    const msg = document.getElementById("profile-msg") || document.getElementById("info-msg");
+    const saveButton = infoForm.querySelector('button[type="submit"]');
+    const originalButtonText = saveButton ? saveButton.textContent : "Save Details";
+
+    if (!newUsername) {
+      if (msg) {
+        msg.style.display = "block";
+        msg.style.color = "#d9534f";
+        msg.textContent = "Please enter your full name.";
+      }
+      return;
+    }
+
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error("Your session has expired. Please sign in again.");
+      if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = "Saving...";
+      }
+      await setDoc(doc(db, "users", user.uid), {
+        username: newUsername,
+        email: user.email || "",
+        address: newAddress,
+        phone: newPhone,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      window.userDataObj = {
+        ...(window.userDataObj || {}),
+        username: newUsername,
+        address: newAddress,
+        phone: newPhone
+      };
+
+      const displayName = document.getElementById("profile-name-display");
+      if (displayName) displayName.textContent = newUsername;
+      const legacyName = document.getElementById("profile-name");
+      if (legacyName && !/(INPUT|TEXTAREA|SELECT)/.test(legacyName.tagName)) legacyName.textContent = newUsername;
+
+      if (msg) {
+        msg.style.display = "block";
+        msg.style.color = "#57a05f";
+        msg.textContent = "Profile updated successfully!";
+        setTimeout(() => { msg.style.display = "none"; }, 4000);
+      }
+    } catch (error) {
+      console.error("Error saving profile details:", error);
+      if (msg) {
+        msg.style.display = "block";
+        msg.style.color = "#d9534f";
+        msg.textContent = error.message || "Error saving changes. Please try again.";
+      }
+    } finally {
+      if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.textContent = originalButtonText;
+      }
+    }
+  });
+}
+
+// --- PASSWORD UPDATE ---
+
+const passwordForm = document.getElementById("password-form");
+const passwordButton = document.getElementById("btn-update-password");
+async function handlePasswordUpdate(event) {
+  if (event) event.preventDefault();
+  const passwordInput = document.getElementById("profile-new-password") || document.getElementById("new-password");
+  const msg = document.getElementById("password-msg");
+  const newPassword = String(passwordInput?.value || "");
+
+  if (!newPassword || newPassword.length < 6) {
+    if (msg) {
+      msg.style.display = "block";
+      msg.style.color = "#d9534f";
+      msg.textContent = "Password must be at least 6 characters long.";
+    }
+    return;
+  }
+  if (!auth.currentUser) {
+    if (msg) {
+      msg.style.display = "block";
+      msg.style.color = "#d9534f";
+      msg.textContent = "Please sign in again before changing your password.";
+    }
+    return;
+  }
+
+  const originalButtonText = passwordButton ? passwordButton.textContent : "Update Password";
+  if (passwordButton) {
+    passwordButton.disabled = true;
+    passwordButton.textContent = "Updating...";
+  }
+  try {
+    await updatePassword(auth.currentUser, newPassword);
+    if (passwordInput) passwordInput.value = "";
+    if (passwordForm) passwordForm.reset();
+    if (msg) {
+      msg.style.display = "block";
+      msg.style.color = "#57a05f";
+      msg.textContent = "Password updated successfully!";
+      setTimeout(() => { msg.style.display = "none"; }, 4000);
+    }
+  } catch (error) {
+    console.error("Password update failed:", error);
+    if (msg) {
+      msg.style.display = "block";
+      msg.style.color = "#d9534f";
+      msg.textContent = authMessage(error, "Could not update password. You may need to sign in again first.");
+    }
+  } finally {
+    if (passwordButton) {
+      passwordButton.disabled = false;
+      passwordButton.textContent = originalButtonText;
+    }
+  }
+}
+if (passwordButton) passwordButton.addEventListener("click", handlePasswordUpdate);
+if (passwordForm) passwordForm.addEventListener("submit", handlePasswordUpdate);
+
+// --- USER ROUTING ---
 
 function routeUser(user) {
   if (user.email === ADMIN_EMAIL) {
@@ -770,21 +1134,29 @@ function routeUser(user) {
   }
 }
 
+// --- LOGIN ---
+
 const loginForm = document.getElementById("auth-form");
 if (loginForm) {
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
+
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
       routeUser(cred.user);
     } catch (error) {
       const errEl = document.getElementById("error-msg");
-      if (errEl) { errEl.style.display = "block"; errEl.textContent = authMessage(error); }
+      if (errEl) {
+        errEl.style.display = "block";
+        errEl.textContent = authMessage(error);
+      }
     }
   });
 }
+
+// --- SIGN UP ---
 
 const signupForm = document.getElementById("auth-form-signup");
 if (signupForm) {
@@ -793,18 +1165,28 @@ if (signupForm) {
     const username = document.getElementById("username").value;
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
+
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await setDoc(doc(db, "users", cred.user.uid), {
-        username: username, email: email, role: "customer", joinedAt: new Date(), cart: []
+        username: username,
+        email: email,
+        role: "customer",
+        joinedAt: new Date(),
+        cart: []
       });
       routeUser(cred.user);
     } catch (error) {
       const errEl = document.getElementById("error-msg");
-      if (errEl) { errEl.style.display = "block"; errEl.textContent = authMessage(error); }
+      if (errEl) {
+        errEl.style.display = "block";
+        errEl.textContent = authMessage(error);
+      }
     }
   });
 }
+
+// --- GOOGLE SIGN-IN ---
 
 const googleBtn = document.getElementById("google-btn");
 if (googleBtn) {
@@ -816,18 +1198,27 @@ if (googleBtn) {
 
       if (!userSnap.exists()) {
         await setDoc(userRef, {
-          username: cred.user.displayName, email: cred.user.email, role: "customer", joinedAt: new Date(), cart: []
+          username: cred.user.displayName,
+          email: cred.user.email,
+          role: "customer",
+          joinedAt: new Date(),
+          cart: []
         });
       }
       routeUser(cred.user);
     } catch (error) {
       const errEl = document.getElementById("error-msg");
-      if (errEl) { errEl.style.display = "block"; errEl.textContent = authMessage(error, "Google sign-in failed."); }
+      if (errEl) {
+        errEl.style.display = "block";
+        errEl.textContent = authMessage(error, "Google sign-in failed.");
+      }
     }
   });
 }
 
-const logoutBtn = document.getElementById("logout-btn");
+// --- LOGOUT ---
+
+const logoutBtn = document.getElementById("logout-btn") || document.getElementById("btn-logout");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
     signOut(auth).then(() => {
