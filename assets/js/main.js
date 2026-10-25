@@ -1,12 +1,10 @@
 /* =========================================================
    Youyou's Cookies - main.js
-   Header / Navigation / Theme / Status Pill / Mobile Drawer
+   Shared helpers + header / nav / theme / status pill
    ========================================================= */
 
-// Delivery window in Morocco time (24h). All week from 15:00 to 20:00.
 window.YOUYOU_HOURS = { open: 15, close: 20 };
 
-// Current time in Morocco, independent of visitor device timezone.
 window.getMoroccoTime = function () {
   try {
     const parts = new Intl.DateTimeFormat("en-GB", {
@@ -42,36 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadBrandLogos();
 });
 
-// --- GLOBAL SHOW / HIDE PASSWORD TOGGLE ---
-document.addEventListener("click", (e) => {
-  const toggleBtn = e.target.closest(".toggle-password-btn");
-  if (!toggleBtn) return;
-  const targetId = toggleBtn.getAttribute("data-target");
-  const input = document.getElementById(targetId);
-  if (!input) return;
-
-  if (input.type === "password") {
-    input.type = "text";
-    toggleBtn.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-        <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
-        <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.536 3.536 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
-        <path d="M3.35 5.47c-.18.158-.353.321-.518.487C1.402 7.21 1 8 1 8s3 5.5 8 5.5c1.026 0 1.996-.23 2.868-.619l.72.72c-.173.102-.348.2-.524.29C10.74 14.49 9.38 15 8 15c-5 0-8-5.5-8-5.5a13.165 13.135 0 0 1 2.408-3.085l.942.942zM13.646 14.354l-12-12 .708-.708 12 12-.708.708z"/>
-      </svg>
-    `;
-    toggleBtn.setAttribute("aria-label", "Hide password");
-  } else {
-    input.type = "password";
-    toggleBtn.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
-      </svg>
-    `;
-    toggleBtn.setAttribute("aria-label", "Show password");
-  }
-});
-
 function initHeader() {
   const header = document.querySelector(".site-header");
   if (!header) return;
@@ -81,43 +49,34 @@ function initHeader() {
 }
 
 function initMobileNav() {
-  const navToggle = document.getElementById("nav-toggle") || document.querySelector(".nav-toggle");
-  const mainNav = document.getElementById("main-nav") || document.querySelector(".main-nav");
-  const closeBtn = document.getElementById("nav-close") || document.querySelector(".nav-close");
-  let backdrop = document.getElementById("nav-overlay");
-
+  const navToggle = document.querySelector(".nav-toggle");
+  const mainNav = document.querySelector(".main-nav");
   if (!navToggle || !mainNav) return;
-
-  if (!backdrop) {
-    backdrop = document.createElement("div");
-    backdrop.className = "nav-overlay";
-    document.body.appendChild(backdrop);
-  }
-
-  const open = () => {
-    mainNav.classList.add("open");
-    backdrop.classList.add("show");
-    navToggle.setAttribute("aria-expanded", "true");
-    document.body.style.overflow = "hidden";
-  };
 
   const close = () => {
     mainNav.classList.remove("open");
-    backdrop.classList.remove("show");
     navToggle.setAttribute("aria-expanded", "false");
-    document.body.style.overflow = "";
   };
 
+  navToggle.setAttribute("aria-expanded", "false");
   navToggle.addEventListener("click", () => {
-    if (mainNav.classList.contains("open")) close();
-    else open();
+    mainNav.classList.add("open");
+    navToggle.setAttribute("aria-expanded", "true");
   });
 
-  if (closeBtn) closeBtn.addEventListener("click", close);
-  backdrop.addEventListener("click", close);
-
   mainNav.addEventListener("click", (e) => {
-    if (e.target.closest("a")) close();
+    if (e.target.closest("a") || e.target.classList.contains("nav-close")) close();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (mainNav.classList.contains("open") && !mainNav.contains(e.target) && !navToggle.contains(e.target)) close();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && mainNav.classList.contains("open")) {
+      close();
+      navToggle.focus();
+    }
   });
 }
 
@@ -181,29 +140,30 @@ function initFaq() {
 }
 
 function initTheme() {
-  const themeToggles = document.querySelectorAll(".theme-toggle");
-  
+  const themeToggle = document.getElementById("theme-toggle");
+  if (!themeToggle) return;
+  const moon = themeToggle.querySelector(".moon-icon");
+  const sun = themeToggle.querySelector(".sun-icon");
+
   const apply = (theme) => {
     if (theme === "dark") {
       document.documentElement.setAttribute("data-theme", "dark");
-      document.querySelectorAll(".moon-icon").forEach(m => m.style.display = "none");
-      document.querySelectorAll(".sun-icon").forEach(s => s.style.display = "inline");
+      if (moon) moon.style.display = "none";
+      if (sun) sun.style.display = "inline";
     } else {
       document.documentElement.removeAttribute("data-theme");
-      document.querySelectorAll(".moon-icon").forEach(m => m.style.display = "inline");
-      document.querySelectorAll(".sun-icon").forEach(s => s.style.display = "none");
+      if (moon) moon.style.display = "inline";
+      if (sun) sun.style.display = "none";
     }
     loadBrandLogos();
   };
 
   apply(window.safeStorage.get("youyou_theme") || "dark");
 
-  themeToggles.forEach(toggle => {
-    toggle.addEventListener("click", () => {
-      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      window.safeStorage.set("youyou_theme", next);
-      apply(next);
-    });
+  themeToggle.addEventListener("click", () => {
+    const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    window.safeStorage.set("youyou_theme", next);
+    apply(next);
   });
 }
 
