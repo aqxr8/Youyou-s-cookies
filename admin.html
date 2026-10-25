@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="assets/css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
-
   <style>
     /* Admin Dashboard Specific Styles */
     .admin-hero-banner {
@@ -265,6 +264,9 @@
     .promo-status-badge.disabled {
       background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;
     }
+    .promo-status-badge.expired {
+      background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2;
+    }
     .promo-actions {
       display: flex;
       gap: 8px;
@@ -505,7 +507,7 @@
           <h2 class="pro-card-title" style="font-size: 1.6rem;">🎟️ Advanced Promo Code Manager</h2>
         </div>
         
-        <!-- ADD NEW PROMO FORM WITH CONDITIONAL INPUT FIELDS -->
+        <!-- ADD NEW PROMO FORM WITH EXPIRATION TIMER -->
         <form id="add-promo-form" class="pro-form" style="background: var(--cream-light); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(74, 55, 40, 0.1);">
           <h4 style="margin-bottom: 15px; color: var(--brown); font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">Create a New Campaign</h4>
           
@@ -520,7 +522,7 @@
             </div>
           </div>
           
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
             <div class="form-group" style="margin-bottom: 0;">
               <label>Reward Type</label>
               <select id="new-promo-type" class="auth-input pro-input">
@@ -546,6 +548,12 @@
             <div class="form-group" id="input-group-free" style="margin-bottom: 0; display: none;">
               <label>What Free Item(s)?</label>
               <input type="text" id="val-free" class="auth-input pro-input" placeholder="e.g. 2 Free Lotus Cookies">
+            </div>
+
+            <!-- EXPIRATION DATE & TIMER INPUT -->
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Expiration Date & Time (Optional Timer)</label>
+              <input type="datetime-local" id="new-promo-expires" class="auth-input pro-input">
             </div>
           </div>
 

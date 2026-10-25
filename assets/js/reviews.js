@@ -19,11 +19,12 @@ const grid = document.getElementById('notes-grid');
 const statusEl = document.getElementById('reviews-status');
 const escText = (value) => String(value ?? '').slice(0, 500);
 
-function showMessage(message, isError = false) {
+function showMessage(htmlText, isError = false) {
   if (!statusEl) return;
-  statusEl.textContent = message;
+  statusEl.innerHTML = htmlText;
   statusEl.style.color = isError ? '#b42318' : 'var(--brown-soft)';
 }
+
 function renderReview(review) {
   const card = document.createElement('article');
   card.className = 'note-card reveal visible';
@@ -41,6 +42,7 @@ function renderReview(review) {
   card.append(stars, text, by);
   grid.appendChild(card);
 }
+
 async function loadApprovedReviews() {
   if (!grid) return;
   grid.replaceChildren();
@@ -62,17 +64,27 @@ async function loadApprovedReviews() {
     showMessage('Reviews could not be loaded right now. Please try again later.', true);
   }
 }
+
 if (form) {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+
+    // MUST BE LOGGED IN TO POST A REVIEW
+    if (!auth.currentUser && !window.currentUserObj) {
+      showMessage('Please <a href="login.html" style="text-decoration: underline; font-weight: bold; color: inherit;">log in</a> to post a review.', true);
+      return;
+    }
+
     const name = document.getElementById('note-name').value.trim().slice(0, 25);
     const rating = Number(document.getElementById('note-rating').value);
     const text = document.getElementById('note-text').value.trim().slice(0, 200);
     const button = form.querySelector('button[type="submit"]');
+
     if (!name || name.length > 25 || !Number.isInteger(rating) || rating < 1 || rating > 5 || text.length < 3 || text.length > 200) {
       showMessage('Please enter a name, choose a rating, and write a review (3–200 characters).', true);
       return;
     }
+
     button.disabled = true;
     button.textContent = 'Submitting…';
     showMessage('');
@@ -80,7 +92,7 @@ if (form) {
       await addDoc(collection(db, 'reviews'), {
         name, rating, text,
         status: 'pending',
-        userId: auth.currentUser?.uid || null,
+        userId: auth.currentUser?.uid || window.currentUserObj?.uid || null,
         createdAt: serverTimestamp()
       });
       form.reset();
@@ -94,4 +106,5 @@ if (form) {
     }
   });
 }
+
 loadApprovedReviews();

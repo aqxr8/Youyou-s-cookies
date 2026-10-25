@@ -1527,6 +1527,14 @@ video.brand-logo {
   letter-spacing: 2px;
 }
 
+/* ---------- Promo Message Links ---------- */
+.promo-message a {
+  text-decoration: underline !important;
+  font-weight: bold;
+  color: inherit;
+  cursor: pointer;
+}
+
 /* ---------- Theme Toggle Button Styling ---------- */
 .theme-toggle {
   background: transparent !important;
@@ -1814,7 +1822,6 @@ video.brand-logo {
     font-size: 1.05rem !important;
   }
 }
-
 
 /* =========================================
    REVIEWS & MESSAGE WALL (STICKY NOTES)
@@ -2400,7 +2407,7 @@ html[data-theme="dark"] .site-header .brand-logo-wrapper > video.logo-dark {
   color: #c62828;
 }
 
-/* Redesigned Order History Items inside JS (.order-history-card updates) */
+/* Redesigned Order History Items inside JS */
 .order-history-card, .pro-order-item {
   border: 1px solid rgba(74, 55, 40, 0.1);
   border-radius: 16px;
@@ -2568,6 +2575,7 @@ html[data-theme="dark"] .site-header .brand-logo-wrapper > video.logo-dark {
     justify-content: space-around;
   }
 }
+
 /* =========================================
    UPGRADED SLIDE-OUT CART DRAWER
 ========================================= */
@@ -2642,6 +2650,7 @@ html[data-theme="dark"] .site-header .brand-logo-wrapper > video.logo-dark {
 .password-input-wrapper .auth-input { margin-bottom: 0 !important; padding-right: 48px !important; }
 .toggle-password-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--brown-soft); padding: 6px; display: flex; align-items: center; justify-content: center; z-index: 2; }
 .toggle-password-btn:hover { color: var(--caramel); transform: translateY(-50%) scale(1.1); }
+
 /* =========================================
    ADMIN PROMO CODE DASHBOARD STYLES
 ========================================= */
@@ -2693,6 +2702,9 @@ html[data-theme="dark"] .site-header .brand-logo-wrapper > video.logo-dark {
 }
 .promo-status-badge.disabled {
   background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;
+}
+.promo-status-badge.expired {
+  background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2;
 }
 .promo-actions {
   display: flex;

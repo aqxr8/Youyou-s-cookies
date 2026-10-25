@@ -207,6 +207,21 @@ async function initNotesWall() {
 
   form.addEventListener("submit", async function (e) {
     e.preventDefault(); 
+
+    // REQUIRE LOG IN TO POST REVIEW
+    const user = window.currentUserObj;
+    if (!user) {
+      let authMsg = document.getElementById("review-auth-msg");
+      if (!authMsg) {
+        authMsg = document.createElement("div");
+        authMsg.id = "review-auth-msg";
+        authMsg.style.cssText = "margin-top: 15px; font-weight: bold; font-size: 0.95rem; color: #c62828; text-align: center;";
+        form.appendChild(authMsg);
+      }
+      authMsg.innerHTML = 'Please <a href="login.html" style="text-decoration: underline; font-weight: bold; color: inherit;">log in</a> to post a review.';
+      return;
+    }
+
     const name = document.getElementById("note-name").value.trim();
     const rating = parseInt(document.getElementById("note-rating").value);
     const text = document.getElementById("note-text").value.trim();
@@ -727,6 +742,19 @@ function initCart() {
     let finalTotal = (subtotal - totalDiscount) + deliveryFee;
     if (finalTotal < 0) finalTotal = 0;
 
+    // Record promo code single-use for user in Firestore
+    if (window.activePromo && window.activePromo.id && window.currentUserObj) {
+      try {
+        const { db, firestore } = await getPromoFirebaseContext();
+        const promoRef = firestore.doc(db, "promo_codes", window.activePromo.id);
+        await firestore.updateDoc(promoRef, {
+          usedBy: firestore.arrayUnion(window.currentUserObj.uid)
+        });
+      } catch (err) {
+        console.warn("Unable to record promo code usage:", err);
+      }
+    }
+
     if (window.saveOrderToFirestore) {
       await window.saveOrderToFirestore({
         customerName: window.currentUserObj ? (window.currentUserObj.displayName || window.currentUserObj.email) : "Guest",
@@ -769,19 +797,26 @@ function initCart() {
     saveCart();
   }
 
-  // Apply a coupon that was created in the admin dashboard.
+  // ====== APPLY PROMO CODE ENGINE ======
   window.applyPromoCode = async function () {
     const input = document.getElementById("promo-code-input");
     const message = document.getElementById("promo-message");
     const button = document.getElementById("btn-apply-promo");
 
-    const showMessage = (text, isError = false) => {
+    const showMessage = (htmlText, isError = false) => {
       if (!message) return;
-      message.textContent = text;
+      message.innerHTML = htmlText;
       message.style.display = "block";
       message.style.color = isError ? "#c62828" : "#2e7d32";
       message.setAttribute("role", "status");
     };
+
+    // 1. MUST BE LOGGED IN TO USE PROMO CODES
+    const user = window.currentUserObj;
+    if (!user) {
+      showMessage('Please <a href="login.html" style="text-decoration: underline; font-weight: bold; color: inherit;">log in</a> to use promo codes.', true);
+      return;
+    }
 
     const code = String(input?.value || "").trim().toUpperCase();
     if (!code) {
@@ -806,25 +841,37 @@ function initCart() {
       const { db, firestore } = await getPromoFirebaseContext();
       const promoQuery = firestore.query(
         firestore.collection(db, "promo_codes"),
-        firestore.where("code", "==", code),
-        firestore.where("active", "==", true)
+        firestore.where("code", "==", code)
       );
       const snapshot = await firestore.getDocs(promoQuery);
 
+      // 2. RANDOM / NON-EXISTENT CODE
       if (snapshot.empty) {
-        showMessage("This promo code does not exist or is currently disabled.", true);
+        showMessage("That promo code does not exist.", true);
         return;
       }
 
       const matchingDoc = snapshot.docs[0];
-
       const data = matchingDoc.data();
+
+      // 3. CHECK EXPIRED, DISABLED, OR ALREADY USED BY THIS USER
+      const isExpired = data.expiresAt && new Date(data.expiresAt) <= new Date();
+      const isUsedByUser = Array.isArray(data.usedBy) && data.usedBy.includes(user.uid);
+      const isDisabled = data.active !== true;
+
+      if (isDisabled || isExpired || isUsedByUser) {
+        showMessage("This promo code is expired or already used.", true);
+        return;
+      }
+
+      // 4. MIN AMOUNT CHECK
       const minAmount = Math.max(0, Number(data.minAmount) || 0);
       if (subtotal < minAmount) {
         showMessage(`This coupon requires an order of at least ${minAmount} DH.`, true);
         return;
       }
 
+      // 5. VALIDATE REWARD TYPE
       if (data.type === "discount_percent") {
         const value = Number(data.value);
         if (!Number.isFinite(value) || value <= 0 || value > 100) {
@@ -842,9 +889,6 @@ function initCart() {
           showMessage("This coupon has an invalid reward. Please contact the store.", true);
           return;
         }
-      } else {
-        showMessage("This coupon uses an unsupported reward type.", true);
-        return;
       }
 
       window.activePromo = {
@@ -859,7 +903,7 @@ function initCart() {
       showMessage(`Coupon ${window.activePromo.code} applied successfully!`);
     } catch (error) {
       console.error("Unable to apply promo code:", error);
-      showMessage("Could not verify this coupon. Check your connection or Firebase permissions and try again.", true);
+      showMessage("Could not verify this coupon. Check your connection and try again.", true);
     } finally {
       if (button) {
         button.disabled = false;
@@ -911,7 +955,6 @@ function init3DHoverEffect() {
 
 /* =========================================================
    SHARED FIRESTORE PROMO CODE ENGINE
-   Uses the same modular Firebase SDK as auth.js.
 ========================================================= */
 const YOUYOU_FIREBASE_CONFIG = {
   apiKey: "AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk",
@@ -975,6 +1018,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const valPercent = document.getElementById("val-percent");
   const valFixed = document.getElementById("val-fixed");
   const valFree = document.getElementById("val-free");
+  const expiresInput = document.getElementById("new-promo-expires");
   let promoSnapshotDocs = [];
 
   let feedback = document.getElementById("admin-promo-feedback");
@@ -1012,26 +1056,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
     docs.forEach((promoDoc) => {
       const promo = promoDoc.data();
-      const active = promo.active === true;
+      const usedBy = Array.isArray(promo.usedBy) ? promo.usedBy : [];
+      const usedCount = usedBy.length;
+
+      // Timer & Expiration Calculation
+      let isExpired = false;
+      let timerString = "";
+
+      if (promo.expiresAt) {
+        const expDate = new Date(promo.expiresAt);
+        const now = new Date();
+        if (expDate <= now) {
+          isExpired = true;
+          timerString = `Expired on ${expDate.toLocaleDateString()} ${expDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        } else {
+          const diffMs = expDate - now;
+          const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+          const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+          timerString = `⏳ Timer: ${hrs}h ${mins}m ${secs}s remaining`;
+        }
+      }
+
+      const active = promo.active === true && !isExpired;
       const card = document.createElement("div");
       card.className = `admin-promo-item ${active ? "" : "disabled"}`;
 
       const info = document.createElement("div");
       info.className = "promo-info";
+      
       const title = document.createElement("h3");
       title.appendChild(document.createTextNode(String(promo.code || "(missing code)")));
+      
       const badge = document.createElement("span");
-      badge.className = `promo-status-badge ${active ? "active" : "disabled"}`;
-      badge.textContent = active ? "Active" : "Disabled";
+      if (isExpired) {
+        badge.className = "promo-status-badge expired";
+        badge.textContent = "Expired";
+      } else {
+        badge.className = `promo-status-badge ${active ? "active" : "disabled"}`;
+        badge.textContent = active ? "Active" : "Disabled";
+      }
       title.appendChild(badge);
 
       const details = document.createElement("p");
       const minAmount = Math.max(0, Number(promo.minAmount) || 0);
-      details.textContent = `Reward: ${formatReward(promo)} | Condition: ${minAmount > 0 ? `Orders over ${minAmount} DH` : "No minimum amount required"}`;
+      let conditionText = minAmount > 0 ? `Orders over ${minAmount} DH` : "No minimum amount";
+      let usageText = `👥 Used by: ${usedCount} ${usedCount === 1 ? 'user' : 'users'}`;
+      let expirationText = timerString ? ` | ${timerString}` : "";
+
+      details.textContent = `Reward: ${formatReward(promo)} | Condition: ${conditionText} | ${usageText}${expirationText}`;
       info.append(title, details);
 
       const actions = document.createElement("div");
       actions.className = "promo-actions";
+      
       const toggle = document.createElement("button");
       toggle.type = "button";
       toggle.className = "btn-promo-action btn-toggle-promo";
@@ -1046,10 +1124,18 @@ document.addEventListener("DOMContentLoaded", () => {
       remove.dataset.id = promoDoc.id;
       remove.textContent = "Delete";
       actions.append(toggle, remove);
+      
       card.append(info, actions);
       adminPromoList.appendChild(card);
     });
   };
+
+  // Live countdown timer ticker for Admin dashboard
+  setInterval(() => {
+    if (promoSnapshotDocs.length) {
+      renderPromos(promoSnapshotDocs);
+    }
+  }, 1000);
 
   const startPromoListener = async () => {
     try {
@@ -1088,6 +1174,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const code = String(codeInput?.value || "").trim().toUpperCase();
     const minAmount = Number(minAmountInput?.value);
     const type = promoTypeSelect?.value;
+    const expiresAt = expiresInput?.value ? expiresInput.value : null;
     let value;
 
     if (!code) {
@@ -1150,6 +1237,8 @@ document.addEventListener("DOMContentLoaded", () => {
         minAmount,
         type,
         value,
+        expiresAt,
+        usedBy: [],
         active: true,
         createdAt: firestore.serverTimestamp()
       });
@@ -1202,4 +1291,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
   startPromoListener();
 });
-
