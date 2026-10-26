@@ -13,7 +13,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* Executive Profile Page Styles */
+    /* =========================================================
+       REDESIGNED PROFILE HERO BANNER & DASHBOARD STYLES
+       ========================================================= */
     .profile-page {
       padding: clamp(24px, 4vw, 48px) 0 80px !important;
     }
@@ -68,12 +70,12 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 12px 22px;
+      padding: 10px 20px;
       border: 1px solid rgba(168, 90, 62, 0.3);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--cream);
       color: var(--caramel);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 700;
       text-decoration: none;
       transition: all 0.25s ease;
@@ -82,72 +84,85 @@
     .profile-menu-link:hover {
       background: var(--caramel);
       color: #ffffff;
-      box-shadow: 0 6px 20px rgba(168, 90, 62, 0.25);
+      box-shadow: 0 6px 18px rgba(168, 90, 62, 0.25);
       transform: translateY(-2px);
     }
 
-    /* Hero Banner Card */
+    /* --- ADAPTIVE HERO USER BANNER --- */
     .pro-hero-banner {
       position: relative;
-      padding: clamp(24px, 4vw, 36px);
-      border-radius: 24px;
-      background: linear-gradient(135deg, #2b1d19 0%, #52332c 50%, #8c4731 100%);
-      box-shadow: 0 16px 40px rgba(40, 20, 15, 0.25);
-      color: #ffffff;
+      padding: 28px clamp(20px, 4vw, 36px);
+      border-radius: 22px;
+      background: var(--white);
+      box-shadow: 0 10px 32px rgba(74, 55, 40, 0.07);
+      color: var(--brown);
+      margin-bottom: 28px;
+      border: 1px solid rgba(168, 90, 62, 0.2);
+      transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
       overflow: hidden;
-      margin-bottom: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
     }
 
-    .pro-hero-banner::before {
-      content: "";
-      position: absolute;
-      top: -80px;
-      right: -60px;
-      width: 320px;
-      height: 320px;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
-      pointer-events: none;
+    [data-theme="dark"] .pro-hero-banner {
+      background: linear-gradient(135deg, #241915 0%, #3a2620 60%, #4a2d24 100%);
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3);
+      color: #ffffff;
     }
 
     .pro-hero-main-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 28px;
-      flex-wrap: wrap;
-    }
-
-    .pro-hero-content {
-      display: flex;
-      align-items: center;
       gap: 24px;
       flex-wrap: wrap;
     }
 
-    /* Interactive PFP Changing Container */
+    .pro-hero-user-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex: 1 1 320px;
+      min-width: 0;
+    }
+
+    /* Profile Avatar Outer Wrapper */
+    .pro-avatar-outer {
+      position: relative;
+      width: 92px;
+      height: 92px;
+      flex-shrink: 0;
+    }
+
     .pro-avatar-wrapper {
       position: relative;
-      display: inline-block;
-      flex-shrink: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
       cursor: pointer;
+      overflow: hidden; /* Fixes text overflow */
+      border: 3px solid var(--caramel);
+      box-shadow: 0 6px 16px rgba(74, 55, 40, 0.15);
+      background: var(--cream);
+      display: block;
+    }
+
+    [data-theme="dark"] .pro-avatar-wrapper {
+      border-color: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      background: #3e2723;
     }
 
     .pro-avatar {
-      width: 108px;
-      height: 108px;
-      border-radius: 50%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
-      border: 4px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
       display: block;
-      transition: filter 0.3s ease, transform 0.3s ease;
-      background: #3e2723;
+      transition: filter 0.25s ease, transform 0.25s ease;
     }
 
     .pro-avatar-wrapper:hover .pro-avatar {
       filter: brightness(0.8);
-      transform: scale(1.02);
+      transform: scale(1.05);
     }
 
     .pro-avatar-overlay {
@@ -156,12 +171,9 @@
       border-radius: 50%;
       background: rgba(0, 0, 0, 0.45);
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       color: #ffffff;
-      font-size: 0.75rem;
-      font-weight: 700;
       opacity: 0;
       transition: opacity 0.25s ease;
       backdrop-filter: blur(2px);
@@ -173,128 +185,206 @@
 
     .pro-avatar-upload-badge {
       position: absolute;
-      bottom: 2px;
-      right: 2px;
-      width: 34px;
-      height: 34px;
+      bottom: -2px;
+      right: -2px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       background: var(--caramel);
       color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      border: 2px solid #ffffff;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+      border: 2px solid var(--white);
       cursor: pointer;
+      z-index: 2;
       transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    [data-theme="dark"] .pro-avatar-upload-badge {
+      border-color: #3a2620;
     }
 
     .pro-avatar-upload-badge:hover {
       transform: scale(1.15);
-      background: #ffffff;
-      color: var(--caramel);
+      background: var(--brown);
+    }
+
+    /* User Details Typography */
+    .pro-user-details {
+      min-width: 0;
     }
 
     .pro-user-details h1 {
-      margin: 0 0 4px;
+      margin: 0 0 2px;
       font-family: "Cormorant Garamond", serif;
-      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
       font-weight: 700;
+      color: var(--brown);
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    [data-theme="dark"] .pro-user-details h1 {
       color: #ffffff !important;
-      line-height: 1.1;
     }
 
     .pro-email {
-      margin: 0 0 8px;
-      color: rgba(255, 255, 255, 0.85) !important;
-      font-size: 0.92rem;
+      margin: 0 0 10px;
+      color: var(--brown-soft);
+      font-size: 0.9rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .pro-rank-badge {
-      display: inline-flex;
+    [data-theme="dark"] .pro-email {
+      color: rgba(255, 255, 255, 0.8) !important;
+    }
+
+    /* Override Legacy Pill Clipping Rules */
+    .cookie-rank-pill, 
+    .status-pill-badge.cookie-rank-pill,
+    #profile-rank-badge {
+      position: static !important;
+      transform: none !important;
+      margin: 0 !important;
+      display: inline-flex !important;
       align-items: center;
       gap: 6px;
       padding: 5px 14px;
       border-radius: 999px;
       font-size: 0.78rem;
       font-weight: 700;
-      background: rgba(255, 255, 255, 0.18);
-      color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(4px);
+      background: var(--cream);
+      color: var(--caramel);
+      border: 1px solid rgba(168, 90, 62, 0.25);
+      box-shadow: none !important;
     }
 
-    /* Metric Cards Inside Banner */
+    [data-theme="dark"] .cookie-rank-pill,
+    [data-theme="dark"] #profile-rank-badge {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Hero Stats Box */
     .pro-hero-stats {
       display: flex;
-      gap: 20px;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 16px 24px;
-      border-radius: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      align-items: center;
+      gap: 16px;
+      background: var(--cream);
+      padding: 14px 22px;
+      border-radius: 16px;
+      border: 1px solid rgba(74, 55, 40, 0.1);
+      flex: 0 0 auto;
+    }
+
+    [data-theme="dark"] .pro-hero-stats {
+      background: rgba(0, 0, 0, 0.22);
+      border-color: rgba(255, 255, 255, 0.12);
       backdrop-filter: blur(8px);
     }
 
     .pro-stat-box {
       text-align: center;
-      min-width: 80px;
+      min-width: 75px;
     }
 
     .pro-stat-val {
       display: block;
       font-family: "Cormorant Garamond", serif;
-      font-size: 1.8rem;
+      font-size: 1.65rem;
       font-weight: 700;
-      color: #fce4ec;
+      color: var(--caramel);
       line-height: 1;
     }
 
+    [data-theme="dark"] .pro-stat-val {
+      color: #fce4ec;
+    }
+
     .pro-stat-label {
-      font-size: 0.68rem;
-      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.65rem;
+      color: var(--brown-soft);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-weight: 700;
       margin-top: 4px;
     }
 
+    [data-theme="dark"] .pro-stat-label {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .pro-stat-divider {
+      width: 1px;
+      height: 32px;
+      background: rgba(74, 55, 40, 0.12);
+    }
+
+    [data-theme="dark"] .pro-stat-divider {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
     /* Loyalty Level Progress Bar */
     .rank-progress-box {
-      margin-top: 22px;
-      padding-top: 18px;
-      border-top: 1px dashed rgba(255, 255, 255, 0.2);
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px dashed rgba(74, 55, 40, 0.15);
+    }
+
+    [data-theme="dark"] .rank-progress-box {
+      border-top-color: rgba(255, 255, 255, 0.18);
     }
 
     .rank-progress-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.85rem;
-      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.82rem;
+      color: var(--brown);
       margin-bottom: 8px;
       font-weight: 600;
     }
 
+    [data-theme="dark"] .rank-progress-header {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
     .rank-progress-bar-bg {
       width: 100%;
-      height: 8px;
-      background: rgba(0, 0, 0, 0.3);
+      height: 7px;
+      background: rgba(74, 55, 40, 0.12);
       border-radius: 999px;
       overflow: hidden;
+    }
+
+    [data-theme="dark"] .rank-progress-bar-bg {
+      background: rgba(0, 0, 0, 0.35);
     }
 
     .rank-progress-bar-fill {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, #f0a868, #e87a5d);
+      background: linear-gradient(90deg, #d47c5d, #a85a3e);
       border-radius: 999px;
       transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .rank-progress-footer {
       margin-top: 8px;
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.78rem;
+      color: var(--brown-soft);
+    }
+
+    [data-theme="dark"] .rank-progress-footer {
+      color: rgba(255, 255, 255, 0.75);
     }
 
     /* Dashboard Main Grid */
@@ -309,42 +399,42 @@
       background: var(--white);
       border: 1px solid rgba(74, 55, 40, 0.1);
       border-radius: 20px;
-      padding: 26px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+      padding: 24px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.04);
       margin-bottom: 24px;
       transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
 
     .pro-card:hover {
       border-color: rgba(168, 90, 62, 0.25);
-      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.07);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.07);
     }
 
     .pro-card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 14px;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
       border-bottom: 1px solid rgba(74, 55, 40, 0.08);
     }
 
     .pro-card-title {
       font-family: "Cormorant Garamond", serif;
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       color: var(--brown);
       margin: 0;
       font-weight: 700;
     }
 
     .pro-form .form-group {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     .pro-form label {
       display: block;
       margin-bottom: 6px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 700;
       color: var(--brown);
       text-transform: uppercase;
@@ -353,14 +443,14 @@
 
     .pro-input {
       width: 100%;
-      min-height: 46px;
-      padding: 12px 16px;
+      min-height: 44px;
+      padding: 10px 14px;
       border-radius: 12px;
       border: 1px solid rgba(74, 55, 40, 0.18);
       background: var(--white);
       color: var(--brown);
       font-family: inherit;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
@@ -371,26 +461,26 @@
     }
 
     textarea.pro-input {
-      min-height: 90px;
+      min-height: 85px;
       resize: vertical;
     }
 
     .pro-btn-full {
       width: 100%;
-      min-height: 48px;
+      min-height: 46px;
       border-radius: 12px;
-      font-size: 0.98rem;
+      font-size: 0.95rem;
       font-weight: 700;
     }
 
     .btn-logout-danger {
       width: 100%;
-      padding: 14px;
+      padding: 12px;
       border-radius: 12px;
       background: transparent;
       border: 1px solid rgba(217, 83, 79, 0.3);
       color: #d9534f;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
@@ -446,13 +536,14 @@
     }
 
     @media (max-width: 500px) {
-      .pro-hero-content {
+      .pro-hero-user-group {
         flex-direction: column;
         align-items: flex-start;
+        gap: 14px;
       }
-      .pro-avatar {
-        width: 90px;
-        height: 90px;
+      .pro-avatar-outer {
+        width: 80px;
+        height: 80px;
       }
     }
   </style>
@@ -552,31 +643,32 @@
       <div class="pro-hero-banner">
         <div class="pro-hero-main-row">
           
-          <div class="pro-hero-content">
-            <!-- Profile Picture Upload Area -->
-            <label for="avatar-input" class="pro-avatar-wrapper" title="Click to change profile picture">
-              <img src="assets/images/default-avatar.png" id="profile-avatar" class="pro-avatar" alt="User Profile Picture">
-              <div class="pro-avatar-overlay">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+          <div class="pro-hero-user-group">
+            <!-- Profile Picture Outer Box -->
+            <div class="pro-avatar-outer">
+              <label for="avatar-input" class="pro-avatar-wrapper" title="Click to change profile picture">
+                <img src="https://ui-avatars.com/api/?name=Cookie+Lover&background=c1771e&color=fff" id="profile-avatar" class="pro-avatar" alt="User Profile" onerror="this.src='https://ui-avatars.com/api/?name=Cookie+Lover&background=c1771e&color=fff'">
+                <div class="pro-avatar-overlay">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                    <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
+                  </svg>
+                </div>
+              </label>
+              <label for="avatar-input" class="pro-avatar-upload-badge" title="Upload new image">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
                   <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
                 </svg>
-                <span>Change</span>
-              </div>
-              <div class="pro-avatar-upload-badge">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M10.5 8.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
-                  <path d="M2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2zm.5 2a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm9 2.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z"/>
-                </svg>
-              </div>
-            </label>
+              </label>
+            </div>
             <!-- Hidden Input for Avatar Upload -->
             <input type="file" id="avatar-input" accept="image/*" style="display: none;">
 
             <div class="pro-user-details">
               <h1 id="profile-name-display">Loading User...</h1>
               <p id="profile-email-display" class="pro-email">loading@youyou.com</p>
-              <div id="profile-rank-badge" class="pro-rank-badge">🍪 Cookie Fan</div>
+              <div id="profile-rank-badge" class="cookie-rank-pill">🍪 Cookie Fan</div>
             </div>
           </div>
 
@@ -586,12 +678,14 @@
               <span id="stat-user-orders" class="pro-stat-val">0</span>
               <span class="pro-stat-label">Orders</span>
             </div>
-            <div class="pro-stat-box" style="border-left: 1px solid rgba(255,255,255,0.15); padding-left: 18px;">
+            <div class="pro-stat-divider"></div>
+            <div class="pro-stat-box">
               <span id="stat-user-spent" class="pro-stat-val">0 DH</span>
               <span class="pro-stat-label">Total Spent</span>
             </div>
-            <div class="pro-stat-box" style="border-left: 1px solid rgba(255,255,255,0.15); padding-left: 18px;">
-              <span id="stat-user-level" class="pro-stat-val" style="font-size: 1.3rem;">Cookie Fan</span>
+            <div class="pro-stat-divider"></div>
+            <div class="pro-stat-box">
+              <span id="stat-user-level" class="pro-stat-val" style="font-size: 1.25rem;">Cookie Fan</span>
               <span class="pro-stat-label">Tier</span>
             </div>
           </div>
@@ -699,7 +793,7 @@
           <div class="pro-card">
             <div class="pro-card-header">
               <h3 class="pro-card-title">Order History</h3>
-              <span class="pro-rank-badge" style="background: var(--cream); color: var(--brown); border: 1px solid rgba(74,55,40,0.15);">Live Updates</span>
+              <span class="cookie-rank-pill" style="background: var(--cream); color: var(--brown); border: 1px solid rgba(74,55,40,0.15);">Live Updates</span>
             </div>
             
             <div id="user-orders-list" class="pro-orders-container">
