@@ -11,16 +11,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style>
-    /* Admin Dashboard Specific Styles */
+    /* Fixed Site Header */
+    .site-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      background: var(--white);
+      border-bottom: 1px solid rgba(74, 55, 40, 0.1);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    body {
+      padding-top: 80px;
+    }
+
+    /* Admin Dashboard Specific Adaptive Styles */
     .admin-hero-banner {
       background: var(--white);
       border-radius: var(--radius);
       padding: 30px;
       margin-bottom: 30px;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(74, 55, 40, 0.08);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(168, 90, 62, 0.18);
       position: relative;
       overflow: hidden;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    [data-theme="dark"] .admin-hero-banner {
+      background: linear-gradient(135deg, #241915 0%, #3a2620 60%, #4a2d24 100%);
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3);
     }
 
     .admin-title-row {
@@ -42,6 +65,10 @@
       gap: 12px;
     }
 
+    [data-theme="dark"] .admin-title-row h1 {
+      color: #ffffff;
+    }
+
     .admin-metrics-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -49,19 +76,25 @@
     }
 
     .metric-card {
-      background: var(--cream-light);
+      background: var(--cream);
       border-radius: 16px;
       padding: 20px;
       display: flex;
       align-items: center;
       gap: 16px;
       border: 1px solid rgba(74, 55, 40, 0.08);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
+    }
+
+    [data-theme="dark"] .metric-card {
+      background: rgba(0, 0, 0, 0.25);
+      border-color: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
     }
 
     .metric-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
     }
 
     .metric-icon-box {
@@ -71,10 +104,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.6rem;
       flex-shrink: 0;
       background: var(--white);
+      color: var(--caramel);
       box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border: 1px solid rgba(168, 90, 62, 0.15);
+    }
+
+    [data-theme="dark"] .metric-icon-box {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fce4ec;
+      border-color: rgba(255, 255, 255, 0.2);
     }
 
     .metric-data strong {
@@ -86,12 +126,20 @@
       line-height: 1.1;
     }
 
+    [data-theme="dark"] .metric-data strong {
+      color: #fce4ec;
+    }
+
     .metric-data small {
       font-size: 0.78rem;
       color: var(--brown-soft);
       text-transform: uppercase;
       letter-spacing: 0.06em;
       font-weight: 700;
+    }
+
+    [data-theme="dark"] .metric-data small {
+      color: rgba(255, 255, 255, 0.7);
     }
 
     /* Tabs Navigation */
@@ -104,20 +152,28 @@
       overflow-x: auto;
     }
 
+    [data-theme="dark"] .admin-tabs-nav {
+      border-bottom-color: rgba(255, 255, 255, 0.12);
+    }
+
     .tab-btn {
       background: transparent;
       border: none;
       padding: 10px 22px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
       color: var(--brown-soft);
       cursor: pointer;
       border-radius: 999px;
       transition: all 0.25s ease;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
       white-space: nowrap;
+    }
+
+    [data-theme="dark"] .tab-btn {
+      color: rgba(255, 255, 255, 0.7);
     }
 
     .tab-btn.active {
@@ -154,9 +210,21 @@
       transition: 0.2s;
     }
 
+    [data-theme="dark"] .filter-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+    }
+
     .filter-btn.active, .filter-btn:hover {
       background: var(--brown);
       color: var(--white);
+    }
+
+    [data-theme="dark"] .filter-btn.active,
+    [data-theme="dark"] .filter-btn:hover {
+      background: var(--caramel);
+      color: #ffffff;
     }
 
     /* Cards Layout */
@@ -169,6 +237,11 @@
       margin-bottom: 25px;
     }
 
+    [data-theme="dark"] .admin-card-container {
+      background: var(--white);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
     .admin-order-card {
       border: 1px solid rgba(74, 55, 40, 0.12);
       border-radius: 14px;
@@ -176,6 +249,11 @@
       margin-bottom: 16px;
       background: var(--white);
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    [data-theme="dark"] .admin-order-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.1);
     }
 
     .admin-order-card.is-pending {
@@ -232,10 +310,17 @@
       flex-wrap: wrap;
       gap: 15px;
     }
+
+    [data-theme="dark"] .admin-promo-item {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
     .admin-promo-item.disabled {
       opacity: 0.7;
       background: var(--cream-light);
     }
+
     .promo-info h3 {
       font-family: 'Cormorant Garamond', serif;
       color: var(--caramel);
@@ -245,12 +330,14 @@
       align-items: center;
       gap: 10px;
     }
+
     .promo-info p {
       font-size: 0.85rem;
       color: var(--brown-soft);
       margin: 0;
       font-weight: 500;
     }
+
     .promo-status-badge {
       padding: 4px 10px;
       border-radius: 6px;
@@ -258,19 +345,24 @@
       font-weight: bold;
       text-transform: uppercase;
     }
+
     .promo-status-badge.active {
       background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;
     }
+
     .promo-status-badge.disabled {
       background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;
     }
+
     .promo-status-badge.expired {
       background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2;
     }
+
     .promo-actions {
       display: flex;
       gap: 8px;
     }
+
     .btn-promo-action {
       padding: 8px 12px;
       border-radius: 8px;
@@ -280,20 +372,24 @@
       border: none;
       transition: 0.2s;
     }
+
     .btn-toggle-promo {
       background: var(--cream);
       color: var(--brown);
       border: 1px solid rgba(74,55,40,0.2);
     }
+
     .btn-toggle-promo:hover {
       background: var(--brown);
       color: var(--white);
     }
+
     .btn-delete-promo {
       background: transparent;
       color: #c62828;
       border: 1px solid rgba(198, 40, 40, 0.3);
     }
+
     .btn-delete-promo:hover {
       background: #ffebee;
     }
@@ -325,7 +421,7 @@
 </head>
 <body>
 
-  <!-- Site Header -->
+  <!-- Fixed Site Header -->
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="index.html" aria-label="Youyou's Cookies Home">
@@ -359,11 +455,19 @@
         
         <div class="mobile-nav-actions">
           <a href="login.html" id="mobile-user-link">
-            <span class="nav-icon">👤</span> Account / Login
+            <span class="nav-icon" style="display:inline-flex; align-items:center;">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/><path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/></svg>
+            </span> Account / Login
           </a>
           <button id="mobile-theme-toggle" class="theme-toggle">
-            <span class="moon-icon" style="display:none;">🌙 Dark Mode</span>
-            <span class="sun-icon">☀️ Light Mode</span>
+            <span class="moon-icon" style="display:none;">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>
+              Dark Mode
+            </span>
+            <span class="sun-icon">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
+              Light Mode
+            </span>
           </button>
         </div>
         <div class="nav-decor">Baked fresh in Settat</div>
@@ -380,8 +484,12 @@
         </a>
 
         <button id="theme-toggle" class="header-action-btn theme-toggle desktop-action" aria-label="Toggle Dark Mode" title="Toggle Theme">
-          <span class="moon-icon" style="display:none;">🌙</span>
-          <span class="sun-icon">☀️</span>
+          <span class="moon-icon" style="display:none;">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/></svg>
+          </span>
+          <span class="sun-icon">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/></svg>
+          </span>
         </button>
 
         <a href="#" onclick="window.openBoxModal(); return false;" id="nav-cart-icon" class="header-action-btn cart-btn" aria-label="Open Sweet Box Cart" title="View Box">
@@ -400,12 +508,15 @@
 
   <div class="nav-overlay" id="nav-overlay"></div>
 
-  <main class="section container" style="max-width: 1100px; padding-top: 30px;">
+  <main class="section container" style="max-width: 1100px; padding-top: 20px;">
     
     <!-- Admin Hero Banner & Live Stats -->
     <div class="admin-hero-banner">
       <div class="admin-title-row">
-        <h1><span>⚡ Bakery Control Panel</span></h1>
+        <h1>
+          <svg width="24" height="24" fill="var(--caramel)" viewBox="0 0 16 16"><path d="M5.52.359A.5.5 0 0 1 6 0h4a.5.5 0 0 1 .474.658L8.694 6H12.5a.5.5 0 0 1 .395.807l-7 9a.5.5 0 0 1-.873-.454L6.806 10H3a.5.5 0 0 1-.395-.807l7-9z"/></svg>
+          <span>Bakery Control Panel</span>
+        </h1>
         <button id="logout-btn" class="btn btn-outline" style="padding: 8px 18px; font-size: 0.85rem; border-color: rgba(74,55,40,0.3); color: var(--brown);">
           Log Out Admin
         </button>
@@ -413,7 +524,9 @@
 
       <div class="admin-metrics-grid">
         <div class="metric-card">
-          <div class="metric-icon-box">💰</div>
+          <div class="metric-icon-box">
+            <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16"><path d="M4 10.781c.148 1.167 1.258 1.636 2.5 1.636 1.12 0 2.22-.403 2.22-1.334 0-.846-.73-1.127-1.88-1.393l-.68-.156c-1.634-.374-2.458-.962-2.458-2.227 0-1.455 1.282-2.203 2.8-2.203 1.34 0 2.457.481 2.585 1.748H7.954c-.114-.582-.72-.888-1.554-.888-.84 0-1.427.318-1.427.915 0 .588.463.826 1.58 1.082l.66.15c1.86.425 2.76 1.06 2.76 2.375 0 1.583-1.332 2.28-3.015 2.28-1.6 0-2.82-.533-2.96-1.97H4z"/><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/></svg>
+          </div>
           <div class="metric-data">
             <strong id="stat-total-revenue">0 DH</strong>
             <small>Delivered Revenue</small>
@@ -421,7 +534,9 @@
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon-box">📦</div>
+          <div class="metric-icon-box">
+            <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.84 3.5l2.47.824L11.3 2.133l-3.114-1.02zM15.567 4.5 13.1 3.676 6.08 5.867l8.28 2.76 1.207-.402a.5.5 0 0 0 .333-.473V4.973a.5.5 0 0 0-.333-.473zM6 7.108 2.392 5.905 1 6.37v4.657a.5.5 0 0 0 .333.473l6 2a.5.5 0 0 0 .334 0l6-2a.5.5 0 0 0 .333-.473V7.108L6 7.108z"/></svg>
+          </div>
           <div class="metric-data">
             <strong id="stat-total-orders">0</strong>
             <small>Total Orders</small>
@@ -429,7 +544,9 @@
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon-box">⏳</div>
+          <div class="metric-icon-box">
+            <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/></svg>
+          </div>
           <div class="metric-data">
             <strong id="stat-pending-orders">0</strong>
             <small>Pending Orders</small>
@@ -437,7 +554,9 @@
         </div>
 
         <div class="metric-card">
-          <div class="metric-icon-box">👥</div>
+          <div class="metric-icon-box">
+            <svg width="22" height="22" fill="currentColor" viewBox="0 0 16 16"><path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A4.001 4.001 0 0 1 12 11c2.28 0 3.82 1.218 4 2H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-.5a.5.5 0 0 1-1 0 .5.5 0 0 1 1 0zM7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/></svg>
+          </div>
           <div class="metric-data">
             <strong id="stat-total-users">0</strong>
             <small>Registered Users</small>
@@ -448,10 +567,22 @@
 
     <!-- Admin Section Tabs -->
     <div class="admin-tabs-nav">
-      <button class="tab-btn active" data-tab="orders-pane"><span>📦</span> Orders Management</button>
-      <button class="tab-btn" data-tab="users-pane"><span>👥</span> User Directory</button>
-      <button class="tab-btn" data-tab="reviews-pane"><span>⭐</span> Review Moderation</button>
-      <button class="tab-btn" data-tab="promo-pane"><span>🎟️</span> Promo Codes</button>
+      <button class="tab-btn active" data-tab="orders-pane">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.84 3.5l2.47.824L11.3 2.133l-3.114-1.02zM15.567 4.5 13.1 3.676 6.08 5.867l8.28 2.76 1.207-.402a.5.5 0 0 0 .333-.473V4.973a.5.5 0 0 0-.333-.473zM6 7.108 2.392 5.905 1 6.37v4.657a.5.5 0 0 0 .333.473l6 2a.5.5 0 0 0 .334 0l6-2a.5.5 0 0 0 .333-.473V7.108L6 7.108z"/></svg>
+        Orders Management
+      </button>
+      <button class="tab-btn" data-tab="users-pane">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A4.001 4.001 0 0 1 12 11c2.28 0 3.82 1.218 4 2H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-.5a.5.5 0 0 1-1 0 .5.5 0 0 1 1 0zM7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/></svg>
+        User Directory
+      </button>
+      <button class="tab-btn" data-tab="reviews-pane">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+        Review Moderation
+      </button>
+      <button class="tab-btn" data-tab="promo-pane">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M4 4.85v.9h1v-.9H4zm7 0v.9h1v-.9h-1zm-7 1.8v.9h1v-.9H4zm7 0v.9h1v-.9h-1zm-7 1.8v.9h1v-.9H4zm7 0v.9h1v-.9h-1zm-7 1.8v.9h1v-.9H4zm7 0v.9h1v-.9h-1z"/><path d="M1.5 3A1.5 1.5 0 0 0 0 4.5V6a.5.5 0 0 0 .5.5 1.5 1.5 0 1 1 0 3 .5.5 0 0 0-.5.5v1.5A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5V10a.5.5 0 0 0-.5-.5 1.5 1.5 0 0 1 0-3 .5.5 0 0 0 .5-.5V4.5A1.5 1.5 0 0 0 14.5 3h-13zM1 4.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v1.05a2.5 2.5 0 0 0 0 4.9V11.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V9.95a2.5 2.5 0 0 0 0-4.9V4.5z"/></svg>
+        Promo Codes
+      </button>
     </div>
 
     <!-- Orders Pane -->
@@ -504,11 +635,14 @@
     <div id="promo-pane" class="admin-section-pane">
       <div class="admin-card-container" style="border-top: 4px solid var(--caramel);">
         <div class="pro-card-header" style="margin-bottom: 20px;">
-          <h2 class="pro-card-title" style="font-size: 1.6rem;">🎟️ Advanced Promo Code Manager</h2>
+          <h2 class="pro-card-title" style="font-size: 1.6rem; display:flex; align-items:center; gap:10px;">
+            <svg width="22" height="22" fill="var(--caramel)" viewBox="0 0 16 16"><path d="M4 4.85v.9h1v-.9H4zm7 0v.9h1v-.9h-1zm-7 1.8v.9h1v-.9H4zm7 0v.9h1v-.9h-1zm-7 1.8v.9h1v-.9H4zm7 0v.9h1v-.9h-1zm-7 1.8v.9h1v-.9H4zm7 0v.9h1v-.9h-1z"/><path d="M1.5 3A1.5 1.5 0 0 0 0 4.5V6a.5.5 0 0 0 .5.5 1.5 1.5 0 1 1 0 3 .5.5 0 0 0-.5.5v1.5A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5V10a.5.5 0 0 0-.5-.5 1.5 1.5 0 0 1 0-3 .5.5 0 0 0 .5-.5V4.5A1.5 1.5 0 0 0 14.5 3h-13zM1 4.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v1.05a2.5 2.5 0 0 0 0 4.9V11.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V9.95a2.5 2.5 0 0 0 0-4.9V4.5z"/></svg>
+            Advanced Promo Code Manager
+          </h2>
         </div>
         
         <!-- ADD NEW PROMO FORM WITH EXPIRATION TIMER -->
-        <form id="add-promo-form" class="pro-form" style="background: var(--cream-light); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(74, 55, 40, 0.1);">
+        <form id="add-promo-form" class="pro-form" style="background: var(--cream); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(74, 55, 40, 0.1);">
           <h4 style="margin-bottom: 15px; color: var(--brown); font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;">Create a New Campaign</h4>
           
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
@@ -575,7 +709,6 @@
   <script src="assets/js/features.js"></script>
   
   <script>
-    // Tab switching interaction & dynamic field toggle
     document.addEventListener("DOMContentLoaded", () => {
       const tabs = document.querySelectorAll(".tab-btn");
       const panes = document.querySelectorAll(".admin-section-pane");
@@ -623,17 +756,14 @@
         promoTypeSelect.addEventListener("change", (e) => {
           const type = e.target.value;
           
-          // Hide all input groups first
           groupPercent.style.display = "none";
           groupFixed.style.display = "none";
           groupFree.style.display = "none";
 
-          // Clear values
           valPercent.value = "";
           valFixed.value = "";
           valFree.value = "";
 
-          // Show only the selected input group
           if (type === "discount_percent") {
             groupPercent.style.display = "block";
           } else if (type === "discount_fixed") {
