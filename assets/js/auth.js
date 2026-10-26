@@ -36,8 +36,7 @@ const firebaseConfig = {
   measurementId: "G-85M038ZLQ2"
 };
 
-// Reuse the default Firebase app if another page script already initialized it.
-// This avoids app/duplicate-app errors that can stop authentication and profile loading.
+// Reuse default app if initialized
 const existingDefaultApp = getApps().find((item) => item.name === "[DEFAULT]");
 const app = existingDefaultApp || initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -198,7 +197,7 @@ function updateProfileRankBadge(totalSpent) {
   }
 }
 
-// --- GLOBAL SAVE ORDER METHOD WITH TELEGRAM NOTIFICATION ---
+// --- GLOBAL SAVE ORDER METHOD WITH DETAILED PRICING & TELEGRAM NOTIFICATION ---
 
 window.saveOrderToFirestore = async function (orderData) {
   try {
@@ -228,6 +227,7 @@ window.saveOrderToFirestore = async function (orderData) {
     const totalAmount = orderData.totalAmount !== undefined && orderData.totalAmount !== null && Number.isFinite(requestedTotal)
       ? Math.max(0, requestedTotal)
       : subtotalAmount;
+    const originalPrice = Number(orderData.originalPrice) || subtotalAmount;
     const promoCode = String(orderData.promoCode || "").trim().toUpperCase() || null;
     const discountAmount = Math.max(0, Number(orderData.discountAmount) || 0);
 
@@ -244,6 +244,7 @@ window.saveOrderToFirestore = async function (orderData) {
       address: String(finalAddress || "Settat").slice(0, 400),
       items: items,
       subtotalAmount: subtotalAmount,
+      originalPrice: originalPrice,
       discountAmount: discountAmount,
       promoCode: promoCode,
       totalAmount: totalAmount,
@@ -270,14 +271,24 @@ window.saveOrderToFirestore = async function (orderData) {
       .map(i => `• ${i.quantity}x ${i.name} (${i.price * i.quantity} DH)`)
       .join("\n");
 
-    const telegramMsg = `🚨 *NEW ORDER RECEIVED!* 🚨\n\n` +
-      `👤 *Customer:* ${finalData.customerName}\n` +
-      `📞 *Phone:* ${finalData.phone || "N/A"}\n` +
-      `📍 *Address:* ${finalData.address}\n\n` +
-      `🛍️ *Items:*\n${itemsText}\n\n` +
-      `🧾 *Subtotal:* ${subtotalAmount} DH\n` +
-      (promoCode ? `🎟️ *Promo Code:* ${promoCode}\n💸 *Discount:* ${discountAmount} DH\n` : "") +
-      `💰 *Total:* ${totalAmount} DH`;
+    const promoText = promoCode
+      ? `🎟 *Promo Code Used:* \`${promoCode}\` (-${discountAmount.toFixed(2)} DH)`
+      : `🎟 *Promo Code Used:* None`;
+
+    const telegramMsg = `🛍 *NEW ORDER RECEIVED!*
+───────────────────
+👤 *Customer:* ${finalData.customerName}
+📞 *Phone:* ${finalData.phone || "N/A"}
+📍 *Address:* ${finalData.address}
+
+📦 *Order Items:*
+${itemsText}
+
+───────────────────
+💵 *Real Price:* ${subtotalAmount.toFixed(2)} DH
+${promoText}
+✨ *New Price:* *${totalAmount.toFixed(2)} DH*
+───────────────────`;
 
     fetch("/api/telegram", {
       method: "POST",
@@ -363,7 +374,6 @@ onAuthStateChanged(auth, async (user) => {
         userData = userDocSnap.data() || {};
         userDocExists = true;
       } else {
-        // Recover gracefully for accounts created before the users/{uid} record existed.
         userData = {
           username: user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover"),
           email: user.email || "",
@@ -375,7 +385,6 @@ onAuthStateChanged(auth, async (user) => {
           await setDoc(userDocRef, userData, { merge: true });
           userDocExists = true;
         } catch (createErr) {
-          // The profile can still render from Auth data even if Firestore rules block creation.
           console.warn("Unable to initialize missing user profile document:", createErr);
         }
       }
@@ -386,7 +395,6 @@ onAuthStateChanged(auth, async (user) => {
       }
     } catch (e) {
       console.warn("Unable to retrieve user profile:", e);
-      // Keep the profile page usable even when the profile document cannot be read.
       userData = {
         username: user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover"),
         email: user.email || "",
@@ -435,7 +443,7 @@ onAuthStateChanged(auth, async (user) => {
         window.location.href = "admin.html";
         return;
       }
-      // Render both the current redesigned profile markup and the older profile markup.
+
       const emailText = user.email || "";
       ["profile-email-display", "profile-email"].forEach((id) => {
         const el = document.getElementById(id);
@@ -603,6 +611,27 @@ async function loadCustomerOrderHistory(user, db) {
         ? data.items.map((i) => `${esc(i.quantity)}x ${esc(i.name)}`).join(", ")
         : esc(data.itemsSummary || "Cookie Order");
 
+      const origPrice = Number(data.originalPrice || data.subtotalAmount) || Number(data.totalAmount) || 0;
+      const discount = Number(data.discountAmount) || 0;
+      const hasPromo = Boolean(data.promoCode);
+
+      let priceDisplay = '';
+      if (hasPromo || discount > 0) {
+        priceDisplay = `
+          <div style="font-size: 0.82rem; color: var(--brown-soft); text-decoration: line-through;">Real Price: ${origPrice.toFixed(2)} DH</div>
+          <div style="font-size: 0.82rem; color: #57a05f; font-weight: 600;">Promo: ${esc(data.promoCode)} (-${discount.toFixed(2)} DH)</div>
+          <div style="font-weight: bold; color: ${isCancelled ? "#888; text-decoration: line-through;" : "var(--caramel);"}; font-size: 1.1rem;">
+            New Price: ${Number(data.totalAmount).toFixed(2)} DH
+          </div>
+        `;
+      } else {
+        priceDisplay = `
+          <div style="font-weight: bold; color: ${isCancelled ? "#888; text-decoration: line-through;" : "var(--caramel);"}; font-size: 1.1rem;">
+            Total: ${Number(data.totalAmount).toFixed(2)} DH
+          </div>
+        `;
+      }
+
       historyContainer.innerHTML += `
         <div class="order-history-card">
           <div class="order-history-header">
@@ -616,8 +645,8 @@ async function loadCustomerOrderHistory(user, db) {
           </div>
           <div style="font-size: 0.9rem; margin: 10px 0; color: var(--brown-soft);">${itemsList}</div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-            <div style="font-weight: bold; color: ${isCancelled ? "#888; text-decoration: line-through;" : "var(--caramel);"}">
-              ${Number(data.totalAmount) || 0} DH
+            <div>
+              ${priceDisplay}
             </div>
             ${isProcessing ? `<button class="btn-cancel-order" data-id="${orderId}" style="background: transparent; border: 1px solid #d9534f; color: #d9534f; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Cancel</button>` : ""}
           </div>
@@ -661,7 +690,7 @@ async function loadCustomerOrderHistory(user, db) {
   }
 }
 
-// --- ADMIN DASHBOARD WITH DELIVERED-ONLY REVENUE CALCULATION ---
+// --- ADMIN DASHBOARD WITH DETAILED ORDER PRICING & REVENUE CALCULATION ---
 
 async function loadAdminDashboard(db) {
   const usersList = document.getElementById("admin-users");
@@ -766,8 +795,9 @@ async function loadAdminDashboard(db) {
         const isCancelled = data.status === "Cancelled";
         const isProcessing = data.status === "Processing";
         const amount = Number(data.totalAmount) || 0;
+        const origPrice = Number(data.originalPrice || data.subtotalAmount) || amount;
+        const discount = Number(data.discountAmount) || 0;
 
-        // ONLY add to revenue if status is "Delivered"
         if (isDelivered) totalRevenue += amount;
         if (isProcessing) pendingOrdersCount++;
 
@@ -799,12 +829,14 @@ async function loadAdminDashboard(db) {
             <strong>Customer:</strong> ${esc(data.customerName || data.userEmail || "Guest")}<br>
             <strong>Phone:</strong> <span style="color: ${data.phone ? "inherit" : "#d9534f"}">${esc(data.phone || "N/A")}</span><br>
             <strong>Address:</strong> ${esc(data.address || "Settat")}<br>
-            ${data.promoCode ? `<strong>Promo code:</strong> ${esc(data.promoCode)}${Number(data.discountAmount) > 0 ? ` (−${Number(data.discountAmount).toFixed(2)} DH)` : ""}<br>` : ""}
+            <strong>Real Price:</strong> ${origPrice.toFixed(2)} DH<br>
+            <strong>Promo Code Used:</strong> ${data.promoCode ? `${esc(data.promoCode)} (-${discount.toFixed(2)} DH)` : "None"}<br>
+            <strong>New Price:</strong> ${amount.toFixed(2)} DH<br>
           </div>
 
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(74,55,40,0.15);">
-            <div style="font-size: 1.2rem; font-weight: bold; color: ${isCancelled ? "#888; text-decoration: line-through;" : "var(--caramel);" }">
-              ${amount} DH
+            <div style="font-size: 1.2rem; font-weight: bold; color: ${isCancelled ? "#888; text-decoration: line-through;" : "var(--caramel);"}">
+              New Price: ${amount.toFixed(2)} DH
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
               ${data.phone ? `<a href="https://wa.me/${esc(normalizePhone(data.phone))}" target="_blank" rel="noopener" class="btn-whatsapp-sm">WhatsApp</a>` : ""}
@@ -841,7 +873,7 @@ async function loadAdminDashboard(db) {
                 badge.style = "";
               }
             }
-            initAdminDashboard(db); // Re-calculate dashboard metrics live
+            initAdminDashboard(db); 
           } catch (error) {
             console.error("Update error:", error);
             alert("Failed to update status.");

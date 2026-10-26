@@ -603,11 +603,12 @@ function initCart() {
           <strong style="color: var(--brown);">Items Summary:</strong>
           <pre id="confirm-items-summary" style="font-family: inherit; white-space: pre-wrap; margin: 8px 0; color: var(--brown); font-size: 0.95rem; line-height: 1.4;"></pre>
           
+          <div id="confirm-real-price-summary" style="font-size: 0.95rem; color: var(--brown-soft); text-decoration: line-through; display: none;"></div>
           <div id="confirm-promo-summary" style="font-size: 0.95rem; color: #57a05f; font-weight: bold; display: none;"></div>
           
           <div id="confirm-delivery-summary" style="font-size: 0.85rem; color: var(--brown-soft); margin-top: 5px;"></div>
           <div style="text-align: right; font-weight: bold; color: var(--caramel); font-size: 1.1rem; border-top: 1px dashed rgba(74,55,40,0.2); padding-top: 10px; margin-top: 10px;">
-            Total: <span id="confirm-total-price">0 DH</span>
+            New Price: <span id="confirm-total-price">0 DH</span>
           </div>
         </div>
         <div style="margin-top: 15px;">
@@ -625,6 +626,7 @@ function initCart() {
   }
 
   const confirmList = document.getElementById('confirm-items-summary');
+  const confirmRealPriceSummary = document.getElementById('confirm-real-price-summary');
   const confirmPromoSummary = document.getElementById('confirm-promo-summary');
   const confirmDeliverySummary = document.getElementById('confirm-delivery-summary');
   const confirmTotal = document.getElementById('confirm-total-price');
@@ -664,13 +666,24 @@ function initCart() {
 
       if (confirmList) confirmList.textContent = summaryText;
       
+      if (confirmRealPriceSummary) {
+        if (window.activePromo) {
+          confirmRealPriceSummary.style.display = "block";
+          confirmRealPriceSummary.textContent = `Real Price: ${subtotal.toFixed(2)} DH`;
+        } else {
+          confirmRealPriceSummary.style.display = "none";
+        }
+      }
+
       if (confirmPromoSummary) {
         if (window.activePromo) {
           confirmPromoSummary.style.display = "block";
-          if(freeItemText) confirmPromoSummary.textContent = `Promo Gift: 🎁 ${freeItemText}`;
-          else confirmPromoSummary.textContent = `Promo Discount: -${totalDiscount.toFixed(2)} DH`;
+          if(freeItemText) confirmPromoSummary.textContent = `Promo Code Used: ${window.activePromo.code} (🎁 Gift: ${freeItemText})`;
+          else confirmPromoSummary.textContent = `Promo Code Used: ${window.activePromo.code} (-${totalDiscount.toFixed(2)} DH)`;
         } else {
-          confirmPromoSummary.style.display = "none";
+          confirmPromoSummary.style.display = "block";
+          confirmPromoSummary.style.color = "var(--brown-soft)";
+          confirmPromoSummary.textContent = `Promo Code Used: None`;
         }
       }
       
@@ -761,6 +774,7 @@ function initCart() {
         phone: phone,
         address: address || "Settat",
         items: cart,
+        originalPrice: subtotal,
         totalAmount: finalTotal,
         promoCode: window.activePromo ? window.activePromo.code : null,
         discountAmount: totalDiscount
@@ -776,18 +790,20 @@ function initCart() {
       message += `- ${item.quantity}x ${item.name} (${item.price * item.quantity} DH)\n`;
     });
     
-    message += `\nSubtotal : ${subtotal} DH\n`;
+    message += `\n*Real Price:* ${subtotal.toFixed(2)} DH\n`;
     
     if (window.activePromo && (!window.activePromo.minAmount || subtotal >= window.activePromo.minAmount)) {
-        message += `*Promo Applied:* ${window.activePromo.code}\n`;
+        message += `*Promo Code Used:* ${window.activePromo.code}\n`;
         if (window.activePromo.type === 'free_item') {
             message += `*🎁 Free Gift:* ${freeItemText}\n`;
         } else {
             message += `*Discount:* -${totalDiscount.toFixed(2)} DH\n`;
         }
+    } else {
+        message += `*Promo Code Used:* None\n`;
     }
     
-    message += `Delivery : ${deliveryFee === 0 ? 'Free' : deliveryFee + ' DH'}\nTotal : ${finalTotal.toFixed(2)} DH\nPhone : ${phone}\nAddress : ${address || "Settat"}`;
+    message += `*Delivery:* ${deliveryFee === 0 ? 'Free' : deliveryFee + ' DH'}\n*New Price:* ${finalTotal.toFixed(2)} DH\n*Phone:* ${phone}\n*Address:* ${address || "Settat"}`;
     
     const targetPhone = "212789233029"; 
     window.location.href = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
