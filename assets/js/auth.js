@@ -158,7 +158,7 @@ function getCookieRank(totalSpent) {
 
 function updateProfileRankBadge(totalSpent) {
   const rank = getCookieRank(totalSpent);
-  const rankBadge = document.querySelector(".cookie-rank-pill, .profile-hero-card .status-pill-badge");
+  const rankBadge = document.querySelector(".cookie-rank-pill, .profile-hero-card .status-pill-badge, #profile-rank-badge");
 
   if (rankBadge) {
     rankBadge.innerHTML = `${rank.icon} ${rank.name}`;
@@ -315,6 +315,7 @@ ${promoText}
     }
 
     localStorage.removeItem("youyou_cart");
+    localStorage.removeItem("has_unmerged_guest_cart");
     return docRef.id;
   } catch (error) {
     console.error("Order saving error:", error);
@@ -420,7 +421,7 @@ onAuthStateChanged(auth, async (user) => {
     if (userIconLink && userIconWrapper) {
       userIconLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
       
-      if(mobileUserLink) {
+      if (mobileUserLink) {
         mobileUserLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
         mobileUserLink.innerHTML = `<span class="nav-icon">👤</span> My Profile`;
       }
@@ -434,29 +435,33 @@ onAuthStateChanged(auth, async (user) => {
       `;
     }
 
-    // ====== SMART GUEST CART MERGE ENGINE ======
+    // ====== ONE-TIME GUEST CART MERGE ENGINE ======
     try {
-      const guestCart = getGuestCart();
       const cloudCart = Array.isArray(userData.cart) ? userData.cart : [];
+      const isUnmergedGuestCart = localStorage.getItem("has_unmerged_guest_cart") === "true";
 
-      if (guestCart.length > 0) {
-        // Merge guest items with cloud cart
-        const mergedCart = [...cloudCart];
-        guestCart.forEach((guestItem) => {
-          const existing = mergedCart.find((item) => item.name === guestItem.name);
-          if (existing) {
-            existing.quantity = (Number(existing.quantity) || 1) + (Number(guestItem.quantity) || 1);
-          } else {
-            mergedCart.push(guestItem);
+      if (isUnmergedGuestCart) {
+        const guestCart = getGuestCart();
+        if (guestCart.length > 0) {
+          const mergedCart = [...cloudCart];
+          guestCart.forEach((guestItem) => {
+            const existing = mergedCart.find((item) => item.name === guestItem.name);
+            if (existing) {
+              existing.quantity = (Number(existing.quantity) || 1) + (Number(guestItem.quantity) || 1);
+            } else {
+              mergedCart.push(guestItem);
+            }
+          });
+
+          userData.cart = mergedCart;
+          localStorage.setItem("youyou_cart", JSON.stringify(mergedCart));
+          if (userDocExists) {
+            await updateDoc(doc(db, "users", user.uid), { cart: mergedCart });
           }
-        });
-
-        userData.cart = mergedCart;
-        localStorage.setItem("youyou_cart", JSON.stringify(mergedCart));
-        if (userDocExists) {
-          await updateDoc(doc(db, "users", user.uid), { cart: mergedCart });
         }
+        localStorage.removeItem("has_unmerged_guest_cart");
       } else {
+        // Normal navigation: sync cloud cart to localStorage without duplicating
         localStorage.setItem("youyou_cart", JSON.stringify(cloudCart));
       }
       window.dispatchEvent(new Event("cart-synced"));
@@ -520,11 +525,15 @@ onAuthStateChanged(auth, async (user) => {
       initAdminDashboard(db);
     }
   } else {
+    // Guest mode active: mark any items in cart for one-time merge upon login/signup
+    if (getGuestCart().length > 0) {
+      localStorage.setItem("has_unmerged_guest_cart", "true");
+    }
     if (userIconLink) userIconLink.href = "login.html";
     const mobileUserLink = document.getElementById("mobile-user-link");
-    if(mobileUserLink) {
-       mobileUserLink.href = "login.html";
-       mobileUserLink.innerHTML = `<span class="nav-icon">👤</span> Account / Login`;
+    if (mobileUserLink) {
+      mobileUserLink.href = "login.html";
+      mobileUserLink.innerHTML = `<span class="nav-icon">👤</span> Account / Login`;
     }
     if (PAGE === "profile" || PAGE === "admin") {
       window.location.href = "login.html";
@@ -712,7 +721,7 @@ async function loadCustomerOrderHistory(user, db) {
   }
 }
 
-// --- ADMIN DASHBOARD WITH DETAILED ORDER PRICING & REVENUE CALCULATION ---
+// --- ADMIN DASHBOARD ---
 
 async function loadAdminDashboard(db) {
   const usersList = document.getElementById("admin-users");
@@ -1277,6 +1286,7 @@ if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
     signOut(auth).then(() => {
       localStorage.removeItem("youyou_cart");
+      localStorage.removeItem("has_unmerged_guest_cart");
       window.location.href = "index.html";
     });
   });
