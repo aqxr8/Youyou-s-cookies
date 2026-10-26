@@ -88,6 +88,17 @@ function authMessage(err, fallback) {
   return map[err && err.code] || fallback || "An error occurred.";
 }
 
+// Helper to safely get local guest cart
+function getGuestCart() {
+  try {
+    const raw = localStorage.getItem("youyou_cart");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
 // --- REVIEWS FIRESTORE HELPERS ---
 
 window.submitReviewToFirestore = async function ({ name, rating, text, rot }) {
@@ -330,7 +341,7 @@ if (avatarInput) {
       const user = auth.currentUser;
       if (user) {
         try {
-          const profilePic = document.getElementById("profile-picture");
+          const profilePic = document.getElementById("profile-picture") || document.getElementById("profile-avatar");
           if (profilePic) profilePic.src = base64Image;
 
           await updateDoc(doc(db, "users", user.uid), { photoURL: base64Image });
@@ -356,7 +367,7 @@ if (avatarInput) {
   });
 }
 
-// --- AUTHENTICATION STATE ---
+// --- AUTHENTICATION STATE & SMART CART MERGING ---
 
 onAuthStateChanged(auth, async (user) => {
   window.currentUserObj = user;
@@ -379,7 +390,7 @@ onAuthStateChanged(auth, async (user) => {
           email: user.email || "",
           role: user.email === ADMIN_EMAIL ? "admin" : "customer",
           joinedAt: new Date(),
-          cart: []
+          cart: getGuestCart()
         };
         try {
           await setDoc(userDocRef, userData, { merge: true });
@@ -399,7 +410,7 @@ onAuthStateChanged(auth, async (user) => {
         username: user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover"),
         email: user.email || "",
         role: user.email === ADMIN_EMAIL ? "admin" : "customer",
-        cart: []
+        cart: getGuestCart()
       };
       window.userDataObj = userData;
     }
@@ -423,19 +434,34 @@ onAuthStateChanged(auth, async (user) => {
       `;
     }
 
+    // ====== SMART GUEST CART MERGE ENGINE ======
     try {
-      if (userDocExists && Array.isArray(userData.cart)) {
-        localStorage.setItem("youyou_cart", JSON.stringify(userData.cart));
-        window.dispatchEvent(new Event("cart-synced"));
-      } else {
-        const localCartRaw = localStorage.getItem("youyou_cart");
-        const localCart = localCartRaw ? JSON.parse(localCartRaw) : [];
-        if (localCart.length > 0 && userDocExists) {
-          await updateDoc(doc(db, "users", user.uid), { cart: localCart });
+      const guestCart = getGuestCart();
+      const cloudCart = Array.isArray(userData.cart) ? userData.cart : [];
+
+      if (guestCart.length > 0) {
+        // Merge guest items with cloud cart
+        const mergedCart = [...cloudCart];
+        guestCart.forEach((guestItem) => {
+          const existing = mergedCart.find((item) => item.name === guestItem.name);
+          if (existing) {
+            existing.quantity = (Number(existing.quantity) || 1) + (Number(guestItem.quantity) || 1);
+          } else {
+            mergedCart.push(guestItem);
+          }
+        });
+
+        userData.cart = mergedCart;
+        localStorage.setItem("youyou_cart", JSON.stringify(mergedCart));
+        if (userDocExists) {
+          await updateDoc(doc(db, "users", user.uid), { cart: mergedCart });
         }
+      } else {
+        localStorage.setItem("youyou_cart", JSON.stringify(cloudCart));
       }
+      window.dispatchEvent(new Event("cart-synced"));
     } catch (cartSyncErr) {
-      console.warn("Cart sync error:", cartSyncErr);
+      console.warn("Cart merge error:", cartSyncErr);
     }
 
     if (PAGE === "profile") {
@@ -515,11 +541,7 @@ async function syncAndRenderProfileCart(user, db, userData, userDocExists) {
       activeCart = userData.cart;
       localStorage.setItem("youyou_cart", JSON.stringify(activeCart));
     } else {
-      const rawCartString = localStorage.getItem("youyou_cart");
-      if (rawCartString !== null) {
-        activeCart = JSON.parse(rawCartString);
-        if (!Array.isArray(activeCart)) activeCart = Object.values(activeCart);
-      }
+      activeCart = getGuestCart();
     }
   } catch (err) {
     console.warn("Error displaying profile cart:", err);
@@ -1205,7 +1227,7 @@ if (signupForm) {
         email: email,
         role: "customer",
         joinedAt: new Date(),
-        cart: []
+        cart: getGuestCart()
       });
       routeUser(cred.user);
     } catch (error) {
@@ -1234,7 +1256,7 @@ if (googleBtn) {
           email: cred.user.email,
           role: "customer",
           joinedAt: new Date(),
-          cart: []
+          cart: getGuestCart()
         });
       }
       routeUser(cred.user);
