@@ -1541,16 +1541,54 @@ video.brand-logo {
   border: none;
   font-size: 1.25rem;
   cursor: pointer;
-  padding: 5px;
-  display: flex;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  position: relative;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.3s;
+  overflow: hidden;
+  transition: all 0.3s ease;
   box-shadow: none !important;
 }
 
 .theme-toggle:hover {
-  transform: scale(1.15) rotate(10deg);
+  transform: scale(1.1);
+  background: rgba(168, 90, 62, 0.1) !important;
+}
+
+/* Force flex to override the abrupt JS display:none */
+.theme-toggle .moon-icon,
+.theme-toggle .sun-icon {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Light Mode State */
+html:not([data-theme="dark"]) .theme-toggle .moon-icon {
+  opacity: 1;
+  transform: translateY(0) rotate(0);
+}
+html:not([data-theme="dark"]) .theme-toggle .sun-icon {
+  opacity: 0;
+  transform: translateY(-20px) rotate(-45deg);
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Dark Mode State */
+html[data-theme="dark"] .theme-toggle .sun-icon {
+  opacity: 1;
+  transform: translateY(0) rotate(0);
+}
+html[data-theme="dark"] .theme-toggle .moon-icon {
+  opacity: 0;
+  transform: translateY(20px) rotate(45deg);
+  position: absolute;
+  pointer-events: none;
 }
 
 /* ---------- Dark Mode (Midnight Bakery Theme) ---------- */
@@ -1625,7 +1663,10 @@ video.brand-logo {
 }
 
 /* =======================================================
-   RESPONSIVE MEDIA QUERIES (MOBILE REDESIGN)
+   RESPONSIVE MEDIA QUERIES (COOKIE MOBILE REDESIGN)
+   ======================================================= */
+/* =======================================================
+   FIXED RESPONSIVE MEDIA QUERIES (MOBILE DRAWER)
    ======================================================= */
 @media (max-width: 900px) {
   .intro,
@@ -1657,7 +1698,7 @@ video.brand-logo {
   }
 
   .site-header .brand-text b {
-    font-size: 1.15rem !important; /* Perfect legible size for shop name */
+    font-size: 1.15rem !important;
   }
 
   .site-header .header-actions {
@@ -1684,7 +1725,9 @@ video.brand-logo {
     border-color: rgba(243, 198, 198, 0.45);
   }
 
-  /* Mobile Navigation Drawer */
+  /* =========================================
+     CLEAN, SPACIOUS MOBILE MENU DRAWER
+  ========================================= */
   .main-nav {
     position: fixed;
     top: 0;
@@ -1692,120 +1735,137 @@ video.brand-logo {
     height: 100vh;
     height: 100dvh;
     width: min(320px, 85vw);
+    
     background: var(--cream-light); 
-    box-shadow: -15px 0 50px rgba(0, 0, 0, 0.2);
+    border-left: 1px solid rgba(74, 55, 40, 0.15);
+    box-shadow: -15px 0 30px rgba(0, 0, 0, 0.15);
+    
     transform: translateX(100%);
-    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: transform 0.3s cubic-bezier(0, 0, 0.2, 1); 
     z-index: 999;
+    
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    justify-content: center !important;
-    gap: 0 !important;
-    padding: 80px 30px 40px !important;
+    justify-content: flex-start !important; /* Start from top so nothing gets hidden */
+    overflow-y: auto !important; /* Enable scrolling if screen is short */
+    padding: 80px 24px 40px !important;
   }
 
   [data-theme="dark"] .main-nav {
-    background: var(--cream-light);
+    background: var(--cream); 
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -15px 0 40px rgba(0, 0, 0, 0.6);
   }
 
   .main-nav.open {
     transform: translateX(0);
   }
 
+  /* Close Button */
   .main-nav .nav-close {
     position: absolute !important;
     top: 20px !important;
-    right: 25px !important;
-    display: block;
-    background: none;
+    right: 20px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--brown);
+    color: var(--white);
     border: none;
-    font-size: 2.5rem;
-    color: var(--brown);
+    border-radius: 8px; 
+    font-size: 1.8rem;
     cursor: pointer;
     line-height: 1;
-    padding: 0;
-    transition: transform 0.3s;
+    z-index: 10;
   }
   
   .main-nav .nav-close:hover {
-    transform: rotate(90deg);
+    background: var(--caramel);
   }
 
-  .nav-links {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 22px;
-  }
-
+  /* Nav Links (Ensures Home + all links appear properly spaced) */
   .main-nav a {
     font-family: "Cormorant Garamond", serif !important;
-    font-size: 1.8rem !important;
+    font-size: 1.5rem !important;
     font-weight: 600 !important;
     color: var(--brown) !important;
     background: transparent !important;
     border: none !important;
-    padding: 6px 15px !important;
-    width: auto !important;
-    position: relative;
-    transition: color 0.3s ease;
+    border-bottom: 1px solid rgba(74, 55, 40, 0.08) !important;
+    padding: 14px 10px !important;
+    width: 100% !important;
+    text-align: left;
+    transition: padding-left 0.2s ease, color 0.2s ease;
+  }
+
+  [data-theme="dark"] .main-nav a {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: var(--brown-soft) !important;
   }
 
   .main-nav a::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 2px;
-    background: var(--caramel);
-    transition: width 0.3s ease;
-    display: block !important;
+    display: none !important;
   }
 
   .main-nav a:hover,
   .main-nav a.active {
     color: var(--caramel) !important;
+    padding-left: 14px !important; 
+    border-bottom-color: var(--caramel) !important;
   }
 
-  .main-nav a:hover::after,
-  .main-nav a.active::after {
-    width: 100%;
-  }
-
-  /* Mobile Actions Inside Drawer */
+  /* Mobile Actions Box (Account & Theme Toggle integration) */
   .mobile-nav-actions {
-    display: flex;
+    display: flex !important;
     flex-direction: column;
-    align-items: center;
-    gap: 18px;
-    margin-top: 35px;
-    padding-top: 35px;
-    border-top: 1px dashed rgba(168, 90, 62, 0.3);
+    gap: 12px;
+    margin-top: 24px;
     width: 100%;
+    padding-top: 15px;
+    border-top: 1px solid rgba(74, 55, 40, 0.1);
   }
 
-  .mobile-nav-actions button {
-    font-family: "Cormorant Garamond", serif !important;
-    font-size: 1.6rem !important;
+  [data-theme="dark"] .mobile-nav-actions {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .mobile-nav-actions button,
+  .mobile-nav-actions a,
+  .mobile-nav-actions .theme-toggle {
+    font-family: "Noto Sans TC", sans-serif !important;
+    font-size: 0.95rem !important;
     font-weight: 600 !important;
     color: var(--brown) !important;
+    background: rgba(74, 55, 40, 0.05) !important;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px !important;
+    border-radius: 8px;
+    border: 1px solid rgba(74, 55, 40, 0.1);
+    width: 100%;
+    text-decoration: none;
+    box-sizing: border-box;
   }
 
-  .nav-decor {
-    display: block;
-    font-family: "Cormorant Garamond", serif;
-    font-style: italic;
-    color: var(--caramel);
-    font-size: 1.1rem !important;
-    text-align: center;
-    opacity: 0.85;
-    margin-top: auto;
+  [data-theme="dark"] .mobile-nav-actions button,
+  [data-theme="dark"] .mobile-nav-actions a,
+  [data-theme="dark"] .mobile-nav-actions .theme-toggle {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: var(--brown-soft) !important;
+  }
+  
+  .mobile-nav-actions a:hover,
+  .mobile-nav-actions button:hover,
+  .mobile-nav-actions .theme-toggle:hover {
+    background: var(--brown) !important;
+    color: var(--white) !important;
+    border-color: var(--brown);
   }
 }
 
@@ -2743,7 +2803,9 @@ html[data-theme="dark"] .site-header .brand-logo-wrapper > video.logo-dark {
 }
 [data-theme="dark"] .admin-promo-item.disabled {
   background: #110d0b;
-}/* Sticky / Fixed Header */
+}
+
+/* Sticky / Fixed Header */
 .site-header {
   position: fixed;
   top: 0;
@@ -2762,5 +2824,5 @@ html[data-theme="dark"] .site-header .brand-logo-wrapper > video.logo-dark {
 
 /* Add padding to the top of the main content so the fixed header doesn't cover it */
 body {
-  padding-top: 80px; /* Adjust this value if your header height is taller/shorter */
+  padding-top: 80px; 
 }
