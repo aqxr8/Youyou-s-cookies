@@ -15,12 +15,14 @@ service cloud.firestore {
     // Orders can be placed by guests OR signed-in customers, with strict shape/size checks.
     function validOrder() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['userId','userEmail','customerName','phone','address','items','totalAmount','status','date','createdAt'])
+      return d.keys().hasOnly(['userId','userEmail','customerName','phone','address','items',
+                               'subtotalAmount','originalPrice','discountAmount','promoCode',
+                               'totalAmount','status','date','createdAt'])
         && d.keys().hasAll(['userId','customerName','phone','address','items','totalAmount','status','createdAt'])
         && ((request.auth == null && d.userId == 'guest') || (signedIn() && d.userId == request.auth.uid))
         && d.status == 'Processing'
         && d.items is list && d.items.size() > 0 && d.items.size() <= 50
-        && d.totalAmount is number && d.totalAmount > 0 && d.totalAmount <= 3000
+        && d.totalAmount is number && d.totalAmount >= 0 && d.totalAmount <= 3000
         && d.customerName is string && d.customerName.size() <= 80
         && d.phone is string && d.phone.size() <= 30
         && d.address is string && d.address.size() <= 400
@@ -30,10 +32,17 @@ service cloud.firestore {
     match /orders/{orderId} {
       allow create: if validOrder();
       allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
-      // admin may only flip the status
-      allow update: if isAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-        && request.resource.data.status in ['Processing', 'Delivered'];
+      allow update: if
+        // admin may only change the status
+        (isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && request.resource.data.status in ['Processing', 'Delivered', 'Cancelled'])
+        // a customer may only cancel their OWN order while it is still Processing
+        || (signedIn()
+          && resource.data.userId == request.auth.uid
+          && resource.data.status == 'Processing'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && request.resource.data.status == 'Cancelled');
       allow delete: if isAdmin();
     }
 
@@ -46,6 +55,34 @@ service cloud.firestore {
       // users can edit their own profile/cart but never their role
       allow update: if (isOwner(uid) && request.resource.data.role == resource.data.role) || isAdmin();
       allow delete: if isAdmin();
+    }
+
+    // Reviews: anyone can read approved ones; signed-in users can submit a pending one;
+    // only the admin can approve / reject / delete.
+    match /reviews/{reviewId} {
+      allow read: if resource.data.status == 'approved' || isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name','rating','text','status','userId','createdAt'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 25
+        && request.resource.data.text is string && request.resource.data.text.size() >= 3 && request.resource.data.text.size() <= 200
+        && request.resource.data.rating is int && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if isAdmin();
+    }
+
+    // Promo codes: signed-in customers can read them (needed to validate a code) and may only
+    // add THEIR OWN uid to usedBy. The admin has full control.
+    match /promo_codes/{promoId} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (signedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy'])
+          && request.resource.data.usedBy.size() == resource.data.usedBy.size() + 1
+          && request.auth.uid in request.resource.data.usedBy
+          && !(request.auth.uid in resource.data.usedBy));
     }
 
     match /{document=**} { allow read, write: if false; }

@@ -70,7 +70,8 @@ if (form) {
     event.preventDefault();
 
     // MUST BE LOGGED IN TO POST A REVIEW
-    if (!auth.currentUser && !window.currentUserObj) {
+    try { if (auth.authStateReady) await auth.authStateReady(); } catch (e) { /* ignore */ }
+    if (!auth.currentUser) {
       showMessage('Please <a href="login.html" style="text-decoration: underline; font-weight: bold; color: inherit;">log in</a> to post a review.', true);
       return;
     }
@@ -92,7 +93,7 @@ if (form) {
       await addDoc(collection(db, 'reviews'), {
         name, rating, text,
         status: 'pending',
-        userId: auth.currentUser?.uid || window.currentUserObj?.uid || null,
+        userId: auth.currentUser.uid,
         createdAt: serverTimestamp()
       });
       form.reset();

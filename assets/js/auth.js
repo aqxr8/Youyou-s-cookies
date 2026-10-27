@@ -8,6 +8,7 @@ import {
   signOut,
   onAuthStateChanged,
   updatePassword,
+  updateProfile,
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -235,11 +236,6 @@ window.saveOrderToFirestore = async function (orderData) {
 
     const docRef = await addDoc(collection(db, "orders"), finalData);
 
-    const ADMIN_CHAT_IDS = [
-      "7932537222", // Mohamed
-      "7523215470"  // Aya
-    ];
-
     const itemsText = items
       .map(i => `• ${i.quantity}x ${i.name} (${i.price * i.quantity} DH)`)
       .join("\n");
@@ -248,7 +244,7 @@ window.saveOrderToFirestore = async function (orderData) {
       ? `• Promo Code Used: ${promoCode} (-${discountAmount.toFixed(2)} DH)`
       : `• Promo Code Used: None`;
 
-    const telegramMsg = `NEW ORDER RECEIVED
+    const telegramMsg = `NEW ORDER RECEIVED #${docRef.id.slice(-6).toUpperCase()}
 ───────────────────
 Customer: ${finalData.customerName}
 Phone: ${finalData.phone || "N/A"}
@@ -266,10 +262,7 @@ Total Price: ${totalAmount.toFixed(2)} DH
     fetch("/api/telegram", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: telegramMsg,
-        chatIds: ADMIN_CHAT_IDS
-      })
+      body: JSON.stringify({ message: telegramMsg })
     }).catch(err => console.warn("Telegram alert failed:", err));
 
     if (user) {
@@ -306,7 +299,7 @@ onAuthStateChanged(auth, async (user) => {
         userData = {
           username: user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover"),
           email: user.email || "",
-          role: user.email === ADMIN_EMAIL ? "admin" : "customer",
+          role: "customer",
           joinedAt: new Date(),
           cart: getGuestCart()
         };
@@ -327,7 +320,7 @@ onAuthStateChanged(auth, async (user) => {
       userData = {
         username: user.displayName || (user.email ? user.email.split("@")[0] : "Cookie Lover"),
         email: user.email || "",
-        role: user.email === ADMIN_EMAIL ? "admin" : "customer",
+        role: "customer",
         cart: getGuestCart()
       };
       window.userDataObj = userData;
@@ -610,13 +603,15 @@ if (signupForm) {
 
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const cleanName = String(username || "").trim().slice(0, 80);
+      try { await updateProfile(cred.user, { displayName: cleanName }); } catch (e) { /* not critical */ }
       await setDoc(doc(db, "users", cred.user.uid), {
-        username: username,
+        username: cleanName,
         email: email,
         role: "customer",
         joinedAt: new Date(),
         cart: getGuestCart()
-      });
+      }, { merge: true });
       routeUser(cred.user);
     } catch (error) {
       const errEl = document.getElementById("error-msg");
@@ -665,4 +660,399 @@ if (logoutBtn) {
       window.location.href = "index.html";
     });
   });
+}
+
+// --- FORGOT PASSWORD ---
+
+const forgotForm = document.getElementById("forgot-password-form");
+if (forgotForm) {
+  forgotForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("reset-email").value.trim();
+    const msg = document.getElementById("reset-msg");
+    const btn = forgotForm.querySelector("button[type='submit'], button:not([type])");
+    const show = (text, isError) => {
+      if (!msg) return;
+      msg.style.display = "block";
+      msg.style.color = isError ? "#c62828" : "#2e7d32";
+      msg.textContent = text;
+    };
+    if (btn) btn.disabled = true;
+    try {
+      await sendPasswordResetEmail(auth, email);
+      show("If an account exists for this email, a reset link is on its way. Check your inbox and spam folder.", false);
+    } catch (err) {
+      if (err && (err.code === "auth/user-not-found")) {
+        // do not reveal whether an account exists
+        show("If an account exists for this email, a reset link is on its way. Check your inbox and spam folder.", false);
+      } else {
+        show(authMessage(err, "Could not send the reset email. Please try again."), true);
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+}
+
+// --- PROFILE PAGE: SAVE DETAILS, CHANGE PASSWORD, AVATAR ---
+
+async function currentUserReady() {
+  try { if (auth.authStateReady) await auth.authStateReady(); } catch (e) { /* ignore */ }
+  return auth.currentUser;
+}
+
+function flashMsg(el, text, isError) {
+  if (!el) return;
+  el.style.display = "block";
+  el.style.color = isError ? "#c62828" : "#2e7d32";
+  el.textContent = text;
+}
+
+const profileForm = document.getElementById("profile-info-form");
+if (profileForm) {
+  profileForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("info-msg");
+    const btn = document.getElementById("btn-save-profile");
+    const user = await currentUserReady();
+    if (!user) { flashMsg(msg, "Please log in again.", true); return; }
+
+    const username = document.getElementById("profile-name").value.trim().slice(0, 80);
+    const phone = document.getElementById("profile-phone").value.trim().slice(0, 30);
+    const address = document.getElementById("profile-address").value.trim().slice(0, 400);
+    const digits = phone.replace(/\D/g, "");
+
+    if (!username) { flashMsg(msg, "Please enter your name.", true); return; }
+    if (digits.length < 9 || digits.length > 15) { flashMsg(msg, "Please enter a valid phone number.", true); return; }
+
+    const original = btn ? btn.innerHTML : "";
+    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+    try {
+      await updateDoc(doc(db, "users", user.uid), { username, phone, address });
+      try { await updateProfile(user, { displayName: username }); } catch (err) { /* not critical */ }
+      window.userDataObj = Object.assign({}, window.userDataObj, { username, phone, address });
+      const nameDisplay = document.getElementById("profile-name-display");
+      if (nameDisplay) nameDisplay.textContent = username;
+      flashMsg(msg, "Profile saved.", false);
+    } catch (err) {
+      console.error("Profile save failed:", err);
+      flashMsg(msg, "Could not save your profile. Please try again.", true);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = original; }
+    }
+  });
+}
+
+const passwordBtn = document.getElementById("btn-update-password");
+if (passwordBtn) {
+  const doPasswordUpdate = async () => {
+    const msg = document.getElementById("password-msg");
+    const input = document.getElementById("profile-new-password");
+    const user = await currentUserReady();
+    if (!user) { flashMsg(msg, "Please log in again.", true); return; }
+    const pw = input ? input.value : "";
+    if (pw.length < 6) { flashMsg(msg, "The password must contain at least 6 characters.", true); return; }
+    passwordBtn.disabled = true;
+    try {
+      await updatePassword(user, pw);
+      if (input) input.value = "";
+      flashMsg(msg, "Password updated.", false);
+    } catch (err) {
+      if (err && err.code === "auth/requires-recent-login") {
+        flashMsg(msg, "For security, please log out, log in again, then change your password.", true);
+      } else {
+        flashMsg(msg, authMessage(err, "Could not update the password."), true);
+      }
+    } finally {
+      passwordBtn.disabled = false;
+    }
+  };
+  passwordBtn.addEventListener("click", doPasswordUpdate);
+  const pwForm = document.getElementById("password-form");
+  if (pwForm) pwForm.addEventListener("submit", (e) => { e.preventDefault(); doPasswordUpdate(); });
+}
+
+const avatarInput = document.getElementById("avatar-input");
+if (avatarInput) {
+  avatarInput.addEventListener("change", async () => {
+    const file = avatarInput.files && avatarInput.files[0];
+    const msg = document.getElementById("profile-msg");
+    if (!file) return;
+    if (!/^image\//.test(file.type)) { flashMsg(msg, "Please choose an image file.", true); return; }
+    const user = await currentUserReady();
+    if (!user) { flashMsg(msg, "Please log in again.", true); return; }
+    try {
+      // Resize to a small square so it fits comfortably inside the user document.
+      const bitmapUrl = URL.createObjectURL(file);
+      const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error("Could not read this image."));
+        i.src = bitmapUrl;
+      });
+      const size = 160;
+      const canvas = document.createElement("canvas");
+      canvas.width = size; canvas.height = size;
+      const side = Math.min(img.width, img.height);
+      canvas.getContext("2d").drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+      URL.revokeObjectURL(bitmapUrl);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+      await updateDoc(doc(db, "users", user.uid), { photoURL: dataUrl });
+      window.userDataObj = Object.assign({}, window.userDataObj, { photoURL: dataUrl });
+      const avatar = document.getElementById("profile-avatar");
+      if (avatar) avatar.src = dataUrl;
+      const headerIcon = document.querySelector("#user-icon-wrapper img");
+      if (headerIcon) headerIcon.src = dataUrl;
+      flashMsg(msg, "Profile picture updated.", false);
+    } catch (err) {
+      console.error("Avatar update failed:", err);
+      flashMsg(msg, "Could not update your picture. Please try another image.", true);
+    } finally {
+      avatarInput.value = "";
+    }
+  });
+}
+
+// --- ADMIN DASHBOARD ---
+
+let adminDashboardStarted = false;
+
+function initAdminDashboard(db) {
+  if (adminDashboardStarted) return;
+  adminDashboardStarted = true;
+
+  const ordersBox = document.getElementById("admin-orders");
+  const usersBox = document.getElementById("admin-users");
+  const reviewsBox = document.getElementById("admin-reviews");
+  const statRevenue = document.getElementById("stat-total-revenue");
+  const statOrders = document.getElementById("stat-total-orders");
+  const statPending = document.getElementById("stat-pending-orders");
+  const statUsers = document.getElementById("stat-total-users");
+
+  const errorLine = (box, text) => {
+    if (box) box.innerHTML = `<p style="color:#c62828; font-weight:600;">${esc(text)}</p>`;
+  };
+  const emptyLine = (box, text) => {
+    if (box) box.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">${esc(text)}</p>`;
+  };
+
+  let orderDocs = [];   // {id, data}
+  let userDocs = [];
+
+  const recomputeStats = () => {
+    let revenue = 0, pending = 0;
+    orderDocs.forEach((o) => {
+      if (o.data.status === "Delivered") revenue += Number(o.data.totalAmount) || 0;
+      if (o.data.status === "Processing") pending += 1;
+    });
+    if (statRevenue) statRevenue.textContent = `${Math.round(revenue * 100) / 100} DH`;
+    if (statOrders) statOrders.textContent = String(orderDocs.length);
+    if (statPending) statPending.textContent = String(pending);
+    if (statUsers) statUsers.textContent = String(userDocs.length);
+  };
+
+  const activeOrderFilter = () => {
+    const btn = document.querySelector("[data-order-filter].active");
+    return btn ? btn.getAttribute("data-order-filter") : "all";
+  };
+
+  // ---------- ORDERS ----------
+  const renderOrders = () => {
+    if (!ordersBox) return;
+    if (!orderDocs.length) { emptyLine(ordersBox, "No orders yet."); return; }
+
+    const filter = activeOrderFilter();
+    ordersBox.innerHTML = orderDocs.map(({ id, data }) => {
+      const status = data.status || "Processing";
+      const cls = status === "Delivered" ? "is-delivered" : status === "Cancelled" ? "is-cancelled" : "is-pending";
+      const items = Array.isArray(data.items)
+        ? data.items.map((i) => `${esc(i.quantity)}x ${esc(i.name)}`).join("<br>")
+        : "—";
+      const phoneDigits = normalizePhone(data.phone);
+      const phoneHtml = data.phone
+        ? `<a class="btn-whatsapp-sm" href="https://wa.me/${esc(phoneDigits)}" target="_blank" rel="noopener">WhatsApp ${esc(data.phone)}</a>`
+        : "<em>No phone</em>";
+      const discount = Number(data.discountAmount) || 0;
+      const promoLine = data.promoCode
+        ? `<div style="font-size:.85rem; color:#57a05f; font-weight:600;">Promo ${esc(data.promoCode)} (-${discount.toFixed(2)} DH)</div>`
+        : "";
+      const total = Number(data.totalAmount) || 0;
+      const canToggle = status !== "Cancelled";
+      return `
+        <div class="admin-order-card ${cls}" data-id="${esc(id)}" data-status="${esc(status)}" style="${filter === "all" || filter === status ? "" : "display:none;"}">
+          <div class="admin-order-header">
+            <div>
+              <strong>Order #${esc(id.slice(-6).toUpperCase())}</strong>
+              <div style="font-size:.8rem; color: var(--brown-soft);">${esc(data.date || "")}</div>
+            </div>
+            <span class="status-pill-badge ${status === "Delivered" ? "delivered" : status === "Cancelled" ? "cancelled" : "processing"}">${esc(status)}</span>
+          </div>
+          <div style="margin-bottom:8px;"><strong>${esc(data.customerName || "Guest")}</strong>
+            <span style="color: var(--brown-soft); font-size:.85rem;"> · ${esc(data.userEmail || "Guest")}</span></div>
+          <div style="margin-bottom:8px;">${phoneHtml}</div>
+          <div style="margin-bottom:8px; font-size:.9rem;">📍 ${esc(data.address || "—")}</div>
+          <div style="margin-bottom:10px; font-size:.9rem; color: var(--brown-soft);">${items}</div>
+          ${promoLine}
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:8px;">
+            <strong style="color: var(--caramel); font-size:1.1rem;">${total.toFixed(2)} DH</strong>
+            ${canToggle ? `
+              <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
+                <input type="checkbox" class="admin-delivered-check" data-id="${esc(id)}" ${status === "Delivered" ? "checked" : ""}>
+                Delivered
+              </label>` : ""}
+          </div>
+        </div>`;
+    }).join("");
+  };
+
+  if (ordersBox) {
+    ordersBox.addEventListener("change", async (e) => {
+      const box = e.target.closest(".admin-delivered-check");
+      if (!box) return;
+      const id = box.getAttribute("data-id");
+      const entry = orderDocs.find((o) => o.id === id);
+      if (!entry) return;
+      const next = box.checked ? "Delivered" : "Processing";
+      box.disabled = true;
+      try {
+        await updateDoc(doc(db, "orders", id), { status: next });
+        entry.data.status = next;
+        recomputeStats();
+        renderOrders();
+        renderUsers();
+      } catch (err) {
+        console.error("Status update failed:", err);
+        box.checked = !box.checked;
+        alert("Could not update the order status. Check Firestore rules and your connection.");
+      } finally {
+        box.disabled = false;
+      }
+    });
+  }
+
+  document.querySelectorAll("[data-order-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => setTimeout(renderOrders, 0));
+  });
+
+  // ---------- USERS ----------
+  const renderUsers = () => {
+    if (!usersBox) return;
+    if (!userDocs.length) { emptyLine(usersBox, "No registered users yet."); return; }
+    const spentByUser = {};
+    const countByUser = {};
+    orderDocs.forEach(({ data }) => {
+      if (!data.userId || data.userId === "guest") return;
+      countByUser[data.userId] = (countByUser[data.userId] || 0) + 1;
+      if (data.status === "Delivered") spentByUser[data.userId] = (spentByUser[data.userId] || 0) + (Number(data.totalAmount) || 0);
+    });
+    usersBox.innerHTML = userDocs.map(({ id, data }) => {
+      const spent = spentByUser[id] || 0;
+      const rank = getCookieRank(spent);
+      return `
+        <div class="admin-order-card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <strong>${esc(data.username || "—")}</strong>
+            <div style="font-size:.85rem; color: var(--brown-soft);">${esc(data.email || "")}${data.phone ? " · " + esc(data.phone) : ""}</div>
+            <div style="font-size:.8rem; color: var(--brown-soft);">${countByUser[id] || 0} order(s) · ${spent} DH delivered</div>
+          </div>
+          <span class="status-pill-badge" style="background:${rank.bg}; color:${rank.color}; border:1px solid ${rank.color}40; display:inline-flex; gap:6px; align-items:center;">${rank.icon} ${esc(rank.name)}</span>
+        </div>`;
+    }).join("");
+  };
+
+  // ---------- REVIEWS ----------
+  let reviewDocs = [];
+  let reviewFilter = "all";
+
+  const renderReviews = () => {
+    if (!reviewsBox) return;
+    const list = reviewDocs.filter((r) => reviewFilter === "all" || r.data.status === reviewFilter);
+    if (!list.length) { emptyLine(reviewsBox, "No reviews in this view."); return; }
+    reviewsBox.innerHTML = list.map(({ id, data }) => {
+      const rating = Math.max(1, Math.min(5, Number(data.rating) || 5));
+      const status = data.status || "pending";
+      const color = status === "approved" ? "#57a05f" : status === "rejected" ? "#d9534f" : "#f0ad4e";
+      return `
+        <div class="admin-order-card" style="border-left:5px solid ${color};">
+          <div class="admin-order-header">
+            <div><strong>${esc(data.name || "Anonymous")}</strong>
+              <span style="color:#d49a00; margin-left:8px;">${"★".repeat(rating)}${"☆".repeat(5 - rating)}</span></div>
+            <span style="font-weight:700; text-transform:capitalize; color:${color};">${esc(status)}</span>
+          </div>
+          <p style="margin:0 0 12px;">“${esc(data.text || "")}”</p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${status !== "approved" ? `<button class="btn-promo-action btn-toggle-promo" data-review-action="approved" data-id="${esc(id)}">Approve</button>` : ""}
+            ${status !== "rejected" ? `<button class="btn-promo-action btn-toggle-promo" data-review-action="rejected" data-id="${esc(id)}">Reject</button>` : ""}
+            <button class="btn-promo-action btn-delete-promo" data-review-action="delete" data-id="${esc(id)}">Delete</button>
+          </div>
+        </div>`;
+    }).join("");
+  };
+
+  document.querySelectorAll(".filter-btn-review").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-btn-review").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      reviewFilter = btn.getAttribute("data-filter") || "all";
+      renderReviews();
+    });
+  });
+
+  if (reviewsBox) {
+    reviewsBox.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-review-action]");
+      if (!btn) return;
+      const id = btn.getAttribute("data-id");
+      const action = btn.getAttribute("data-review-action");
+      if (action === "delete" && !confirm("Permanently delete this review?")) return;
+      btn.disabled = true;
+      try {
+        if (action === "delete") {
+          await deleteDoc(doc(db, "reviews", id));
+          reviewDocs = reviewDocs.filter((r) => r.id !== id);
+        } else {
+          await updateDoc(doc(db, "reviews", id), { status: action });
+          const r = reviewDocs.find((x) => x.id === id);
+          if (r) r.data.status = action;
+        }
+        renderReviews();
+      } catch (err) {
+        console.error("Review action failed:", err);
+        alert("Could not update this review. Check Firestore rules.");
+        btn.disabled = false;
+      }
+    });
+  }
+
+  // ---------- LOAD ----------
+  (async () => {
+    try {
+      const snap = await getDocs(collection(db, "orders"));
+      orderDocs = sortNewestFirst(snap.docs).map((d) => ({ id: d.id, data: d.data() }));
+      renderOrders();
+    } catch (err) {
+      console.error("Orders load failed:", err);
+      errorLine(ordersBox, "Could not load orders. Check that the Firestore rules are published.");
+    }
+    try {
+      const snap = await getDocs(collection(db, "users"));
+      userDocs = snap.docs.map((d) => ({ id: d.id, data: d.data() }))
+        .filter((u) => u.data.role !== "admin" && u.data.email !== ADMIN_EMAIL);
+      renderUsers();
+    } catch (err) {
+      console.error("Users load failed:", err);
+      errorLine(usersBox, "Could not load users.");
+    }
+    recomputeStats();
+    renderOrders();
+    renderUsers();
+    try {
+      const snap = await getDocs(collection(db, "reviews"));
+      reviewDocs = sortNewestFirst(snap.docs).map((d) => ({ id: d.id, data: d.data() }));
+      renderReviews();
+    } catch (err) {
+      console.error("Reviews load failed:", err);
+      errorLine(reviewsBox, "Could not load reviews.");
+    }
+  })();
 }

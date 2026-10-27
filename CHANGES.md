@@ -1,3 +1,35 @@
+# v2.3 - bug-fix release
+
+IMPORTANT: publish the new `firestore.rules` in Firebase Console > Firestore > Rules, and redeploy to Vercel.
+
+## Broken features that now work
+- Admin dashboard: `initAdminDashboard` was called but never defined (page threw an error). Orders, stats, users, review moderation and the Delivered checkbox now work.
+- Reviews page never loaded `reviews.js`, so reviews could not be posted or shown. Fixed (and removed the duplicate handler in features.js).
+- Forgot-password form had no handler. Profile "Save", "Update password" and avatar upload had no handlers either. All added.
+- Firestore rules blocked: orders (promo/subtotal fields were not allowed), promo codes, reviews, and customer order cancellation. Rules rewritten.
+- Admin promo list was rebuilt every second, so Enable/Disable/Delete clicks were often lost.
+
+## Security
+- api/telegram.js: anyone could make your bot message any chat id. Recipients are now fixed on the server (optional env TELEGRAM_CHAT_IDS).
+- Telegram messages no longer fail when a name contains _ or * (removed Markdown mode).
+- Browser no longer tries to write role "admin".
+- Cart prices come from MENU_PRICES in features.js (keep it in sync with menu.html). Tampered/unknown cart items are dropped.
+- Cart item names are inserted as text, not HTML.
+
+## Checkout
+- Corrupt localStorage cart no longer crashes the whole site.
+- Phone (9-15 digits) and address required; Esc / click outside closes the confirm modal.
+- Promo is only marked as used if the order was actually saved. WhatsApp message includes the order ref.
+- Morocco time now comes from main.js (Safari-safe).
+
+## Small fixes
+- Broken trash-icon SVG path (Empty Box button), avatar onerror infinite loop, "kinder cookie.jpg" path with a space, dark-theme flash for light-mode visitors.
+
+## Still to do (not changed)
+- Promo codes are validated in the browser; for real protection move promo + order pricing to a server function.
+- Reviews on index/contact, image compression (13 MB), French/Arabic.
+
+---
 # v2.2 - bug-fix release (built on your latest files)
 
 Drop these files over your project (same paths). Images/videos are untouched.

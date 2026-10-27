@@ -418,6 +418,7 @@
       }
     }
   </style>
+<script>try{if(localStorage.getItem('youyou_theme')==='light')document.documentElement.removeAttribute('data-theme')}catch(e){}</script>
 </head>
 <body>
 
@@ -731,7 +732,7 @@
           document.querySelectorAll("[data-order-filter]").forEach(b => b.classList.remove("active"));
           this.classList.add("active");
 
-          document.querySelectorAll(".admin-order-card").forEach(card => {
+          document.querySelectorAll("#admin-orders .admin-order-card").forEach(card => {
             const status = card.getAttribute("data-status");
             if (filter === "all" || status === filter) {
               card.style.display = "";

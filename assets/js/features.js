@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   initHeroCarousel();
   initQuiz();
-  initNotesWall(); 
   initCart(); 
   init3DHoverEffect(); 
 });
@@ -186,111 +185,42 @@ function initQuiz() {
   showView(startView);
 }
 
-async function initNotesWall() {
-  const form = document.getElementById("note-form");
-  const grid = document.getElementById("notes-grid");
+// --- CLOUD-SYNCED CART MECHANIC ---
 
-  if (!grid) return;
+// Official prices (DH). KEEP IN SYNC with the data-price values in menu.html.
+// Anything in the saved cart that is not on this list, or has a different price, is corrected/dropped.
+const MENU_PRICES = {
+  'Classic Cookie': 7, 'Extra Chocolate': 10, 'Red Velvet': 12, 'Oreo Cookie': 12,
+  'Kinder Cookie': 13, 'Lemon Cookie': 13, 'Lotus Cookie': 15, 'Monster Cookie': 15,
+  'KitKat Cookie': 15, 'Loaded Fudge Brownie': 15,
+  '10 Mini Cookies Box': 15, '15 Mini Cookies Box': 20, '20 Mini Cookies Box': 27, '30 Mini Cookies Box': 40
+};
 
-  if (window.fetchApprovedReviews) {
-    grid.innerHTML = `<p style="text-align: center; color: var(--brown-soft); grid-column: 1/-1;">Loading sweet words...</p>`;
-    const approvedNotes = await window.fetchApprovedReviews();
-    grid.innerHTML = "";
-    if (approvedNotes.length === 0) {
-      grid.innerHTML = `<p style="text-align: center; color: var(--brown-soft); grid-column: 1/-1;">No reviews published yet. Be the first to leave one!</p>`;
-    } else {
-      approvedNotes.forEach(note => createNoteCard(note.name, note.rating, note.text, note.rot, false));
-    }
-  }
-
-  if (!form) return;
-
-  form.addEventListener("submit", async function (e) {
-    e.preventDefault(); 
-
-    // REQUIRE LOG IN TO POST REVIEW
-    const user = window.currentUserObj;
-    if (!user) {
-      let authMsg = document.getElementById("review-auth-msg");
-      if (!authMsg) {
-        authMsg = document.createElement("div");
-        authMsg.id = "review-auth-msg";
-        authMsg.style.cssText = "margin-top: 15px; font-weight: bold; font-size: 0.95rem; color: #c62828; text-align: center;";
-        form.appendChild(authMsg);
-      }
-      authMsg.innerHTML = 'Please <a href="login.html" style="text-decoration: underline; font-weight: bold; color: inherit;">log in</a> to post a review.';
-      return;
-    }
-
-    const name = document.getElementById("note-name").value.trim();
-    const rating = parseInt(document.getElementById("note-rating").value);
-    const text = document.getElementById("note-text").value.trim();
-
-    if (!name || !text) return;
-    const rot = (Math.random() * 6 - 3).toFixed(1);
-
-    const submitBtn = form.querySelector("button[type='submit']");
-    const originalText = submitBtn.textContent;
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Submitting...";
-
-    if (window.submitReviewToFirestore) {
-      const success = await window.submitReviewToFirestore({ name, rating, text, rot });
-      if (success) {
-        form.reset();
-        submitBtn.textContent = "✓ Submitted for approval!";
-        submitBtn.style.backgroundColor = "#57a05f";
-        submitBtn.style.borderColor = "#57a05f";
-        submitBtn.style.color = "#ffffff";
-      } else {
-        alert("Failed to submit review. Please try again.");
-        submitBtn.textContent = originalText;
-      }
-    }
-
-    setTimeout(() => {
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
-      submitBtn.style.backgroundColor = ""; 
-      submitBtn.style.borderColor = "";
-      submitBtn.style.color = "";
-    }, 3000);
+function sanitizeCart(raw) {
+  const out = [];
+  if (!Array.isArray(raw)) return out;
+  raw.forEach((item) => {
+    if (!item || typeof item.name !== 'string') return;
+    if (!Object.prototype.hasOwnProperty.call(MENU_PRICES, item.name)) return;
+    const qty = Math.min(99, Math.max(1, parseInt(item.quantity, 10) || 1));
+    const existing = out.find((i) => i.name === item.name);
+    if (existing) existing.quantity = Math.min(99, existing.quantity + qty);
+    else out.push({ name: item.name, price: MENU_PRICES[item.name], quantity: qty });
   });
+  return out;
+}
 
-  function createNoteCard(name, rating, text, rot, isNew) {
-    const fullStar = "★";
-    const emptyStar = "☆";
-    const stars = fullStar.repeat(rating) + emptyStar.repeat(5 - rating);
-
-    const card = document.createElement("div");
-    card.className = isNew ? "note-card reveal visible" : "note-card";
-    card.style.setProperty("--rot", `${rot}deg`);
-
-    card.innerHTML = `
-      <div class="note-stars">${stars}</div>
-      <p class="note-text">"${text}"</p>
-      <div class="note-by">— ${name}</div>
-    `;
-    grid.appendChild(card);
+function readStoredCart() {
+  try {
+    return sanitizeCart(JSON.parse(localStorage.getItem('youyou_cart') || '[]'));
+  } catch (e) {
+    return [];
   }
 }
 
-// --- CLOUD-SYNCED CART MECHANIC ---
 function initCart() {
-  let rawCart = JSON.parse(localStorage.getItem('youyou_cart')) || [];
-  let cart = [];
-  
+  let cart = readStoredCart();
   window.cart = cart;
-  
-  rawCart.forEach(item => {
-    if (item.quantity) {
-      cart.push(item);
-    } else {
-      const existing = cart.find(i => i.name === item.name);
-      if (existing) existing.quantity++;
-      else cart.push({ name: item.name, price: item.price, quantity: 1 });
-    }
-  });
 
   const cartPanel = document.getElementById('cart-panel');
   const cartOverlay = document.getElementById('cart-overlay');
@@ -319,17 +249,9 @@ function initCart() {
   }
 
   window.addEventListener('cart-synced', () => {
-    const syncedCartRaw = localStorage.getItem('youyou_cart');
-    try {
-      cart = syncedCartRaw ? JSON.parse(syncedCartRaw) : [];
-      if (!Array.isArray(cart)) cart = [];
-      window.cart = cart;
-      updateCartUI();
-    } catch(e) {
-      cart = [];
-      window.cart = cart;
-      updateCartUI();
-    }
+    cart = readStoredCart();
+    window.cart = cart;
+    updateCartUI();
   });
 
   document.addEventListener('click', (e) => {
@@ -337,12 +259,12 @@ function initCart() {
     if (!button) return;
 
     const name = button.getAttribute('data-name');
-    const price = parseInt(button.getAttribute('data-price'));
-    if (!name || isNaN(price)) return;
+    if (!name || !Object.prototype.hasOwnProperty.call(MENU_PRICES, name)) return;
+    const price = MENU_PRICES[name];
     
     const existing = cart.find(i => i.name === name);
     if (existing) {
-      existing.quantity++;
+      existing.quantity = Math.min(99, existing.quantity + 1);
     } else {
       cart.push({ name, price, quantity: 1 });
     }
@@ -401,7 +323,7 @@ function initCart() {
   }
 
   async function saveCart() {
-    localStorage.setItem('youyou_cart', JSON.stringify(cart));
+    try { localStorage.setItem('youyou_cart', JSON.stringify(cart)); } catch (e) { /* storage unavailable */ }
     updateCartUI();
 
     if (window.currentUserObj) {
@@ -416,7 +338,8 @@ function initCart() {
   }
 
   window.updateQuantity = function(index, change) {
-    cart[index].quantity += change;
+    if (!cart[index]) return;
+    cart[index].quantity = Math.min(99, cart[index].quantity + change);
     if (cart[index].quantity <= 0) {
       cart.splice(index, 1);
     }
@@ -509,7 +432,7 @@ function initCart() {
       } else {
         tracker.style.display = 'flex';
         const progressPercentage = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
-        const amountLeft = FREE_SHIPPING_THRESHOLD - subtotal;
+        const amountLeft = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
         
         if (subtotal >= FREE_SHIPPING_THRESHOLD) {
           tracker.innerHTML = `
@@ -551,15 +474,16 @@ function initCart() {
         li.className = 'cart-item-row';
         li.innerHTML = `
           <div class="cart-item-info">
-            <div class="cart-item-title">${item.name}</div>
+            <div class="cart-item-title"></div>
             <div class="cart-item-price">${itemTotal} DH <span style="font-size:0.8rem; opacity:0.7;">(${item.price} DH each)</span></div>
           </div>
           <div class="qty-controls">
-            <button onclick="window.updateQuantity(${index}, -1)" class="qty-btn" title="Remove">&minus;</button>
+            <button onclick="window.updateQuantity(${index}, -1)" class="qty-btn" title="Remove" aria-label="Remove one">&minus;</button>
             <span class="qty-val">${item.quantity}</span>
-            <button onclick="window.updateQuantity(${index}, 1)" class="qty-btn" title="Add">&plus;</button>
+            <button onclick="window.updateQuantity(${index}, 1)" class="qty-btn" title="Add" aria-label="Add one">&plus;</button>
           </div>
         `;
+        li.querySelector('.cart-item-title').textContent = item.name;
         cartItemsList.appendChild(li);
       });
 
@@ -708,6 +632,12 @@ function initCart() {
       window.openBoxModal(); 
     });
   }
+  confirmModal.addEventListener('click', (e) => {
+    if (e.target === confirmModal) confirmModal.style.display = 'none';
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && confirmModal.style.display !== 'none') confirmModal.style.display = 'none';
+  });
 
   if (confirmSubmitBtn) {
     const newSubmitBtn = confirmSubmitBtn.cloneNode(true);
@@ -718,23 +648,36 @@ function initCart() {
       const phone = document.getElementById('confirm-phone-input').value.trim();
       const address = document.getElementById('confirm-address-input').value.trim();
 
-      if (!phone) {
-        alert("Please enter a phone number to finalize your order.");
+      const phoneDigits = phone.replace(/\D/g, "");
+      if (phoneDigits.length < 9 || phoneDigits.length > 15) {
+        alert("Please enter a valid phone number (9 to 15 digits) to finalize your order.");
         return; 
+      }
+      if (!address) {
+        alert("Please enter your delivery address in Settat.");
+        return;
       }
 
       confirmSubmitBtn.disabled = true;
       confirmSubmitBtn.textContent = "Processing...";
 
-      await processFinalCheckout(phone, address);
-
-      confirmSubmitBtn.disabled = false;
-      confirmSubmitBtn.textContent = "Confirm & Send via WhatsApp";
-      confirmModal.style.display = 'none';
+      try {
+        await processFinalCheckout(phone, address);
+      } catch (err) {
+        console.error("Checkout error:", err);
+        alert("Something went wrong while sending your order. Please try again.");
+      } finally {
+        confirmSubmitBtn.disabled = false;
+        confirmSubmitBtn.textContent = "Confirm & Send via WhatsApp";
+        confirmModal.style.display = 'none';
+      }
     });
   }
 
   async function processFinalCheckout(phone = "", address = "") {
+    cart = sanitizeCart(cart);
+    window.cart = cart;
+    if (cart.length === 0) return;
     let subtotal = 0;
     cart.forEach(i => subtotal += (i.price * i.quantity));
     
@@ -755,8 +698,30 @@ function initCart() {
     let finalTotal = (subtotal - totalDiscount) + deliveryFee;
     if (finalTotal < 0) finalTotal = 0;
 
-    // Record promo code single-use for user in Firestore
-    if (window.activePromo && window.activePromo.id && window.currentUserObj) {
+    // 1) Save the order (never block the WhatsApp message for more than a few seconds)
+    let orderId = null;
+    if (window.saveOrderToFirestore) {
+      try {
+        orderId = await Promise.race([
+          window.saveOrderToFirestore({
+            customerName: window.currentUserObj ? (window.currentUserObj.displayName || window.currentUserObj.email) : "Guest",
+            phone: phone,
+            address: address || "Settat",
+            items: cart,
+            originalPrice: subtotal,
+            totalAmount: finalTotal,
+            promoCode: window.activePromo ? window.activePromo.code : null,
+            discountAmount: totalDiscount
+          }),
+          new Promise((resolve) => setTimeout(() => resolve(null), 6000))
+        ]);
+      } catch (err) {
+        console.warn("Order save failed:", err);
+      }
+    }
+
+    // 2) Mark the promo as used only if the order really was saved
+    if (orderId && window.activePromo && window.activePromo.id && window.currentUserObj) {
       try {
         const { db, firestore } = await getPromoFirebaseContext();
         const promoRef = firestore.doc(db, "promo_codes", window.activePromo.id);
@@ -768,24 +733,12 @@ function initCart() {
       }
     }
 
-    if (window.saveOrderToFirestore) {
-      await window.saveOrderToFirestore({
-        customerName: window.currentUserObj ? (window.currentUserObj.displayName || window.currentUserObj.email) : "Guest",
-        phone: phone,
-        address: address || "Settat",
-        items: cart,
-        originalPrice: subtotal,
-        totalAmount: finalTotal,
-        promoCode: window.activePromo ? window.activePromo.code : null,
-        discountAmount: totalDiscount
-      });
-    }
+    // 3) Time-of-day note, in Morocco time regardless of the visitor's device
+    const mt = window.getMoroccoTime ? window.getMoroccoTime() : { hour: new Date().getHours(), minute: 0 };
+    const hours = window.YOUYOU_HOURS || { open: 15, close: 20 };
+    let timeNote = mt.hour >= hours.close ? "🚨 *[PRE-ORDER FOR TOMORROW]*\n" : (mt.hour < hours.open ? "⏳ *[PRE-ORDER FOR TODAY (15:00 - 20:00)]*\n" : "");
 
-    const moroccoTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Africa/Casablanca" }));
-    const currentHour = moroccoTime.getHours();
-    let timeNote = currentHour >= 20 ? "🚨 *[PRE-ORDER FOR TOMORROW]*\n" : (currentHour < 15 ? "⏳ *[PRE-ORDER FOR TODAY (15:00 - 20:00)]*\n" : "");
-
-    let message = `Hi YouYou's Cookies !\n${timeNote}New order:\n\n`;
+    let message = `Hi YouYou's Cookies !\n${timeNote}New order${orderId ? " (Order ref: #" + orderId.slice(-6).toUpperCase() + ")" : ""}:\n\n`;
     cart.forEach(item => {
       message += `- ${item.quantity}x ${item.name} (${item.price * item.quantity} DH)\n`;
     });
@@ -806,11 +759,14 @@ function initCart() {
     message += `*Delivery:* ${deliveryFee === 0 ? 'Free' : deliveryFee + ' DH'}\n*New Price:* ${finalTotal.toFixed(2)} DH\n*Phone:* ${phone}\n*Address:* ${address || "Settat"}`;
     
     const targetPhone = "212789233029"; 
-    window.location.href = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+    const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
 
+    // Clear the cart first, then hand over to WhatsApp
     cart = [];
     window.activePromo = null;
     saveCart();
+    window.location.href = waUrl;
+    return;
   }
 
   // ====== APPLY PROMO CODE ENGINE ======
@@ -1094,6 +1050,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
+      promoDoc._wasExpired = isExpired;
       const active = promo.active === true && !isExpired;
       const card = document.createElement("div");
       card.className = `admin-promo-item ${active ? "" : "disabled"}`;
@@ -1118,9 +1075,15 @@ document.addEventListener("DOMContentLoaded", () => {
       const minAmount = Math.max(0, Number(promo.minAmount) || 0);
       let conditionText = minAmount > 0 ? `Orders over ${minAmount} DH` : "No minimum amount";
       let usageText = `👥 Used by: ${usedCount} ${usedCount === 1 ? 'user' : 'users'}`;
-      let expirationText = timerString ? ` | ${timerString}` : "";
 
-      details.textContent = `Reward: ${formatReward(promo)} | Condition: ${conditionText} | ${usageText}${expirationText}`;
+      details.textContent = `Reward: ${formatReward(promo)} | Condition: ${conditionText} | ${usageText}`;
+      if (timerString) {
+        details.appendChild(document.createTextNode(" | "));
+        const timerEl = document.createElement("span");
+        timerEl.textContent = timerString;
+        if (!isExpired) timerEl.dataset.promoTimer = promo.expiresAt;
+        details.appendChild(timerEl);
+      }
       info.append(title, details);
 
       const actions = document.createElement("div");
@@ -1146,11 +1109,29 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Live countdown timer ticker for Admin dashboard
+  // Live countdown ticker: only re-render when a code actually expires; otherwise just refresh the text
   setInterval(() => {
-    if (promoSnapshotDocs.length) {
+    if (!promoSnapshotDocs.length) return;
+    const now = Date.now();
+    const expiredChanged = promoSnapshotDocs.some((d) => {
+      const exp = d.data().expiresAt;
+      if (!exp) return false;
+      const isExp = new Date(exp).getTime() <= now;
+      return isExp !== (d._wasExpired === true);
+    });
+    if (expiredChanged) {
       renderPromos(promoSnapshotDocs);
+      return;
     }
+    adminPromoList.querySelectorAll('[data-promo-timer]').forEach((el) => {
+      const exp = new Date(el.dataset.promoTimer).getTime();
+      const diff = exp - now;
+      if (diff <= 0) return;
+      const hrs = Math.floor(diff / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      el.textContent = `⏳ Timer: ${hrs}h ${mins}m ${secs}s remaining`;
+    });
   }, 1000);
 
   const startPromoListener = async () => {
