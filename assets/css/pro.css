@@ -1,0 +1,59 @@
+/* Professional dashboard styling for profile.html and admin.html */
+.page-pro{--ink:#3b1d17;--muted:#8a6a63;--line:#ecd3cd;--panel:#ffffff;--bg:#fbeeea;--accent:#b85f58;--accent-d:#8f453f;
+  --ok:#2e8b57;--warn:#c98a1b;--bad:#c0443f;--r:14px;
+  background:var(--bg);background-image:none;color:var(--ink);font-family:"DM Sans",system-ui,sans-serif}
+[data-theme="dark"] .page-pro{--ink:#f6e3de;--muted:#c9a39b;--line:#4b2e29;--panel:#33201c;--bg:#241512;--accent:#e8948b;--accent-d:#f3b0a8}
+.page-pro h1,.page-pro h2,.page-pro h3,.page-pro .pro-card-title,.page-pro .pro-card-title *{font-family:"DM Sans",system-ui,sans-serif!important;text-transform:none;letter-spacing:-.01em;color:var(--ink)}
+.page-pro h1{font-weight:700;font-size:clamp(1.6rem,3vw,2.1rem)}
+.page-pro h2,.page-pro h3{font-weight:700;font-size:1.1rem}
+
+/* panels */
+.page-pro .pro-card,.page-pro .admin-hero-banner,.page-pro .admin-card-container,.page-pro .pro-hero-banner,.page-pro .metric-card,
+.page-pro .admin-order-card,.page-pro .order-history-card,.page-pro .admin-promo-item{
+  background:var(--panel)!important;border:1px solid var(--line)!important;border-radius:var(--r)!important;box-shadow:0 1px 2px rgba(59,29,23,.05)!important;outline:0}
+.page-pro .pro-card-header{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px}
+.page-pro .pro-hero-banner,.page-pro .admin-hero-banner{background-image:none!important}
+
+/* labels & inputs */
+.page-pro label,.page-pro .form-group label{font-size:.78rem;font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--muted)}
+.page-pro input,.page-pro textarea,.page-pro select,.page-pro .auth-input{border-radius:10px!important;border:1px solid var(--line)!important;background:var(--panel)!important;color:var(--ink)!important;font-family:inherit;padding:11px 14px}
+.page-pro input:focus,.page-pro textarea:focus,.page-pro select:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(184,95,88,.18)}
+
+/* buttons */
+.page-pro .btn{border-radius:10px;font-weight:600;letter-spacing:0;text-transform:none;padding:11px 20px;box-shadow:none}
+.page-pro .btn-primary,.page-pro .btn-dark,.page-pro .pro-btn-full{background:var(--accent);border:1px solid var(--accent);color:#fff}
+.page-pro .btn-primary:hover,.page-pro .btn-dark:hover,.page-pro .pro-btn-full:hover{background:var(--accent-d);border-color:var(--accent-d)}
+.page-pro .btn-outline{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.page-pro .btn-outline:hover{background:var(--bg);border-color:var(--accent)}
+.page-pro .pro-btn-outline-danger{color:var(--bad);border:1px solid rgba(192,68,63,.4);background:transparent;border-radius:10px}
+
+/* stats / metrics */
+.page-pro .metric-card,.page-pro .pro-stat-box{background:var(--panel)}
+.page-pro .metric-data strong,.page-pro .pro-stat-val{font-family:"DM Sans",sans-serif!important;font-weight:700;font-size:1.5rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.page-pro .metric-data small,.page-pro .pro-stat-label{color:var(--muted);font-size:.74rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.page-pro .metric-icon-box{background:rgba(184,95,88,.12)!important;color:var(--accent);border-radius:10px;border:0}
+.page-pro .metric-card:nth-child(2) .metric-icon-box{background:rgba(46,139,87,.12)!important;color:var(--ok)}
+.page-pro .metric-card:nth-child(3) .metric-icon-box{background:rgba(201,138,27,.14)!important;color:var(--warn)}
+.page-pro .metric-card:nth-child(4) .metric-icon-box{background:rgba(90,110,200,.12)!important;color:#5a6ec8}
+
+/* admin tabs: underline style */
+.page-pro .admin-tabs-nav{background:none!important;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;gap:4px;padding:0}
+.page-pro .tab-btn{background:none!important;color:var(--muted)!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;box-shadow:none!important;padding:12px 18px;font-weight:600}
+.page-pro .tab-btn:hover{color:var(--ink)!important}
+.page-pro .tab-btn.active{color:var(--accent)!important;border-bottom-color:var(--accent)!important}
+.page-pro .filter-btn{background:var(--panel)!important;color:var(--muted)!important;border:1px solid var(--line)!important;border-radius:8px!important;font-weight:600;font-size:.82rem;padding:6px 14px}
+.page-pro .filter-btn.active,.page-pro .filter-btn:hover{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+
+/* badges */
+.page-pro .pro-badge-light,.page-pro .status-pill-badge,.page-pro .promo-status-badge,.page-pro .pro-rank-badge{border-radius:6px;font-weight:600;font-size:.75rem;letter-spacing:.02em;text-transform:none}
+.page-pro .pro-avatar,.page-pro .pro-avatar-wrapper{outline:0}
+.page-pro .pro-hero-content h1,.page-pro .admin-title-row h1{color:var(--ink)!important}
+.page-pro .pro-stat-divider{background:var(--line)}
+.page-pro .site-footer{margin-top:40px}
+.page-pro .profile-heading-title{font-size:clamp(1.7rem,3vw,2.2rem);font-weight:700;margin:2px 0 6px}
+.page-pro .profile-eyebrow{color:var(--accent);font-weight:700;font-size:.78rem;letter-spacing:.04em;text-transform:none}
+.page-pro .pro-hero-stats{background:var(--bg)!important;border:1px solid var(--line)!important;border-radius:12px;box-shadow:none}
+.page-pro .pro-stat-box{background:transparent!important}
+.page-pro .pro-hero-content h1,.page-pro .pro-user-details h1{font-size:1.6rem}
+.page-pro .pro-avatar,.page-pro .pro-avatar-wrapper{box-shadow:none}
+[data-theme="dark"] .page-pro .admin-hero-banner,[data-theme="dark"] .page-pro .pro-hero-banner{background:var(--panel)!important}
