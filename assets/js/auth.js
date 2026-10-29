@@ -88,6 +88,72 @@ function authMessage(err, fallback) {
   return map[err && err.code] || fallback || "An error occurred.";
 }
 
+// Order statuses are stored as Processing / Delivered / Cancelled (the Firestore rules rely on these exact words).
+// "Processing" is shown to people as "In Progress".
+const STATUS_LABELS = { Processing: "In Progress", Delivered: "Delivered", Cancelled: "Cancelled" };
+const statusLabel = (status) => STATUS_LABELS[status] || STATUS_LABELS.Processing;
+
+// Friendly "are you sure?" dialog. Resolves true (confirmed) or false (kept / closed / Esc / click outside).
+function askConfirm({ title, message, confirmText = "Yes", cancelText = "No", danger = false }) {
+  return new Promise((resolve) => {
+    const previouslyFocused = document.activeElement;
+    const overlay = document.createElement("div");
+    overlay.setAttribute("role", "alertdialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.style.cssText =
+      "position:fixed; inset:0; z-index:5000; display:grid; place-items:center; padding:16px; " +
+      "background:rgba(0,0,0,.6); backdrop-filter:blur(4px);";
+
+    const box = document.createElement("div");
+    box.style.cssText =
+      "background:var(--cream-light,#fff); color:inherit; width:100%; max-width:400px; padding:26px 24px 22px; " +
+      "border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,.3); text-align:center;";
+
+    const h = document.createElement("h3");
+    h.textContent = title;
+    h.style.cssText = "margin:0 0 10px; font-size:1.35rem;";
+    const m = document.createElement("p");
+    m.textContent = message;
+    m.style.cssText = "margin:0 0 22px; line-height:1.5; opacity:.85; font-size:.95rem;";
+
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex; gap:10px; flex-wrap:wrap; justify-content:center;";
+    const keepBtn = document.createElement("button");
+    keepBtn.type = "button";
+    keepBtn.textContent = cancelText;
+    keepBtn.style.cssText =
+      "flex:1 1 140px; padding:12px 16px; border-radius:10px; font-weight:700; cursor:pointer; font-family:inherit; " +
+      "background:transparent; color:inherit; border:1px solid rgba(128,128,128,.5);";
+    const yesBtn = document.createElement("button");
+    yesBtn.type = "button";
+    yesBtn.textContent = confirmText;
+    yesBtn.style.cssText =
+      "flex:1 1 140px; padding:12px 16px; border-radius:10px; font-weight:700; cursor:pointer; font-family:inherit; color:#fff; " +
+      "border:1px solid " + (danger ? "#d9534f" : "#57a05f") + "; background:" + (danger ? "#d9534f" : "#57a05f") + ";";
+    row.append(keepBtn, yesBtn);
+    box.append(h, m, row);
+    overlay.appendChild(box);
+
+    const finish = (result) => {
+      document.removeEventListener("keydown", onKey, true);
+      overlay.remove();
+      document.body.style.overflow = prevOverflow;
+      if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus();
+      resolve(result);
+    };
+    const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); finish(false); } };
+    const prevOverflow = document.body.style.overflow;
+    keepBtn.addEventListener("click", () => finish(false));
+    yesBtn.addEventListener("click", () => finish(true));
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) finish(false); });
+    document.addEventListener("keydown", onKey, true);
+
+    document.body.style.overflow = "hidden";
+    document.body.appendChild(overlay);
+    keepBtn.focus(); // the safe choice is focused by default
+  });
+}
+
 function getGuestCart() {
   try {
     const raw = localStorage.getItem("youyou_cart");
@@ -513,7 +579,7 @@ async function loadCustomerOrderHistory(user, db) {
               <div style="font-size: 0.8rem; color: var(--brown-soft);">${esc(data.date || "Recently")}</div>
             </div>
             <span class="status-pill-badge ${statusClass}" id="customer-status-${orderId}" ${isCancelled ? 'style="background:#ffebee; color:#c62828;"' : ""}>
-              ${esc(data.status || "Processing")}
+              ${esc(statusLabel(data.status))}
             </span>
           </div>
           <div style="font-size: 0.9rem; margin: 10px 0; color: var(--brown-soft);">${itemsList}</div>
@@ -521,7 +587,7 @@ async function loadCustomerOrderHistory(user, db) {
             <div>
               ${priceDisplay}
             </div>
-            ${isProcessing ? `<button class="btn-cancel-order" data-id="${orderId}" style="background: transparent; border: 1px solid #d9534f; color: #d9534f; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Cancel</button>` : ""}
+            ${isProcessing ? `<button class="btn-cancel-order" data-id="${esc(orderId)}" style="background: transparent; border: 1px solid #d9534f; color: #d9534f; padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Cancel Order</button>` : ""}
           </div>
         </div>
       `;
@@ -534,26 +600,33 @@ async function loadCustomerOrderHistory(user, db) {
     updateProfileRankBadge(totalSpent);
 
     document.querySelectorAll(".btn-cancel-order").forEach((btn) => {
-      btn.addEventListener("click", async (e) => {
-        const orderId = e.target.getAttribute("data-id");
-        if (confirm("Are you sure you want to cancel this order?")) {
-          try {
-            e.target.disabled = true;
-            e.target.textContent = "Cancelling...";
-            await updateDoc(doc(db, "orders", orderId), { status: "Cancelled" });
-            e.target.style.display = "none";
-            const statusBadge = document.getElementById(`customer-status-${orderId}`);
-            if (statusBadge) {
-              statusBadge.textContent = "Cancelled";
-              statusBadge.className = "status-pill-badge cancelled";
-              statusBadge.style = "background:#ffebee; color:#c62828;";
-            }
-          } catch (err) {
-            console.error("Cancellation failed", err);
-            alert("Unable to cancel the order.");
-            e.target.disabled = false;
-            e.target.textContent = "Cancel";
+      btn.addEventListener("click", async () => {
+        const orderId = btn.getAttribute("data-id");
+        const sure = await askConfirm({
+          title: "Cancel this order?",
+          message: `Order #${orderId.slice(-6).toUpperCase()} will be cancelled and we won't prepare it. This can't be undone, but you're always welcome to place a new order.`,
+          confirmText: "Yes, cancel order",
+          cancelText: "No, keep my order",
+          danger: true
+        });
+        if (!sure) return;
+
+        btn.disabled = true;
+        btn.textContent = "Cancelling...";
+        try {
+          await updateDoc(doc(db, "orders", orderId), { status: "Cancelled" });
+          btn.remove();
+          const statusBadge = document.getElementById(`customer-status-${orderId}`);
+          if (statusBadge) {
+            statusBadge.textContent = "Cancelled";
+            statusBadge.className = "status-pill-badge cancelled";
+            statusBadge.style.cssText = "background:#ffebee; color:#c62828;";
           }
+        } catch (err) {
+          console.error("Cancellation failed", err);
+          alert("Unable to cancel the order. If it was already prepared, please contact us on WhatsApp.");
+          btn.disabled = false;
+          btn.textContent = "Cancel Order";
         }
       });
     });
@@ -877,7 +950,12 @@ function initAdminDashboard(db) {
         ? `<div style="font-size:.85rem; color:#57a05f; font-weight:600;">Promo ${esc(data.promoCode)} (-${discount.toFixed(2)} DH)</div>`
         : "";
       const total = Number(data.totalAmount) || 0;
-      const canToggle = status !== "Cancelled";
+      const statusBtn = (value, color) => {
+        const active = status === value;
+        return `<button type="button" class="admin-status-btn" data-set-status="${value}" data-id="${esc(id)}" ${active ? 'disabled aria-pressed="true"' : 'aria-pressed="false"'}
+          style="padding:7px 13px; border-radius:8px; font-size:.82rem; font-weight:700; font-family:inherit; border:1px solid ${color};
+                 cursor:${active ? "default" : "pointer"}; background:${active ? color : "transparent"}; color:${active ? "#fff" : color};">${esc(STATUS_LABELS[value])}</button>`;
+      };
       return `
         <div class="admin-order-card ${cls}" data-id="${esc(id)}" data-status="${esc(status)}" style="${filter === "all" || filter === status ? "" : "display:none;"}">
           <div class="admin-order-header">
@@ -885,7 +963,7 @@ function initAdminDashboard(db) {
               <strong>Order #${esc(id.slice(-6).toUpperCase())}</strong>
               <div style="font-size:.8rem; color: var(--brown-soft);">${esc(data.date || "")}</div>
             </div>
-            <span class="status-pill-badge ${status === "Delivered" ? "delivered" : status === "Cancelled" ? "cancelled" : "processing"}">${esc(status)}</span>
+            <span class="status-pill-badge ${status === "Delivered" ? "delivered" : status === "Cancelled" ? "cancelled" : "processing"}">${esc(statusLabel(status))}</span>
           </div>
           <div style="margin-bottom:8px;"><strong>${esc(data.customerName || "Guest")}</strong>
             <span style="color: var(--brown-soft); font-size:.85rem;"> · ${esc(data.userEmail || "Guest")}</span></div>
@@ -895,25 +973,38 @@ function initAdminDashboard(db) {
           ${promoLine}
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:8px;">
             <strong style="color: var(--caramel); font-size:1.1rem;">${total.toFixed(2)} DH</strong>
-            ${canToggle ? `
-              <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
-                <input type="checkbox" class="admin-delivered-check" data-id="${esc(id)}" ${status === "Delivered" ? "checked" : ""}>
-                Delivered
-              </label>` : ""}
+            <div class="admin-status-group" role="group" aria-label="Order status" style="display:flex; gap:6px; flex-wrap:wrap;">
+              ${statusBtn("Processing", "#f0ad4e")}
+              ${statusBtn("Delivered", "#57a05f")}
+              ${statusBtn("Cancelled", "#d9534f")}
+            </div>
           </div>
         </div>`;
     }).join("");
   };
 
   if (ordersBox) {
-    ordersBox.addEventListener("change", async (e) => {
-      const box = e.target.closest(".admin-delivered-check");
-      if (!box) return;
-      const id = box.getAttribute("data-id");
+    ordersBox.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".admin-status-btn");
+      if (!btn || btn.disabled) return;
+      const id = btn.getAttribute("data-id");
+      const next = btn.getAttribute("data-set-status");
       const entry = orderDocs.find((o) => o.id === id);
-      if (!entry) return;
-      const next = box.checked ? "Delivered" : "Processing";
-      box.disabled = true;
+      if (!entry || !STATUS_LABELS[next] || entry.data.status === next) return;
+
+      if (next === "Cancelled") {
+        const sure = await askConfirm({
+          title: "Cancel this order?",
+          message: `Order #${id.slice(-6).toUpperCase()} for ${entry.data.customerName || "this customer"} will be marked as Cancelled and won't count as revenue. You can switch it back to In Progress later.`,
+          confirmText: "Yes, cancel order",
+          cancelText: "Keep order",
+          danger: true
+        });
+        if (!sure) return;
+      }
+
+      const group = btn.closest(".admin-status-group");
+      if (group) group.querySelectorAll("button").forEach((b) => (b.disabled = true));
       try {
         await updateDoc(doc(db, "orders", id), { status: next });
         entry.data.status = next;
@@ -922,10 +1013,8 @@ function initAdminDashboard(db) {
         renderUsers();
       } catch (err) {
         console.error("Status update failed:", err);
-        box.checked = !box.checked;
         alert("Could not update the order status. Check Firestore rules and your connection.");
-      } finally {
-        box.disabled = false;
+        renderOrders();
       }
     });
   }
