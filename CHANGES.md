@@ -1,5 +1,7 @@
 # v2.4 - phone polish + WebP
 
+- Home "Popular Cookies" cards now open that item on the menu (menu.html#cookie-classic / #cookie-kinder / #mini-boxes) and flash it. Fixed duplicated carousel dots.
+
 - Footer text properly centred on phones; "From 15dh" badge is now a pill (was clipped by the flower shape); light/dark button has its own calm fade on phones, desktop animation unchanged.
 
 - All images are WebP (HTML, CSS and JSON-LD references updated; no broken .png/.jpg links). Images resized for phones: 6.8 MB -> 1.65 MB.

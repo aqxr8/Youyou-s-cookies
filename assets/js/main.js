@@ -232,3 +232,11 @@ function loadBrandLogos() {
     if (p && p.catch) p.catch(() => {});
   });
 }
+
+// Home page: tapping anywhere on a "Popular Cookies" card opens that item on the menu
+document.addEventListener("click", (e) => {
+  const card = e.target.closest && e.target.closest(".product-card[data-href]");
+  if (!card || e.target.closest("a")) return; // real links navigate by themselves
+  window.location.href = card.getAttribute("data-href");
+});
+
