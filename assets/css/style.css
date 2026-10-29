@@ -28,11 +28,11 @@ body {
   background: var(--cream-light);
   line-height: 1.8;
   overflow-x: hidden;
-  cursor: url('../images/cookie-arrow.png') 0 0, auto;
+  cursor: url('../images/cookie-arrow.webp') 0 0, auto;
 }
 
 a, button, select, .theme-toggle, .nav-toggle, .cookie-icon, .nav-close, .faq-q {
-  cursor: url('../images/cookie-bite.png') 16 16, pointer !important;
+  cursor: url('../images/cookie-bite.webp') 16 16, pointer !important;
 }
 
 h1, h2, h3 {
@@ -2117,7 +2117,7 @@ html[data-theme="dark"] .site-header .brand-logo-wrapper > video.logo-dark {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: linear-gradient(rgba(18, 14, 12, 0.7), rgba(18, 14, 12, 0.8)), url('../images/cover2.jpg');
+  background-image: linear-gradient(rgba(18, 14, 12, 0.7), rgba(18, 14, 12, 0.8)), url('../images/cover2.webp');
   background-size: cover;
   background-position: center;
   padding: 20px;

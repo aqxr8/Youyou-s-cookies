@@ -195,7 +195,17 @@ function initTheme() {
     toggle.addEventListener("click", () => {
       const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
       window.safeStorage.set("youyou_theme", next);
+      // phones: pause every colour transition for one frame so the swap is clean (see mobile.css)
+      const root = document.documentElement;
+      root.classList.add("theme-switching");
       apply(next);
+      void root.offsetHeight;
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-switching")));
+      // small fade-in of the new label (phone drawer button)
+      toggle.classList.remove("theme-pop");
+      void toggle.offsetWidth;
+      toggle.classList.add("theme-pop");
+      setTimeout(() => toggle.classList.remove("theme-pop"), 400);
     });
   });
 }

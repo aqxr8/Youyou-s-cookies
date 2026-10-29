@@ -1,3 +1,17 @@
+# v2.4 - phone polish + WebP
+
+- Footer text properly centred on phones; "From 15dh" badge is now a pill (was clipped by the flower shape); light/dark button has its own calm fade on phones, desktop animation unchanged.
+
+- All images are WebP (HTML, CSS and JSON-LD references updated; no broken .png/.jpg links). Images resized for phones: 6.8 MB -> 1.65 MB.
+  The only PNG is `assets/images/apple-touch-icon.png`, because iPhones ignore WebP for the home-screen icon.
+- New `assets/css/mobile.css` (loaded last on every page): single-column footer, horizontal product cards on the home page,
+  44px tap targets, 16px form fields (no iOS zoom-on-focus), safe-area cart drawer, phone-friendly admin stat cards.
+- Pinch-to-zoom re-enabled on login/signup/forgot-password (removed maximum-scale / user-scalable=no).
+- Cart toast no longer wraps into a tall bubble or blocks taps.
+- Includes v2.3.1: In Progress / Delivered / Cancelled buttons in admin, and a "Cancel Order" confirmation dialog for customers.
+
+---
+
 # v2.3 - bug-fix release
 
 IMPORTANT: publish the new `firestore.rules` in Firebase Console > Firestore > Rules, and redeploy to Vercel.

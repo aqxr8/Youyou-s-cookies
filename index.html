@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" sizes="48x48" href="assets/images/logo.png">
-  <link rel="apple-touch-icon" href="assets/images/logo1.png">
+  <link rel="icon" type="image/webp" sizes="48x48" href="assets/images/logo.webp">
+  <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
   <meta property="og:site_name" content="Youyou's Cookies">
   <meta name="application-name" content="Youyou's Cookies">
   <meta charset="UTF-8">
@@ -14,7 +14,7 @@
   <meta property="og:title" content="Youyou's Cookies | Made With Love">
   <meta property="og:description" content="Welcome to Aya's cookie world. Handcrafted, small-batch cookies made with love and the finest ingredients.">
   <meta property="og:url" content="https://youyouscookies.vercel.app/">
-  <meta property="og:image" content="https://youyouscookies.vercel.app/assets/images/cover.jpg">
+  <meta property="og:image" content="https://youyouscookies.vercel.app/assets/images/cover.webp">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,7 +29,7 @@
     "@context": "https://schema.org",
     "@type": "Bakery",
     "name": "Youyou's Cookies",
-    "image": "https://youyouscookies.vercel.app/assets/images/logo.png",
+    "image": "https://youyouscookies.vercel.app/assets/images/logo.webp",
     "description": "Small-batch, handcrafted thick cookies baked fresh in Settat. Order via WhatsApp for local cash on delivery.",
     "address": {
       "@type": "PostalAddress",
@@ -50,6 +50,7 @@
   </script>
   <script defer src="/_vercel/insights/script.js"></script>
 <script>try{if(localStorage.getItem('youyou_theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+<link rel="stylesheet" href="assets/css/mobile.css">
 </head>
 <body>
 
@@ -59,14 +60,14 @@
       <!-- Brand Logo & Text -->
       <a class="brand" href="index.html" aria-label="Youyou's Cookies Home">
         <div class="brand-logo-wrapper">
-          <video class="brand-logo logo-light" poster="assets/images/logo.png" autoplay loop muted playsinline>
+          <video class="brand-logo logo-light" poster="assets/images/logo.webp" autoplay loop muted playsinline>
             <source data-src="assets/videos/logo-light.mp4" type="video/mp4">
-            <img src="assets/images/logo.png" alt="Youyou Cookies Logo">
+            <img src="assets/images/logo.webp" alt="Youyou Cookies Logo">
           </video>
 
-          <video class="brand-logo logo-dark" poster="assets/images/logo1.png" autoplay loop muted playsinline>
+          <video class="brand-logo logo-dark" poster="assets/images/logo1.webp" autoplay loop muted playsinline>
             <source data-src="assets/videos/logo-dark.mp4" type="video/mp4">
-            <img src="assets/images/logo1.png" alt="Youyou Cookies Logo">
+            <img src="assets/images/logo1.webp" alt="Youyou Cookies Logo">
           </video>
         </div>
         
@@ -160,9 +161,9 @@
 
   <main>
     <section class="hero hero-carousel" style="position: relative; overflow: hidden; min-height: 80vh; display: flex; align-items: center; justify-content: center;">
-      <div class="hero-slide active" style="background-image: url('assets/images/cover.jpg');"></div>
-      <div class="hero-slide" style="background-image: url('assets/images/cover3.jpg');"></div>
-      <div class="hero-slide" style="background-image: url('assets/images/cover2.jpg');"></div>
+      <div class="hero-slide active" style="background-image: url('assets/images/cover.webp');"></div>
+      <div class="hero-slide" style="background-image: url('assets/images/cover3.webp');"></div>
+      <div class="hero-slide" style="background-image: url('assets/images/cover2.webp');"></div>
 
       <div class="hero-inner" style="text-align: center; color: white;">
         <span class="hero-tag">Aya & Only Aya's</span>
@@ -185,7 +186,7 @@
     <section class="section">
       <div class="container intro reveal">
         <div class="intro-media">
-          <img src="assets/images/chiffon-souffle.jpg" alt="Youyou Cookies fresh out of the oven">
+          <img src="assets/images/chiffon-souffle.webp" alt="Youyou Cookies fresh out of the oven">
         </div>
         <div class="intro-text">
           <span class="en">About Us</span>
@@ -210,7 +211,7 @@
         </div>
         <div class="product-grid">
           <article class="product-card reveal">
-            <img src="assets/images/chiffon-souffle.jpg" alt="Classic Chocolate Chunk Cookie" loading="lazy">
+            <img src="assets/images/chiffon-souffle.webp" alt="Classic Chocolate Chunk Cookie" loading="lazy" decoding="async">
             <div class="body">
               <span class="tag">Signature Must-Try</span>
               <h3>Classic Cookies</h3>
@@ -219,7 +220,7 @@
             </div>
           </article>
           <article class="product-card reveal">
-            <img src="assets/images/kinder%20cookie.jpg" alt="Kinder Cookie" loading="lazy">
+            <img src="assets/images/kinder%20cookie.webp" alt="Kinder Cookie" loading="lazy" decoding="async">
             <div class="body">
               <span class="tag">Aya's Favorite</span>
               <h3>Kinder Cookie</h3>
@@ -228,12 +229,12 @@
             </div>
           </article>
           <article class="product-card reveal">
-            <img src="assets/images/boxes.jpg" alt="Seasonal Cookie" loading="lazy">
+            <img src="assets/images/boxes.webp" alt="Seasonal Cookie" loading="lazy" decoding="async">
             <div class="body">
               <span class="tag">Mix & Match</span>
               <h3>Signature Mini Assortment</h3>
               <p>Build your perfect box. Choose from our 6 signature flavors to create the ultimate bite-sized tasting experience.</p>
-              <div class="price">From 15dh</div>
+              <div class="price price-wide">From 15dh</div>
             </div>
           </article>
         </div>

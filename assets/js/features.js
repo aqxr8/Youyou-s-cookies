@@ -276,9 +276,11 @@ function initCart() {
 
     const toast = document.createElement('div');
     toast.textContent = `Added ${name} to your box!`;
+    toast.setAttribute('role', 'status');
     toast.style.cssText = `
-      position: fixed; bottom: 35px; left: 50%; transform: translate(-50%, 20px); 
-      background: var(--caramel); color: white; padding: 12px 28px; border-radius: 999px; 
+      position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translate(-50%, 20px); 
+      width: max-content; max-width: calc(100vw - 32px); text-align: center; pointer-events: none; 
+      background: var(--caramel); color: white; padding: 12px 24px; border-radius: 999px; 
       box-shadow: 0 10px 30px rgba(0,0,0,0.25); font-weight: 600; z-index: 2000;
       transition: opacity 0.3s, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); opacity: 0;
     `;

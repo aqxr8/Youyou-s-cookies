@@ -1,0 +1,159 @@
+/* =========================================================
+   MOBILE POLISH  (loaded last, only affects phones/tablets)
+   - bigger tap targets, no iOS zoom-on-focus, cleaner stacking
+   ========================================================= */
+
+/* ---- all touch devices ---- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+a, button, input, select, textarea, summary, label { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+@media (hover: none) {
+  .product-card:hover, .new-menu-card:hover, .info-card:hover, .note-card:hover { transform: none; }
+}
+
+@media (max-width: 860px) {
+  body { overflow-x: clip; }
+  img, video, iframe, svg { max-width: 100%; }
+
+  /* iOS zooms the page when a field under 16px is focused */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* ---- tap targets (>= 44px) ---- */
+  .add-to-box-btn { min-height: 44px; }
+  .cart-drawer .close-cart { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .toggle-password-btn { min-width: 44px; min-height: 44px; }
+  .qty-btn { min-width: 40px; min-height: 40px; }
+  .faq-question, .faq summary, details > summary { min-height: 48px; }
+  .site-footer li a, .footer-bottom a { display: inline-block; padding: 8px 0; }
+  .btn { min-height: 46px; }
+  /* carousel dots keep their look but get a 44px touch area */
+  .hero-dots button { position: relative; }
+  .hero-dots button::after { content: ''; position: absolute; inset: -10px; }
+
+  /* ---- cart drawer: real viewport height on mobile browsers + notch/home-bar safe ---- */
+  .cart-drawer { height: 100vh; height: 100dvh; width: 100%; max-width: 420px; }
+  .cart-drawer .cart-footer { padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .cart-drawer .cart-body, .cart-drawer .cart-header, .cart-drawer .cart-footer { padding-left: 20px; padding-right: 20px; }
+}
+
+@media (max-width: 700px) {
+  .container { padding-left: 18px; padding-right: 18px; }
+
+  /* ---- footer: one clean centered column ---- */
+  .footer-grid { grid-template-columns: 1fr !important; gap: 26px; text-align: center; padding-bottom: 28px; }
+  .footer-brand b, .footer-grid b { font-size: 1.7rem; line-height: 1.2; }
+  .site-footer ul { padding: 0; }
+  .site-footer li { text-align: center; }
+  .site-footer li a { justify-content: center; }
+  .footer-bottom { text-align: center; }
+
+  /* ---- info cards (contact page): stack so text isn't squeezed ---- */
+  .info-grid { grid-template-columns: 1fr !important; gap: 14px; }
+
+  /* ---- home "Popular Cookies": comfortable horizontal cards ---- */
+  .product-grid { grid-template-columns: 1fr !important; gap: 14px; }
+  .product-card { display: grid; grid-template-columns: 118px 1fr; align-items: center; text-align: left; border-radius: 18px; }
+  .product-card:hover { transform: none; }
+  .product-card > img { width: 100%; height: 100%; min-height: 118px; aspect-ratio: 1 / 1; object-fit: cover; }
+  .product-card .body { align-items: flex-start; text-align: left; padding: 12px 14px 14px; gap: 4px; min-width: 0; }
+  .product-card h3 { font-size: 1.05rem; margin: 2px 0 0; }
+  .product-card .body p { font-size: .84rem; line-height: 1.4; margin: 0;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .product-card .tag { font-size: .67rem; padding: 4px 10px; letter-spacing: .08em; }
+  .product-card .price { min-width: 0 !important; width: auto !important; height: 40px !important; padding: 0 16px !important;
+    font-size: .95rem !important; margin-top: 6px !important; -webkit-mask: none !important; mask: none !important; border-radius: 999px; }
+
+  /* ---- menu cards: keep 2 columns but make text readable ---- */
+  .new-menu-card .card-img .badge { font-size: .66rem !important; }
+  .new-menu-card .card-info .desc { font-size: .78rem !important; }
+  .new-menu-card .add-to-box-btn { min-height: 42px; font-size: .82rem !important; }
+
+  /* ---- hero buttons: full-width stack feels better under a thumb ---- */
+  .hero-carousel .btn { flex: 1 1 140px; }
+
+  /* ---- reviews / forms ---- */
+  .notes-grid { grid-template-columns: 1fr; gap: 16px; }
+  .note-card { padding: 20px; }
+
+  /* ---- headings: avoid oversized wraps ---- */
+  .section-head h2, .section-title { font-size: clamp(1.5rem, 7vw, 2rem); }
+}
+
+@media (max-width: 380px) {
+  .product-card { grid-template-columns: 96px 1fr; }
+  .new-menu-grid { gap: 8px !important; }
+}
+
+/* landscape phones: don't let the cart/menus exceed the short screen */
+@media (max-height: 480px) and (orientation: landscape) {
+  .cart-drawer .cart-body { padding-top: 12px; padding-bottom: 12px; }
+}
+
+/* ---- admin dashboard on phones ---- */
+@media (max-width: 700px) {
+  .admin-metrics-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .metric-card { padding: 14px !important; gap: 8px !important; min-width: 0; flex-direction: column; align-items: flex-start !important; }
+  .metric-icon-box { width: 38px !important; height: 38px !important; border-radius: 10px !important; }
+  .metric-icon-box svg { width: 18px; height: 18px; }
+  .metric-data { min-width: 0; }
+  .metric-data strong { font-size: 1.2rem !important; }
+  .metric-data small { font-size: .66rem !important; letter-spacing: .02em; display: block; line-height: 1.3; word-break: normal; overflow-wrap: normal; }
+  .admin-tabs-nav { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .admin-tabs-nav::-webkit-scrollbar { display: none; }
+  .tab-btn { white-space: nowrap; min-height: 44px; }
+  .admin-status-btn { flex: 1 1 auto; min-height: 40px; }
+  .admin-status-group { width: 100%; }
+}
+
+/* ---- wide price label ("From 15dh"): the scalloped flower can't stretch, so use a pill (all screen sizes) ---- */
+.product-card .price.price-wide {
+  -webkit-mask: none !important; mask: none !important;
+  border-radius: 999px !important;
+  min-width: 0 !important; width: auto !important;
+  height: 46px !important; padding: 0 24px !important;
+}
+
+/* ---- footer text centred on phones (the paragraph had a max-width but no auto margins) ---- */
+@media (max-width: 700px) {
+  .footer-brand { text-align: center; }
+  .footer-brand p { margin-left: auto !important; margin-right: auto !important; max-width: 320px; text-align: center; }
+  .footer-grid > div { width: 100%; }
+  .site-footer h3.footer-title { text-align: center; }
+}
+
+/* =========================================================
+   LIGHT / DARK BUTTON - phone version
+   Desktop keeps the round icon that slides + rotates.
+   On phones the button is a full-width row inside the menu drawer, where
+   rotating/sliding looked broken. Here: no movement, just a soft fade.
+   ========================================================= */
+@media (max-width: 900px) {
+  .mobile-nav-actions .theme-toggle,
+  .mobile-nav-actions .theme-toggle:hover,
+  .mobile-nav-actions .theme-toggle:active {
+    transform: none !important;
+    transition: background-color .25s ease, color .25s ease, border-color .25s ease !important;
+    overflow: hidden;
+  }
+  /* one label at a time, always in normal flow (no absolute positioning, no sliding) */
+  .mobile-nav-actions .theme-toggle .moon-icon,
+  .mobile-nav-actions .theme-toggle .sun-icon {
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+    pointer-events: none;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  html:not([data-theme="dark"]) .mobile-nav-actions .theme-toggle .sun-icon,
+  html[data-theme="dark"] .mobile-nav-actions .theme-toggle .moon-icon { display: none !important; }
+
+  .mobile-nav-actions .theme-toggle.theme-pop .moon-icon,
+  .mobile-nav-actions .theme-toggle.theme-pop .sun-icon { animation: themeLabelFade .3s ease both; }
+  @keyframes themeLabelFade { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+
+  /* switch the whole page instantly instead of animating hundreds of elements (laggy on phones) */
+  html.theme-switching *, html.theme-switching *::before, html.theme-switching *::after { transition: none !important; }
+}
