@@ -104,3 +104,10 @@ html[dir="rtl"] .hero-tag{letter-spacing:0}
 .mobile-nav-actions .lang-switch{width:100%;box-sizing:border-box}
 .mobile-nav-actions .lang-switch .lang-btn{background:transparent!important;border:0!important;border-radius:999px!important;padding:8px 10px!important;width:auto;flex:1;color:var(--brown)!important}
 .mobile-nav-actions .lang-switch .lang-btn.active{background:var(--caramel,#c0716a)!important;color:#fff!important}
+
+/* ---- login: "Remember me" + "Forgot password" row ---- */
+.auth-options-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-5px 0 16px;flex-wrap:wrap}
+.remember-me{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--brown,#5b2b22);user-select:none}
+.remember-me input{width:17px;height:17px;margin:0;accent-color:var(--caramel,#c0716a);cursor:pointer}
+.auth-options-row .forgot-link{font-size:.85rem;color:var(--caramel,#c0716a);text-decoration:none;font-weight:600}
+.auth-options-row .forgot-link:hover{text-decoration:underline}

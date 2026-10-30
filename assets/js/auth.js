@@ -5,6 +5,9 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
   signOut,
   onAuthStateChanged,
   updatePassword,
@@ -646,6 +649,17 @@ function routeUser(user) {
   }
 }
 
+// "Remember me": ticked (default) = stay signed in on this device; unticked = signed out when the browser closes
+async function applyRememberMe() {
+  const box = document.getElementById("remember-me");
+  const remember = box ? box.checked : true;
+  try {
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+  } catch (e) {
+    console.warn("Could not set login persistence:", e);
+  }
+}
+
 const loginForm = document.getElementById("auth-form");
 if (loginForm) {
   loginForm.addEventListener("submit", async (e) => {
@@ -654,6 +668,7 @@ if (loginForm) {
     const password = document.getElementById("password").value;
 
     try {
+      await applyRememberMe();
       const cred = await signInWithEmailAndPassword(auth, email, password);
       routeUser(cred.user);
     } catch (error) {
@@ -700,6 +715,7 @@ const googleBtn = document.getElementById("google-btn");
 if (googleBtn) {
   googleBtn.addEventListener("click", async () => {
     try {
+      await applyRememberMe();
       const cred = await signInWithPopup(auth, googleProvider);
       const userRef = doc(db, "users", cred.user.uid);
       const userSnap = await getDoc(userRef);

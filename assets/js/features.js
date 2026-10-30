@@ -545,7 +545,7 @@ function initCart() {
           <label for="confirm-address-input" style="display:block; margin-bottom:5px; color:var(--brown); font-weight:600; font-size: 0.9rem;">Delivery Address in Settat:</label>
           <textarea id="confirm-address-input" style="width:100%; padding:12px; border:1px solid rgba(74,55,40,0.2); border-radius:8px; font-family:inherit; background: #fff; color: var(--brown); min-height:80px; resize: vertical;" placeholder="Neighborhood, street, building..."></textarea>
         </div>
-        <button id="confirm-submit-order" class="btn btn-dark" style="width:100%; padding: 14px; font-size: 1.1rem; background: var(--caramel); border-color: var(--caramel);">Confirm & Send via WhatsApp</button>
+        <button id="confirm-submit-order" class="btn btn-dark" style="width:100%; padding: 14px; font-size: 1.1rem; background: var(--caramel); border-color: var(--caramel);">Confirm Order</button>
       </div>
     `;
     document.body.appendChild(confirmModal);
@@ -670,7 +670,7 @@ function initCart() {
         alert("Something went wrong while sending your order. Please try again.");
       } finally {
         confirmSubmitBtn.disabled = false;
-        confirmSubmitBtn.textContent = "Confirm & Send via WhatsApp";
+        confirmSubmitBtn.textContent = "Confirm Order";
         confirmModal.style.display = 'none';
       }
     });
@@ -735,40 +735,41 @@ function initCart() {
       }
     }
 
-    // 3) Time-of-day note, in Morocco time regardless of the visitor's device
-    const mt = window.getMoroccoTime ? window.getMoroccoTime() : { hour: new Date().getHours(), minute: 0 };
-    const hours = window.YOUYOU_HOURS || { open: 15, close: 20 };
-    let timeNote = mt.hour >= hours.close ? "🚨 *[PRE-ORDER FOR TOMORROW]*\n" : (mt.hour < hours.open ? "⏳ *[PRE-ORDER FOR TODAY (15:00 - 20:00)]*\n" : "");
+    // 3) The order must really be saved (the bakery is alerted on Telegram from there).
+    //    If it was not, keep the cart and let the customer try again - never lose an order silently.
+    if (!orderId) throw new Error("Order could not be saved");
 
-    let message = `Hi YouYou's Cookies !\n${timeNote}New order${orderId ? " (Order ref: #" + orderId.slice(-6).toUpperCase() + ")" : ""}:\n\n`;
-    cart.forEach(item => {
-      message += `- ${item.quantity}x ${item.name} (${item.price * item.quantity} DH)\n`;
-    });
-    
-    message += `\n*Real Price:* ${subtotal.toFixed(2)} DH\n`;
-    
-    if (window.activePromo && (!window.activePromo.minAmount || subtotal >= window.activePromo.minAmount)) {
-        message += `*Promo Code Used:* ${window.activePromo.code}\n`;
-        if (window.activePromo.type === 'free_item') {
-            message += `*🎁 Free Gift:* ${freeItemText}\n`;
-        } else {
-            message += `*Discount:* -${totalDiscount.toFixed(2)} DH\n`;
-        }
-    } else {
-        message += `*Promo Code Used:* None\n`;
-    }
-    
-    message += `*Delivery:* ${deliveryFee === 0 ? 'Free' : deliveryFee + ' DH'}\n*New Price:* ${finalTotal.toFixed(2)} DH\n*Phone:* ${phone}\n*Address:* ${address || "Settat"}`;
-    
-    const targetPhone = "212789233029"; 
-    const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
-
-    // Clear the cart first, then hand over to WhatsApp
+    // 4) Clear the cart and show the confirmation on the site (no redirect)
+    const orderRef = "#" + String(orderId).slice(-6).toUpperCase();
     cart = [];
     window.activePromo = null;
     saveCart();
-    window.location.href = waUrl;
-    return;
+    if (window.closeCart) window.closeCart();
+    showOrderSuccess(orderRef);
+  }
+
+  function showOrderSuccess(orderRef) {
+    const old = document.getElementById('order-success-modal');
+    if (old) old.remove();
+    const loggedIn = !!window.currentUserObj;
+    const m = document.createElement('div');
+    m.id = 'order-success-modal';
+    m.setAttribute('role', 'dialog');
+    m.setAttribute('aria-modal', 'true');
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:4000;display:grid;place-items:center;backdrop-filter:blur(4px);padding:16px;';
+    m.innerHTML = `
+      <div style="background:var(--cream);padding:30px 26px;border-radius:18px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.25);">
+        <div style="font-size:3rem;line-height:1;margin-bottom:10px;">🍪</div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--brown);margin:0 0 8px;">Order received!</h3>
+        <p style="color:var(--brown-soft);margin:0 0 6px;font-weight:600;">Order ${orderRef}</p>
+        <p style="color:var(--brown);margin:0 0 20px;line-height:1.5;">Thank you! Aya has your order and will bake it fresh. We deliver between 15:00 and 20:00 and you pay in cash on delivery.</p>
+        ${loggedIn ? '<a href="profile.html" class="btn btn-dark" style="display:block;margin-bottom:10px;background:var(--caramel);border-color:var(--caramel);">View my orders</a>' : ''}
+        <button type="button" id="order-success-close" class="btn btn-dark" style="width:100%;">Close</button>
+      </div>`;
+    document.body.appendChild(m);
+    const close = () => m.remove();
+    m.querySelector('#order-success-close').addEventListener('click', close);
+    m.addEventListener('click', (e) => { if (e.target === m) close(); });
   }
 
   // ====== APPLY PROMO CODE ENGINE ======

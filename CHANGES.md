@@ -1,4 +1,4 @@
-# v4.2.1 - light mode is the default (old saved dark choices reset once); phone theme button is now a round sun/moon icon with no text.
+# v4.2.2 - login "Remember me" checkbox; checkout no longer opens WhatsApp (order is saved + Telegram alert + on-site confirmation); removed the false "Free delivery across Settat" line from the home ticker.
 
 # v4.2 - French + Arabic, pen icon, user photos in admin
 
