@@ -1,4 +1,4 @@
-# v4.2.3 - email receipt after every order (account email for logged-in customers, email field for guests). See README for the Brevo setup.
+# v4.2.4 - receipt email can be sent from your own Gmail (no Brevo needed) and now has a PDF receipt attached.
 
 # v4.2 - French + Arabic, pen icon, user photos in admin
 

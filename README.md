@@ -25,9 +25,16 @@ To run this project locally on your machine:
    ```bash
    git clone https://github.com/aqxr8/Youyou-s-cookies.git
 
-## Email receipts (new)
-After an order, the customer gets a receipt by email (logged-in customers automatically, guests when they type their email).
-It uses `api/send-receipt.js` + Brevo (free, 300 emails/day):
-1. Create a free account on brevo.com and verify `youyouscookies@gmail.com` as a sender (Senders & IP > Senders).
-2. SMTP & API > API keys > create a key.
-3. In Vercel > Settings > Environment Variables add `BREVO_API_KEY` (and optionally `RECEIPT_FROM_EMAIL`, `RECEIPT_FROM_NAME`), then redeploy.
+## Email receipts (PDF attached)
+After an order the customer gets a receipt email with a PDF attached (logged-in customers automatically, guests when they type their email).
+Sending is done by `api/send-receipt.js`. Pick ONE way and add the variables in Vercel > Settings > Environment Variables, then redeploy:
+
+**A) Gmail - recommended (free, no domain, ~500 emails/day)**
+1. In the Google account youyouscookies@gmail.com turn on 2-Step Verification.
+2. Open myaccount.google.com/apppasswords, create an App password (name it "website"), copy the 16 letters.
+3. In Vercel add `GMAIL_APP_PASSWORD` = those 16 letters (spaces don't matter). Optional: `GMAIL_USER` if you use another Gmail address.
+
+**B) Brevo (free, 300/day)** - used only when `GMAIL_APP_PASSWORD` is not set: `BREVO_API_KEY`, and the sender verified in Brevo.
+
+Check it: open `https://YOUR-SITE/api/send-receipt` - it shows which provider is active.
+The project now has a `package.json` (needed for `nodemailer`), so Vercel installs it automatically on deploy.

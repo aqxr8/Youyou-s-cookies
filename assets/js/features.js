@@ -763,13 +763,34 @@ function initCart() {
   }
 
   // Emails the receipt through /api/send-receipt. Resolves true / false.
+  function loadReceiptPdfModule() {
+    if (window.buildReceiptPdf) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const s = document.createElement("script");
+      s.src = "assets/js/receipt-pdf.js";
+      s.onload = () => resolve(!!window.buildReceiptPdf);
+      s.onerror = () => resolve(false);
+      document.head.appendChild(s);
+    });
+  }
+
   async function sendReceiptEmail(email, receipt) {
     try {
+      // PDF is a bonus: if it cannot be built, the email still goes out with the receipt in the body.
+      if (receipt.pdfBase64 === undefined) {
+        receipt.pdfBase64 = null;
+        if (await loadReceiptPdfModule()) receipt.pdfBase64 = await window.buildReceiptPdf(receipt);
+      }
       const res = await fetch("/api/send-receipt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(Object.assign({}, receipt, { email: email }))
       });
+      if (!res.ok) {
+        let info = "";
+        try { info = await res.text(); } catch (e) { /* ignore */ }
+        console.error("Receipt email failed (" + res.status + "):", info);
+      }
       return res.ok;
     } catch (err) {
       console.warn("Receipt email failed:", err);
