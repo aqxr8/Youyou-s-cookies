@@ -60,6 +60,18 @@ const TEXT = {
   }
 };
 
+function buildText(t, d) {
+  const L = [t.title, '', t.hello(d.name), t.intro, '', `${t.order}: ${d.orderRef}`, `${t.date}: ${d.date}`, ''];
+  d.items.forEach((i) => L.push(`${i.quantity} x ${i.name} - ${money(i.price * i.quantity)} DH`));
+  L.push('', `${t.subtotal}: ${money(d.subtotal)} DH`);
+  if (d.promoCode && d.discount > 0) L.push(`${t.promo} ${d.promoCode}: -${money(d.discount)} DH`);
+  L.push(`${t.delivery}: ${d.deliveryFee > 0 ? money(d.deliveryFee) + ' DH' : t.free}`, `${t.total}: ${money(d.total)} DH`, '');
+  if (d.address) L.push(`${t.address}: ${d.address}`);
+  if (d.phone) L.push(`${t.phone}: ${d.phone}`);
+  L.push('', t.pay, '', t.help, t.bye);
+  return L.join('\n');
+}
+
 function buildHtml(t, d) {
   const align = t.dir === 'rtl' ? 'right' : 'left';
   const opp = t.dir === 'rtl' ? 'left' : 'right';
@@ -124,6 +136,9 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     return res.status(200).json({
       ok: true,
+      provider: (String(process.env.EMAIL_PROVIDER || '').toLowerCase() === 'brevo' ? 'brevo'
+        : String(process.env.EMAIL_PROVIDER || '').toLowerCase() === 'gmail' ? 'gmail'
+        : process.env.GMAIL_APP_PASSWORD ? 'gmail' : 'brevo'),
       gmailConfigured: Boolean(process.env.GMAIL_APP_PASSWORD),
       brevoKeyConfigured: Boolean(process.env.BREVO_API_KEY),
       sender: process.env.GMAIL_USER || process.env.RECEIPT_FROM_EMAIL || 'youyouscookies@gmail.com'
@@ -136,8 +151,10 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.BREVO_API_KEY;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
-  if (!apiKey && !gmailPass) {
-    return res.status(500).json({ error: 'Set GMAIL_APP_PASSWORD (or BREVO_API_KEY) in Vercel.', code: 'no_key' });
+  const wanted = String(process.env.EMAIL_PROVIDER || '').toLowerCase();
+  const useGmail = wanted === 'brevo' ? false : wanted === 'gmail' ? true : Boolean(gmailPass);
+  if (useGmail ? !gmailPass : !apiKey) {
+    return res.status(500).json({ error: useGmail ? 'GMAIL_APP_PASSWORD is not set in Vercel.' : 'BREVO_API_KEY is not set in Vercel.', code: 'no_key' });
   }
 
   // --- rate limit (best effort) ---
@@ -193,9 +210,15 @@ export default async function handler(req, res) {
   if (pdfBase64 && (pdfBase64.length > 900000 || !/^JVBER/.test(pdfBase64) || !/^[A-Za-z0-9+/=]+$/.test(pdfBase64))) pdfBase64 = '';
   const pdfName = `Youyou-receipt-${orderRef.replace(/^#/, '')}.pdf`;
 
+  const text = buildText(t, {
+    name, orderRef: '#' + orderRef.replace(/^#/, ''), date, items, subtotal, discount, deliveryFee, total,
+    promoCode: String(body.promoCode || '').slice(0, 40),
+    address: String(body.address || '').slice(0, 300),
+    phone: String(body.phone || '').slice(0, 30)
+  });
   const subject = t.subject('#' + orderRef.replace(/^#/, ''));
   try {
-    if (gmailPass) {
+    if (useGmail) {
       // ---- Gmail (App Password) ----
       const user = process.env.GMAIL_USER || 'youyouscookies@gmail.com';
       const nodemailer = (await import('nodemailer')).default;
@@ -209,6 +232,7 @@ export default async function handler(req, res) {
         replyTo: user,
         subject,
         html,
+        text,
         attachments: pdfBase64 ? [{ filename: pdfName, content: pdfBase64, encoding: 'base64', contentType: 'application/pdf' }] : []
       });
     } else {
@@ -225,6 +249,7 @@ export default async function handler(req, res) {
           replyTo: { email: process.env.RECEIPT_FROM_EMAIL || 'youyouscookies@gmail.com' },
           subject,
           htmlContent: html,
+          textContent: text,
           ...(pdfBase64 ? { attachment: [{ name: pdfName, content: pdfBase64 }] } : {})
         })
       });

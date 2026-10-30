@@ -61,6 +61,7 @@ window.YY_I18N_ROWS.push(
 ["Send my receipt","Envoyer mon reçu","أرسل لي الإيصال"],
 ["Sending...","Envoi en cours...","جارٍ الإرسال..."],
 ["Could not send the receipt. Please try again.","Impossible d'envoyer le reçu. Veuillez réessayer.","تعذّر إرسال الإيصال. يرجى المحاولة مرة أخرى."],
+["Can't find it? Check your spam folder.","Introuvable ? Vérifiez vos courriers indésirables.","لا تجده؟ تحقق من مجلد الرسائل غير المرغوبة (السبام)."],
 ["Remember me","Se souvenir de moi","تذكّرني"],
 ["Order received!","Commande reçue !","تم استلام طلبك!"],
 ["Thank you! Aya has your order and will bake it fresh. We deliver between 15:00 and 20:00 and you pay in cash on delivery.","Merci ! Aya a bien reçu votre commande et la préparera toute fraîche. Nous livrons entre 15h00 et 20h00 et vous payez en espèces à la livraison.","شكراً لك! وصل طلبك إلى آية وستخبزه طازجاً. نوصّل بين 15:00 و20:00 والدفع نقداً عند الاستلام."],

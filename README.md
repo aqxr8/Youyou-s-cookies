@@ -36,5 +36,7 @@ Sending is done by `api/send-receipt.js`. Pick ONE way and add the variables in 
 
 **B) Brevo (free, 300/day)** - used only when `GMAIL_APP_PASSWORD` is not set: `BREVO_API_KEY`, and the sender verified in Brevo.
 
+To force one: set `EMAIL_PROVIDER` = `brevo` (or `gmail`) in Vercel. Without it, Gmail is used when `GMAIL_APP_PASSWORD` exists, otherwise Brevo.
+
 Check it: open `https://YOUR-SITE/api/send-receipt` - it shows which provider is active.
 The project now has a `package.json` (needed for `nodemailer`), so Vercel installs it automatically on deploy.

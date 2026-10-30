@@ -786,14 +786,19 @@ function initCart() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(Object.assign({}, receipt, { email: email }))
       });
+      window.__lastReceiptError = "";
       if (!res.ok) {
         let info = "";
         try { info = await res.text(); } catch (e) { /* ignore */ }
         console.error("Receipt email failed (" + res.status + "):", info);
+        let code = "";
+        try { const j = JSON.parse(info); code = [j.code, j.error, j.detail].filter(Boolean).join(" - "); } catch (e) { code = String(info).slice(0, 120); }
+        window.__lastReceiptError = "HTTP " + res.status + (code ? " - " + code : "");
       }
       return res.ok;
     } catch (err) {
       console.warn("Receipt email failed:", err);
+      window.__lastReceiptError = "Network: " + (err && err.message ? err.message : err);
       return false;
     }
   }
@@ -838,6 +843,25 @@ function initCart() {
       if (!status) return;
       status.textContent = text;
       status.style.color = ok === false ? '#c62828' : (ok ? '#2e7d32' : 'var(--brown)');
+      const oldHint = m.querySelector('#receipt-hint');
+      if (oldHint) oldHint.remove();
+      if (ok === true) {
+        const hint = document.createElement('p');
+        hint.id = 'receipt-hint';
+        hint.style.cssText = 'margin:6px 0 14px;font-size:.8rem;color:var(--brown-soft);';
+        hint.textContent = "Can't find it? Check your spam folder.";
+        status.insertAdjacentElement('afterend', hint);
+      }
+      let dbg = m.querySelector('#receipt-debug');
+      if (dbg) dbg.remove();
+      if (ok === false && window.__lastReceiptError) {
+        dbg = document.createElement('p');
+        dbg.id = 'receipt-debug';
+        dbg.setAttribute('data-i18n-skip', '');
+        dbg.style.cssText = 'margin:6px 0 14px;font-size:.75rem;color:#8a6a62;word-break:break-word;direction:ltr;';
+        dbg.textContent = 'Reason: ' + window.__lastReceiptError;
+        status.insertAdjacentElement('afterend', dbg);
+      }
     };
 
     if (accountEmail) {
