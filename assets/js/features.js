@@ -741,35 +741,107 @@ function initCart() {
 
     // 4) Clear the cart and show the confirmation on the site (no redirect)
     const orderRef = "#" + String(orderId).slice(-6).toUpperCase();
+    const lang = (window.YYLang && window.YYLang()) || "en";
+    const tr = (txt) => (window.YYT ? window.YYT(txt) : txt);
+    const user = window.currentUserObj;
+    const receipt = {
+      orderRef: orderRef,
+      lang: lang,
+      name: (user && (user.displayName || (window.userDataObj && window.userDataObj.username))) || "",
+      items: cart.map((i) => ({ name: tr(i.name), price: i.price, quantity: i.quantity })),
+      discount: totalDiscount,
+      promoCode: window.activePromo ? window.activePromo.code : "",
+      deliveryFee: deliveryFee,
+      address: address || "Settat",
+      phone: phone
+    };
     cart = [];
     window.activePromo = null;
     saveCart();
     if (window.closeCart) window.closeCart();
-    showOrderSuccess(orderRef);
+    showOrderSuccess(orderRef, receipt);
   }
 
-  function showOrderSuccess(orderRef) {
+  // Emails the receipt through /api/send-receipt. Resolves true / false.
+  async function sendReceiptEmail(email, receipt) {
+    try {
+      const res = await fetch("/api/send-receipt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.assign({}, receipt, { email: email }))
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn("Receipt email failed:", err);
+      return false;
+    }
+  }
+
+  function showOrderSuccess(orderRef, receipt) {
     const old = document.getElementById('order-success-modal');
     if (old) old.remove();
-    const loggedIn = !!window.currentUserObj;
+    const user = window.currentUserObj;
+    const accountEmail = user && user.email ? String(user.email) : "";
+    const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const m = document.createElement('div');
     m.id = 'order-success-modal';
     m.setAttribute('role', 'dialog');
     m.setAttribute('aria-modal', 'true');
-    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:4000;display:grid;place-items:center;backdrop-filter:blur(4px);padding:16px;';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:4000;display:grid;place-items:center;backdrop-filter:blur(4px);padding:16px;overflow:auto;';
+    const inputStyle = "width:100%;padding:12px;border:1px solid rgba(74,55,40,0.2);border-radius:8px;font-family:inherit;background:#fff;color:var(--brown);box-sizing:border-box;";
+    const receiptBlock = accountEmail
+      ? '<p id="receipt-status" style="color:var(--brown);margin:0 0 18px;font-weight:600;">Sending receipt to ' + esc(accountEmail) + '...</p>'
+      : '<div id="receipt-guest" style="margin:0 0 18px;text-align:start;">' +
+          '<label for="receipt-email" style="display:block;margin-bottom:6px;color:var(--brown);font-weight:600;font-size:.92rem;">Enter your email to receive your receipt.</label>' +
+          '<input type="email" id="receipt-email" autocomplete="email" placeholder="Your email" style="' + inputStyle + '">' +
+          '<button type="button" id="receipt-send" class="btn btn-dark" style="width:100%;margin-top:10px;background:var(--caramel);border-color:var(--caramel);">Send my receipt</button>' +
+          '<p id="receipt-status" style="margin:10px 0 0;font-size:.9rem;font-weight:600;"></p>' +
+        '</div>';
     m.innerHTML = `
       <div style="background:var(--cream);padding:30px 26px;border-radius:18px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.25);">
         <div style="font-size:3rem;line-height:1;margin-bottom:10px;">🍪</div>
         <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--brown);margin:0 0 8px;">Order received!</h3>
         <p style="color:var(--brown-soft);margin:0 0 6px;font-weight:600;">Order ${orderRef}</p>
-        <p style="color:var(--brown);margin:0 0 20px;line-height:1.5;">Thank you! Aya has your order and will bake it fresh. We deliver between 15:00 and 20:00 and you pay in cash on delivery.</p>
-        ${loggedIn ? '<a href="profile.html" class="btn btn-dark" style="display:block;margin-bottom:10px;background:var(--caramel);border-color:var(--caramel);">View my orders</a>' : ''}
+        <p style="color:var(--brown);margin:0 0 18px;line-height:1.5;">Thank you! Aya has your order and will bake it fresh. We deliver between 15:00 and 20:00 and you pay in cash on delivery.</p>
+        ${receiptBlock}
+        ${user ? '<a href="profile.html" class="btn btn-dark" style="display:block;margin-bottom:10px;background:var(--caramel);border-color:var(--caramel);">View my orders</a>' : ''}
         <button type="button" id="order-success-close" class="btn btn-dark" style="width:100%;">Close</button>
       </div>`;
     document.body.appendChild(m);
     const close = () => m.remove();
     m.querySelector('#order-success-close').addEventListener('click', close);
     m.addEventListener('click', (e) => { if (e.target === m) close(); });
+
+    const status = m.querySelector('#receipt-status');
+    const setStatus = (text, ok) => {
+      if (!status) return;
+      status.textContent = text;
+      status.style.color = ok === false ? '#c62828' : (ok ? '#2e7d32' : 'var(--brown)');
+    };
+
+    if (accountEmail) {
+      // logged in: send it to the account email automatically
+      sendReceiptEmail(accountEmail, receipt).then((ok) => {
+        setStatus(ok ? 'Receipt sent to ' + accountEmail : 'Could not send the receipt. Please try again.', ok);
+      });
+    } else {
+      // guest: ask for an email
+      const emailInput = m.querySelector('#receipt-email');
+      const sendBtn = m.querySelector('#receipt-send');
+      sendBtn.addEventListener('click', async () => {
+        const email = String(emailInput.value || '').trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+          setStatus('Please enter a valid email address.', false);
+          emailInput.focus();
+          return;
+        }
+        sendBtn.disabled = true;
+        setStatus('Sending...', null);
+        const ok = await sendReceiptEmail(email, receipt);
+        sendBtn.disabled = false;
+        setStatus(ok ? 'Receipt sent to ' + email : 'Could not send the receipt. Please try again.', ok);
+      });
+    }
   }
 
   // ====== APPLY PROMO CODE ENGINE ======

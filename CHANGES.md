@@ -1,4 +1,4 @@
-# v4.2.2 - login "Remember me" checkbox; checkout no longer opens WhatsApp (order is saved + Telegram alert + on-site confirmation); removed the false "Free delivery across Settat" line from the home ticker.
+# v4.2.3 - email receipt after every order (account email for logged-in customers, email field for guests). See README for the Brevo setup.
 
 # v4.2 - French + Arabic, pen icon, user photos in admin
 

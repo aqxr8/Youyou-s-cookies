@@ -24,3 +24,10 @@ To run this project locally on your machine:
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/aqxr8/Youyou-s-cookies.git
+
+## Email receipts (new)
+After an order, the customer gets a receipt by email (logged-in customers automatically, guests when they type their email).
+It uses `api/send-receipt.js` + Brevo (free, 300 emails/day):
+1. Create a free account on brevo.com and verify `youyouscookies@gmail.com` as a sender (Senders & IP > Senders).
+2. SMTP & API > API keys > create a key.
+3. In Vercel > Settings > Environment Variables add `BREVO_API_KEY` (and optionally `RECEIPT_FROM_EMAIL`, `RECEIPT_FROM_NAME`), then redeploy.

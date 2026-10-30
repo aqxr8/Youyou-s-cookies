@@ -43,6 +43,8 @@
     [/^Order #(\w+)$/, function (m) { return "Commande #" + m[1]; }, function (m) { return "الطلب #" + m[1]; }],
     [/^• (\d+)x (.+?) \((\d+(?:\.\d+)?) DH\)$/, function (m) { return "• " + m[1] + "x " + T(m[2]) + " (" + m[3] + " DH)"; }, function (m) { return "• " + m[1] + "x " + T(m[2]) + " (" + m[3] + " درهم)"; }],
     [/^\((\d+(?:\.\d+)?) DH each\)$/, function (m) { return "(" + m[1] + " DH l'unité)"; }, function (m) { return "(" + m[1] + " درهم للواحدة)"; }],
+    [/^Sending receipt to (.+)\.\.\.$/, function (m) { return "Envoi du reçu à " + m[1] + "..."; }, function (m) { return "جارٍ إرسال الإيصال إلى " + m[1] + "..."; }],
+    [/^Receipt sent to (.+)$/, function (m) { return "Reçu envoyé à " + m[1]; }, function (m) { return "تم إرسال الإيصال إلى " + m[1]; }],
     [/^Added (.+) to your box!$/, function (m) { return T(m[1]) + " ajouté à votre box !"; }, function (m) { return "تمت إضافة " + T(m[1]) + " إلى صندوقك!"; }],
     [/^(\d+) order\(s\) · (\d+(?:\.\d+)?) DH delivered$/, function (m) { return m[1] + " commande(s) · " + m[2] + " DH livrés"; }, function (m) { return m[1] + " طلب(ات) · " + m[2] + " درهم مُسلَّمة"; }],
     [/^Delivery Fee: (\d+(?:\.\d+)?) DH$/, function (m) { return "Frais de livraison : " + m[1] + " DH"; }, function (m) { return "رسوم التوصيل: " + m[1] + " درهم"; }],
