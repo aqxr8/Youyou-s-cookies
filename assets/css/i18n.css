@@ -1,0 +1,106 @@
+/* =========================================================
+   i18n.css - language switcher + Arabic / right-to-left layout
+   ========================================================= */
+
+/* ---- switcher ---- */
+.lang-switch{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;border:1px solid rgba(192,113,106,.45);background:rgba(255,255,255,.55);flex:none}
+.lang-switch .lang-btn{border:0;background:transparent;color:var(--brown,#5b2b22);font:700 .78rem/1 "DM Sans",system-ui,sans-serif;letter-spacing:.02em;padding:7px 10px;border-radius:999px;cursor:pointer;min-width:34px;transition:background .2s,color .2s}
+.lang-switch .lang-btn[lang="ar"]{font-family:"Cairo","Noto Sans Arabic","Segoe UI",Tahoma,sans-serif;font-size:.85rem;letter-spacing:0}
+.lang-switch .lang-btn:hover{background:rgba(192,113,106,.15)}
+.lang-switch .lang-btn.active{background:var(--caramel,#c0716a);color:#fff}
+.lang-switch .lang-btn:focus-visible{outline:2px solid var(--caramel,#c0716a);outline-offset:2px}
+[data-theme="dark"] .lang-switch{background:rgba(255,255,255,.06);border-color:rgba(240,164,155,.4)}
+[data-theme="dark"] .lang-switch .lang-btn{color:#f6d9d3}
+[data-theme="dark"] .lang-switch .lang-btn.active{background:#c0716a;color:#fff}
+.lang-mobile{display:flex;justify-content:center;width:100%;margin-bottom:10px}
+.lang-mobile .lang-btn{flex:1;min-height:40px}
+.lang-floating{position:fixed;top:12px;inset-inline-end:12px;z-index:3500}
+@media (min-width:861px){.lang-mobile{display:none}}
+
+/* ---- Arabic typography ---- */
+html[data-lang="ar"] body,
+html[data-lang="ar"] button,
+html[data-lang="ar"] input,
+html[data-lang="ar"] textarea,
+html[data-lang="ar"] select{font-family:"Cairo","Noto Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif}
+html[data-lang="ar"] h1,html[data-lang="ar"] h2,html[data-lang="ar"] h3,html[data-lang="ar"] h4,
+html[data-lang="ar"] .brand-text b,html[data-lang="ar"] .pf-title,html[data-lang="ar"] .pf-id h1,
+html[data-lang="ar"] .pf-card-h h3{font-family:"Cairo","Noto Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif;letter-spacing:0}
+html[data-lang="ar"] *{letter-spacing:0!important}
+html[data-lang="ar"] .brand-text b,html[data-lang="ar"] .brand-text span{text-transform:none}
+
+/* ---- RTL layout ---- */
+html[dir="rtl"] body{direction:rtl;text-align:start}
+html[dir="rtl"] .brand{flex-direction:row-reverse}
+html[dir="rtl"] .header-inner{direction:rtl}
+html[dir="rtl"] .header-actions{flex-direction:row-reverse}
+html[dir="rtl"] input,html[dir="rtl"] textarea,html[dir="rtl"] select{text-align:right}
+html[dir="rtl"] input[type="email"],html[dir="rtl"] input[type="tel"],html[dir="rtl"] input[type="password"],
+html[dir="rtl"] input[type="url"]{direction:ltr;text-align:right}
+html[dir="rtl"] input[type="email"]::placeholder,html[dir="rtl"] input[type="tel"]::placeholder,
+html[dir="rtl"] input[type="password"]::placeholder{direction:rtl;text-align:right}
+
+/* password eye button + avatar pen swap sides */
+html[dir="rtl"] .password-input-wrapper .pro-input,
+html[dir="rtl"] .password-input-wrapper input{padding-right:14px;padding-left:46px}
+html[dir="rtl"] .toggle-password-btn{right:auto;left:6px}
+html[dir="rtl"] .pf-avatar-btn{right:auto;left:2px}
+html[dir="rtl"] .pf-who{flex-direction:row-reverse}
+
+/* arrows / chevrons that point "forward" */
+html[dir="rtl"] .pf-link svg,html[dir="rtl"] .btn svg{transform:scaleX(-1)}
+
+/* lists, FAQ, footer */
+html[dir="rtl"] ul,html[dir="rtl"] ol{padding-inline-start:1.2em;padding-inline-end:0}
+html[dir="rtl"] .faq-q{text-align:right}
+html[dir="rtl"] .faq-q::after,html[dir="rtl"] .faq-q svg{margin-inline-start:auto}
+html[dir="rtl"] .footer-grid,html[dir="rtl"] .site-footer{text-align:right}
+
+/* cart drawer: keep sliding from the right edge, but lay its content out RTL */
+html[dir="rtl"] .cart-drawer{direction:rtl;text-align:right}
+html[dir="rtl"] .cart-header,html[dir="rtl"] .cart-item-row,html[dir="rtl"] .cart-total-row{flex-direction:row-reverse}
+html[dir="rtl"] .cart-item-info{text-align:right}
+html[dir="rtl"] .qty-controls{direction:ltr}
+html[dir="rtl"] .confirm-modal-content{direction:rtl;text-align:right}
+html[dir="rtl"] .confirm-modal-content [style*="text-align: right"]{text-align:left!important}
+
+/* orders / admin cards */
+html[dir="rtl"] .admin-order-card,html[dir="rtl"] .order-history-card,html[dir="rtl"] .pf-orders .order-history-header{direction:rtl}
+html[dir="rtl"] .admin-order-card[style*="border-left"],html[dir="rtl"] .note-card[style*="border-left"]{border-left:0!important;border-right:5px solid currentColor}
+html[dir="rtl"] .status-pill,html[dir="rtl"] .status-pill-badge{direction:rtl}
+html[dir="rtl"] .tab-btn{flex-direction:row-reverse}
+
+/* admin avatar spacing handled by flex gap; keep email/phone readable */
+html[dir="rtl"] .admin-user-avatar{margin:0}
+
+/* numbers, emails, prices keep their natural left-to-right shape */
+html[dir="rtl"] [href^="mailto:"],html[dir="rtl"] [href^="tel:"],html[dir="rtl"] .pro-email,
+html[dir="rtl"] #cart-total,html[dir="rtl"] .price,html[dir="rtl"] .pro-stat-val{unicode-bidi:plaintext}
+
+/* mobile drawer slides in from the right on RTL too */
+@media (max-width:860px){
+  html[dir="rtl"] .main-nav{text-align:right}
+  html[dir="rtl"] .nav-close{left:14px;right:auto}
+}
+
+/* ---- RTL: home hero (photo goes to the left, text to the right) ---- */
+@media (min-width:861px){
+  html[dir="rtl"] .hero-carousel .hero-slide{right:auto;left:7%}
+  html[dir="rtl"] .hero-carousel .hero-inner,html[dir="rtl"] .hero-carousel .hero-inner>*{text-align:right!important}
+  html[dir="rtl"] .hero-inner>div{justify-content:flex-start!important}
+}
+html[data-lang="ar"] .hero h1{font-family:var(--f-script)!important}
+html[dir="rtl"] .hero-tag{letter-spacing:0}
+
+/* ---- phone menu: theme button is just a round sun / moon icon ---- */
+.mobile-nav-actions #mobile-theme-toggle{
+  width:48px!important;height:48px;min-width:48px;padding:0!important;border-radius:50%!important;
+  align-self:center;margin:0 auto;display:grid!important;place-items:center;gap:0}
+.mobile-nav-actions #mobile-theme-toggle .moon-icon,
+.mobile-nav-actions #mobile-theme-toggle .sun-icon{gap:0!important}
+.mobile-nav-actions #mobile-theme-toggle svg{width:22px;height:22px}
+
+/* phone menu: keep the language pills looking like pills, with the active one highlighted */
+.mobile-nav-actions .lang-switch{width:100%;box-sizing:border-box}
+.mobile-nav-actions .lang-switch .lang-btn{background:transparent!important;border:0!important;border-radius:999px!important;padding:8px 10px!important;width:auto;flex:1;color:var(--brown)!important}
+.mobile-nav-actions .lang-switch .lang-btn.active{background:var(--caramel,#c0716a)!important;color:#fff!important}

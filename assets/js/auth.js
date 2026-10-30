@@ -1024,6 +1024,9 @@ function initAdminDashboard(db) {
   });
 
   // ---------- USERS ----------
+  const avatarFor = (data) =>
+    (data && data.photoURL) ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent((data && (data.username || data.email)) || "User")}&background=c1771e&color=fff&size=128`;
   const renderUsers = () => {
     if (!usersBox) return;
     if (!userDocs.length) { emptyLine(usersBox, "No registered users yet."); return; }
@@ -1039,10 +1042,15 @@ function initAdminDashboard(db) {
       const rank = getCookieRank(spent);
       return `
         <div class="admin-order-card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div>
-            <strong>${esc(data.username || "—")}</strong>
-            <div style="font-size:.85rem; color: var(--brown-soft);">${esc(data.email || "")}${data.phone ? " · " + esc(data.phone) : ""}</div>
-            <div style="font-size:.8rem; color: var(--brown-soft);">${countByUser[id] || 0} order(s) · ${spent} DH delivered</div>
+          <div style="display:flex; align-items:center; gap:14px; min-width:0;">
+            <img class="admin-user-avatar" src="${esc(avatarFor(data))}" alt="" loading="lazy" width="52" height="52"
+                 style="width:52px; height:52px; border-radius:50%; object-fit:cover; flex:none; border:2px solid rgba(193,119,30,.35); background:#f4e6d4;"
+                 onerror="this.onerror=null; this.src='assets/images/logo.webp'">
+            <div style="min-width:0;">
+              <strong>${esc(data.username || "—")}</strong>
+              <div style="font-size:.85rem; color: var(--brown-soft); word-break:break-all;">${esc(data.email || "")}${data.phone ? " · " + esc(data.phone) : ""}</div>
+              <div style="font-size:.8rem; color: var(--brown-soft);">${countByUser[id] || 0} order(s) · ${spent} DH delivered</div>
+            </div>
           </div>
           <span class="status-pill-badge" style="background:${rank.bg}; color:${rank.color}; border:1px solid ${rank.color}40; display:inline-flex; gap:6px; align-items:center;">${rank.icon} ${esc(rank.name)}</span>
         </div>`;

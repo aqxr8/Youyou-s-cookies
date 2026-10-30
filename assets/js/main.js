@@ -189,12 +189,12 @@ function initTheme() {
     loadBrandLogos();
   };
 
-  apply(window.safeStorage.get("youyou_theme") || "light");
+  apply(window.safeStorage.get("youyou_theme_v2") || "light");
 
   themeToggles.forEach(toggle => {
     toggle.addEventListener("click", () => {
       const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      window.safeStorage.set("youyou_theme", next);
+      window.safeStorage.set("youyou_theme_v2", next);
       // phones: pause every colour transition for one frame so the swap is clean (see mobile.css)
       const root = document.documentElement;
       root.classList.add("theme-switching");

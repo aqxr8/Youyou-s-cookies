@@ -1,3 +1,17 @@
+# v4.2.1 - light mode is the default (old saved dark choices reset once); phone theme button is now a round sun/moon icon with no text.
+
+# v4.2 - French + Arabic, pen icon, user photos in admin
+
+- **French and Arabic**: EN / FR / عربي switcher in the header (and in the phone menu). Hand-written translations (no Google Translate) in `assets/js/i18n-dict-1.js` and `i18n-dict-2.js`; engine in `assets/js/i18n.js`; styles in `assets/css/i18n.css`.
+  Arabic switches the whole site to right-to-left. The choice is remembered; on a first visit the browser language is used if it is French or Arabic.
+  Texts that appear later (cart, checkout, order history, admin lists, error messages) are translated too.
+  To change a translation or add a new sentence, edit the rows `["English", "Français", "العربية"]` in the dict files (the English must match the page text exactly).
+  The WhatsApp / Telegram order messages stay in English on purpose, so the bakery always reads the same format.
+- **Profile picture**: the camera icon is now a pen.
+- **Admin > User Directory**: each user now shows their profile picture (initials avatar if they have none).
+
+---
+
 # v2.4 - phone polish + WebP
 
 - Home "Popular Cookies" cards now open that item on the menu (menu.html#cookie-classic / #cookie-kinder / #mini-boxes) and flash it. Fixed duplicated carousel dots.
