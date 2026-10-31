@@ -1,13 +1,13 @@
 /* =========================================================
    halloween.js - seasonal Halloween theme (temporary)
-   - Switches itself ON only from 25 Oct to 31 Oct 2026 (Morocco time) and OFF automatically after.
+   - Switches itself ON only from 25 Oct to 1 Nov 2026 (until 23:59, Morocco time) and OFF automatically after.
    - Test any day with   ?halloween=1   - force it off with   ?halloween=0
    - To remove it for good: delete the 3 Halloween lines in each page <head> (or deploy v8.1.1 again).
    ========================================================= */
 (function () {
   "use strict";
 
-  var FROM = "2026-10-25", TO = "2026-10-31";
+  var FROM = "2026-10-25", TO = "2026-11-01";   // TO = last day it is shown (until 23:59 Morocco time)
   var qs = new URLSearchParams(location.search).get("halloween");
   var today;
   try { today = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Casablanca" }).format(new Date()); }

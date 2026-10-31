@@ -54,3 +54,9 @@ Each use is stored in the `promo_uses` collection (document id = `<promoId>_<uid
 Firestore refuses a second use by the same account, so it cannot be bypassed with two tabs or devices.
 **You must publish the new `firestore.rules`** (Firebase Console > Firestore Database > Rules > paste > Publish) - until then the site
 falls back to the old, weaker method. Admin > Promo Codes shows how many users used each code and a "Who used it" list (name, email, date, order).
+
+## Seasonal themes (automatic)
+- `halloween.js/css`: 25 Oct - 1 Nov 2026 (until 23:59 Morocco time). Test: `?halloween=1`, force off: `?halloween=0`.
+- `christmas.js/css`: 1 - 31 Dec 2026. Test: `?christmas=1`, force off: `?christmas=0`. Keeps the light/dark switch (red & white by day, pine green at night).
+- Change the dates in the `FROM` / `TO` lines at the top of each .js file. To remove a theme for good, delete its 2 lines (`<link>` + `<script>`) in each page's `<head>`.
+- After the event, bump `VERSION` in `sw.js` if you change dates, so phones refresh their saved files.
