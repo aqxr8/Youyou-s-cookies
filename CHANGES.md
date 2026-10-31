@@ -1,3 +1,5 @@
+# v8.1.1-halloween - TEMPORARY Halloween theme (halloween.css/js). Auto-on 25-31 Oct 2026 (Morocco time), auto-off after. Revert = deploy the plain v8.1.1 zip.
+
 # v8.1.1 - admin lock-out fix: rules accept the admin by UID too; admin page shows which account/email-verified state it sees when Firestore refuses.
 
 # v8.1.0 - promo codes can only be used ONCE per account (checked by Firestore, saved with the order); admin promo list shows how many users used each code and who (name, email, date, order). Publish the new firestore.rules!

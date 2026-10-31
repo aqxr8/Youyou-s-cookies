@@ -1,0 +1,92 @@
+/* =========================================================
+   halloween.css - only active when halloween.js sets <html data-halloween>
+   ========================================================= */
+html[data-halloween]{
+  --cream-light:#140b1f; --cream:#1b1030; --white:#251639;
+  --pink:#3a1f52; --pink-deep:#7b36a8; --brown:#fde9d0; --brown-soft:#cdb4e0; --caramel:#ff7a1a;
+  --shadow:0 8px 30px rgba(0,0,0,.55);
+  color-scheme:dark;
+}
+html[data-halloween] body{
+  background:radial-gradient(ellipse at 50% -10%,#3a1763 0%,#1b1030 45%,#0f0817 100%) fixed;
+  color:var(--brown);
+}
+
+/* theme switch is hidden while Halloween is on (the site is dark for the occasion) */
+html[data-halloween] #theme-toggle,
+html[data-halloween] #mobile-theme-toggle{display:none!important}
+
+/* spooky headings */
+html[data-halloween] h1,
+html[data-halloween] h2,
+html[data-halloween] .hero h1,
+html[data-halloween] .section-title{
+  font-family:"Creepster","Playfair Display",Georgia,serif!important;
+  letter-spacing:.05em!important;font-weight:400!important;
+  color:#ffb05a!important;
+  text-shadow:0 0 6px rgba(255,122,26,.65),0 0 22px rgba(255,122,26,.35),0 3px 0 rgba(0,0,0,.45);
+}
+html[data-halloween] .hero h1{font-size:clamp(3rem,9vw,6rem)!important;animation:hwFlicker 5s infinite}
+@keyframes hwFlicker{0%,18%,22%,62%,66%,100%{opacity:1}20%,64%{opacity:.78}}
+
+/* header / ticker / footer */
+html[data-halloween] .site-header,
+html[data-halloween] .site-header.scrolled{
+  background:rgba(20,11,31,.95)!important;border-bottom:2px dashed rgba(255,122,26,.7)!important;
+  box-shadow:0 6px 24px rgba(255,122,26,.12)!important;overflow:visible!important}
+html[data-halloween] .brand-text b{font-family:"Creepster",serif!important;letter-spacing:.06em;color:#ffb05a!important;font-weight:400!important;text-shadow:0 0 10px rgba(255,122,26,.5)}
+html[data-halloween] .brand img,html[data-halloween] .brand-logo{filter:drop-shadow(0 0 8px rgba(255,122,26,.7))}
+html[data-halloween] .ticker{background:linear-gradient(90deg,#5a1d8f,#ff7a1a,#5a1d8f)!important;color:#fff!important}
+html[data-halloween] .site-footer{background:#0b0612!important;border-top:3px solid #ff7a1a}
+.hw-strip{text-align:center;padding:14px 8px 4px;font-size:1.4rem;letter-spacing:.3em;overflow:hidden;white-space:nowrap}
+
+/* hero: purple mist over the round photo only */
+html[data-halloween] .hero-slide::after{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(180deg,rgba(35,10,70,.5) 0%,rgba(20,8,35,.25) 50%,rgba(20,8,35,.6) 100%)}
+html[data-halloween] .hero-carousel{isolation:isolate}
+html[data-halloween] .hero-inner{position:relative;z-index:3}
+html[data-halloween] .hero-tag{background:rgba(20,11,31,.8)!important;color:#ffb05a!important;border-color:#ff7a1a!important}
+
+/* buttons & cards glow */
+html[data-halloween] .btn,html[data-halloween] .btn-dark,html[data-halloween] button.btn{
+  background:linear-gradient(135deg,#ff7a1a,#e8500a)!important;border-color:#ff9a4a!important;color:#1a0b00!important;font-weight:800;
+  box-shadow:0 0 16px rgba(255,122,26,.45)}
+html[data-halloween] .btn-outline,html[data-halloween] .btn-ghost,html[data-halloween] .btn-light{
+  background:transparent!important;color:#ffb05a!important;border:2px solid #ff7a1a!important;box-shadow:none}
+html[data-halloween] .card,html[data-halloween] .menu-card,html[data-halloween] .product-card,
+html[data-halloween] .pf-card,html[data-halloween] .side-card,html[data-halloween] .note-card,
+html[data-halloween] .auth-card,html[data-halloween] .faq-item{
+  background:rgba(37,22,57,.92)!important;border:1px solid rgba(255,122,26,.35)!important;
+  box-shadow:0 8px 28px rgba(0,0,0,.5),0 0 18px rgba(123,54,168,.25)!important;color:var(--brown)}
+html[data-halloween] input,html[data-halloween] textarea,html[data-halloween] select{
+  background:#1b1030!important;color:#fde9d0!important;border-color:rgba(255,122,26,.45)!important}
+html[data-halloween] a{text-decoration-color:rgba(255,122,26,.6)}
+
+/* lang switch + install bar fit the mood */
+html[data-halloween] .lang-switch{background:rgba(255,255,255,.06);border-color:rgba(255,122,26,.6)}
+html[data-halloween] .lang-switch .lang-btn{color:#fde9d0}
+html[data-halloween] .lang-switch .lang-btn.active{background:#ff7a1a;color:#1a0b00}
+html[data-halloween] #install-bar{background:#241538;color:#fde9d0;border-color:rgba(255,122,26,.5)}
+
+/* decorations */
+#hw-bats{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:40}
+#hw-bats span{position:absolute;left:0;top:var(--y);font-size:var(--size);opacity:.85;filter:drop-shadow(0 0 6px rgba(0,0,0,.6));
+  animation:hwFly var(--dur) linear var(--delay) infinite}
+@keyframes hwFly{
+  0%{transform:translate(-12vw,0) rotate(-8deg) scaleX(1)}
+  25%{transform:translate(22vw,-9vh) rotate(6deg) scaleX(.8)}
+  50%{transform:translate(52vw,4vh) rotate(-6deg) scaleX(1)}
+  75%{transform:translate(80vw,-8vh) rotate(8deg) scaleX(.8)}
+  100%{transform:translate(112vw,2vh) rotate(-4deg) scaleX(1)}}
+.hw-web{position:absolute;top:0;width:130px;height:130px;color:rgba(255,255,255,.4);pointer-events:none;z-index:4}
+.hw-web svg{width:100%;height:100%}
+.hw-web-left{left:0}
+.hw-web-right{right:0;transform:scaleX(-1)}
+.hw-spider{position:absolute;top:100%;right:14%;display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:60;
+  transform-origin:top center;animation:hwSwing 4s ease-in-out infinite}
+.hw-spider i{display:block;width:1px;height:46px;background:rgba(255,255,255,.55)}
+.hw-spider span{font-size:1.7rem;line-height:1;margin-top:-4px}
+@keyframes hwSwing{0%,100%{transform:rotate(-6deg) translateY(0)}50%{transform:rotate(6deg) translateY(10px)}}
+@media (max-width:860px){.hw-web{width:84px;height:84px}.hw-spider{right:22%}.hw-spider i{height:30px}.hw-strip{font-size:1.1rem}}
+@media (prefers-reduced-motion:reduce){#hw-bats span,.hw-spider,html[data-halloween] .hero h1{animation:none!important}}
