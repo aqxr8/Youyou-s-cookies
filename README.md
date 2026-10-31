@@ -40,3 +40,11 @@ To force one: set `EMAIL_PROVIDER` = `brevo` (or `gmail`) in Vercel. Without it,
 
 Check it: open `https://YOUR-SITE/api/send-receipt` - it shows which provider is active.
 The project now has a `package.json` (needed for `nodemailer`), so Vercel installs it automatically on deploy.
+
+## Phone app (PWA)
+The site is now an installable app: `manifest.webmanifest`, `sw.js` (service worker), `offline.html`, `assets/icons/`, `assets/js/pwa.js`, `assets/css/pwa.css`.
+- **Android (Chrome):** open the site, tap the "Install" bar (or menu > Install app). It appears on the home screen with the Youyou's Cookies icon and opens full screen.
+- **iPhone (Safari):** tap Share > Add to Home Screen.
+- Orders, login, Firebase and `/api` calls are never cached; they always use the internet. Without internet the app shows a friendly "No internet connection" screen.
+- Needs HTTPS (Vercel provides it). After changing site files, bump `VERSION` in `sw.js` so phones refresh their saved copies.
+- To publish in Google Play / App Store later, wrap this same site with Capacitor (`npx cap init`, server URL = your site) or use PWABuilder.com, which turns the live site into an Android package for free.

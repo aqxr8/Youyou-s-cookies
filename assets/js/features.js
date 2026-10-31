@@ -767,7 +767,7 @@ function initCart() {
     if (window.buildReceiptPdf) return Promise.resolve(true);
     return new Promise((resolve) => {
       const s = document.createElement("script");
-      s.src = "assets/js/receipt-pdf.js";
+      s.src = "assets/js/receipt-pdf.js?v=20261030a";
       s.onload = () => resolve(!!window.buildReceiptPdf);
       s.onerror = () => resolve(false);
       document.head.appendChild(s);

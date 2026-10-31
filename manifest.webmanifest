@@ -1,0 +1,23 @@
+{
+  "name": "Youyou's Cookies",
+  "short_name": "Youyou's",
+  "description": "Handcrafted small-batch cookies baked fresh in Settat. Order online, pay on delivery.",
+  "id": "/",
+  "start_url": "/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbeeea",
+  "theme_color": "#c0716a",
+  "lang": "en",
+  "categories": ["food", "shopping"],
+  "icons": [
+    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Menu", "url": "/menu?source=shortcut", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "My Profile", "url": "/profile?source=shortcut", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

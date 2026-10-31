@@ -1,3 +1,5 @@
+# v4.3 - installable phone app (PWA): home-screen icon, full-screen app, install bar, offline screen.
+
 # v4.2 - French + Arabic, pen icon, user photos in admin
 
 - **French and Arabic**: EN / FR / عربي switcher in the header (and in the phone menu). Hand-written translations (no Google Translate) in `assets/js/i18n-dict-1.js` and `i18n-dict-2.js`; engine in `assets/js/i18n.js`; styles in `assets/css/i18n.css`.
