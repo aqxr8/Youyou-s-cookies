@@ -24,33 +24,3 @@ To run this project locally on your machine:
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/aqxr8/Youyou-s-cookies.git
-
-## Email receipts (PDF attached)
-After an order the customer gets a receipt email with a PDF attached (logged-in customers automatically, guests when they type their email).
-Sending is done by `api/send-receipt.js`. Pick ONE way and add the variables in Vercel > Settings > Environment Variables, then redeploy:
-
-**A) Gmail - recommended (free, no domain, ~500 emails/day)**
-1. In the Google account youyouscookies@gmail.com turn on 2-Step Verification.
-2. Open myaccount.google.com/apppasswords, create an App password (name it "website"), copy the 16 letters.
-3. In Vercel add `GMAIL_APP_PASSWORD` = those 16 letters (spaces don't matter). Optional: `GMAIL_USER` if you use another Gmail address.
-
-**B) Brevo (free, 300/day)** - used only when `GMAIL_APP_PASSWORD` is not set: `BREVO_API_KEY`, and the sender verified in Brevo.
-
-To force one: set `EMAIL_PROVIDER` = `brevo` (or `gmail`) in Vercel. Without it, Gmail is used when `GMAIL_APP_PASSWORD` exists, otherwise Brevo.
-
-Check it: open `https://YOUR-SITE/api/send-receipt` - it shows which provider is active.
-The project now has a `package.json` (needed for `nodemailer`), so Vercel installs it automatically on deploy.
-
-## Phone app (PWA)
-The site is now an installable app: `manifest.webmanifest`, `sw.js` (service worker), `offline.html`, `assets/icons/`, `assets/js/pwa.js`, `assets/css/pwa.css`.
-- **Android (Chrome):** open the site, tap the "Install" bar (or menu > Install app). It appears on the home screen with the Youyou's Cookies icon and opens full screen.
-- **iPhone (Safari):** tap Share > Add to Home Screen.
-- Orders, login, Firebase and `/api` calls are never cached; they always use the internet. Without internet the app shows a friendly "No internet connection" screen.
-- Needs HTTPS (Vercel provides it). After changing site files, bump `VERSION` in `sw.js` so phones refresh their saved copies.
-- To publish in Google Play / App Store later, wrap this same site with Capacitor (`npx cap init`, server URL = your site) or use PWABuilder.com, which turns the live site into an Android package for free.
-
-## Promo codes: one use per account (server-enforced)
-Each use is stored in the `promo_uses` collection (document id = `<promoId>_<uid>`) in the SAME batch as the order.
-Firestore refuses a second use by the same account, so it cannot be bypassed with two tabs or devices.
-**You must publish the new `firestore.rules`** (Firebase Console > Firestore Database > Rules > paste > Publish) - until then the site
-falls back to the old, weaker method. Admin > Promo Codes shows how many users used each code and a "Who used it" list (name, email, date, order).
