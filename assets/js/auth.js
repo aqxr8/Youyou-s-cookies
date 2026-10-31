@@ -963,7 +963,12 @@ function initAdminDashboard(db) {
   const statUsers = document.getElementById("stat-total-users");
 
   const errorLine = (box, text) => {
-    if (box) box.innerHTML = `<p style="color:#c62828; font-weight:600;">${esc(text)}</p>`;
+    const u = auth.currentUser;
+    const who = u
+      ? `Signed in as ${u.email} - email verified: ${u.emailVerified ? "yes" : "NO (the rules need it, or the admin UID: ${u.uid})"}`
+      : "Not signed in";
+    if (box) box.innerHTML = `<p style="color:#c62828; font-weight:600;">${esc(text)}</p>` +
+      `<p style="color: var(--brown-soft); font-size:.8rem; word-break:break-all;" data-i18n-skip>${esc(who.replace("${u.uid}", u ? u.uid : ""))}</p>`;
   };
   const emptyLine = (box, text) => {
     if (box) box.innerHTML = `<p style="color: var(--brown-soft); font-style: italic;">${esc(text)}</p>`;

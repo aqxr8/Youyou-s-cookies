@@ -5,10 +5,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function signedIn() { return request.auth != null; }
+    // Admin = the store account with a VERIFIED email (e.g. signed in with Google),
+    // OR the exact admin user id. If the admin dashboard is empty, copy the admin UID shown on the
+    // admin page (or Firebase Console > Authentication > Users > User UID) and put it below.
     function isAdmin() {
-      return signedIn()
-        && request.auth.token.email == "youyouscookies@gmail.com"
-        && request.auth.token.email_verified == true;
+      return signedIn() && (
+        request.auth.uid == "PUT_ADMIN_UID_HERE"
+        || (request.auth.token.email == "youyouscookies@gmail.com" && request.auth.token.email_verified == true)
+      );
     }
     function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
 
