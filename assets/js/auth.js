@@ -26,6 +26,7 @@ import {
   getDocs,
   updateDoc,
   addDoc,
+  writeBatch,
   deleteDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -303,7 +304,50 @@ window.saveOrderToFirestore = async function (orderData) {
       createdAt: serverTimestamp()
     };
 
-    const docRef = await addDoc(collection(db, "orders"), finalData);
+    // Order + "this account used this promo code" are written TOGETHER (one atomic batch).
+    // The promo_uses document id is <promoId>_<uid>, so Firestore itself refuses a second use of the same
+    // code by the same account (the whole order is rejected), even from another tab or device.
+    const promo = user && orderData.promo && orderData.promo.id && promoCode
+      ? { id: String(orderData.promo.id) } : null;
+    window.__orderSaveError = "";
+    window.__promoFallback = false;
+    let orderId = null;
+
+    if (promo) {
+      const orderRef = doc(collection(db, "orders"));
+      const useRef = doc(db, "promo_uses", promo.id + "_" + user.uid);
+      const batch = writeBatch(db);
+      batch.set(orderRef, finalData);
+      batch.set(useRef, {
+        promoId: promo.id,
+        code: promoCode,
+        uid: user.uid,
+        userEmail: String(user.email || "").slice(0, 120),
+        userName: String(finalData.customerName || "").slice(0, 80),
+        orderId: orderRef.id,
+        discountAmount: discountAmount,
+        createdAt: serverTimestamp()
+      });
+      try {
+        await batch.commit();
+        orderId = orderRef.id;
+      } catch (err) {
+        if (!err || err.code !== "permission-denied") throw err;
+        let alreadyUsed = false;
+        let rulesOutdated = false;
+        try { alreadyUsed = (await getDoc(useRef)).exists(); } catch (e2) { rulesOutdated = true; }
+        if (alreadyUsed) { window.__orderSaveError = "promo_used"; return null; }
+        if (!rulesOutdated) throw err;
+        // Firestore rules not updated yet: keep the shop working with the old (weaker) method
+        console.warn("promo_uses rules missing - publish the new firestore.rules");
+        const fallbackRef = await addDoc(collection(db, "orders"), finalData);
+        orderId = fallbackRef.id;
+        window.__promoFallback = true;
+      }
+    } else {
+      orderId = (await addDoc(collection(db, "orders"), finalData)).id;
+    }
+    const docRef = { id: orderId };
 
     const itemsText = items
       .map(i => `• ${i.quantity}x ${i.name} (${i.price * i.quantity} DH)`)

@@ -48,3 +48,9 @@ The site is now an installable app: `manifest.webmanifest`, `sw.js` (service wor
 - Orders, login, Firebase and `/api` calls are never cached; they always use the internet. Without internet the app shows a friendly "No internet connection" screen.
 - Needs HTTPS (Vercel provides it). After changing site files, bump `VERSION` in `sw.js` so phones refresh their saved copies.
 - To publish in Google Play / App Store later, wrap this same site with Capacitor (`npx cap init`, server URL = your site) or use PWABuilder.com, which turns the live site into an Android package for free.
+
+## Promo codes: one use per account (server-enforced)
+Each use is stored in the `promo_uses` collection (document id = `<promoId>_<uid>`) in the SAME batch as the order.
+Firestore refuses a second use by the same account, so it cannot be bypassed with two tabs or devices.
+**You must publish the new `firestore.rules`** (Firebase Console > Firestore Database > Rules > paste > Publish) - until then the site
+falls back to the old, weaker method. Admin > Promo Codes shows how many users used each code and a "Who used it" list (name, email, date, order).

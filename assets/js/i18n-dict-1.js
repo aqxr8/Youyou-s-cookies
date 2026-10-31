@@ -70,6 +70,8 @@ window.YY_I18N_ROWS.push(
 ["No internet connection","Pas de connexion internet","لا يوجد اتصال بالإنترنت"],
 ["Aya's cookies need a connection to order. Check your internet and try again.","Les cookies d'Aya nécessitent une connexion pour commander. Vérifiez votre internet et réessayez.","كوكيز آية تحتاج إلى اتصال بالإنترنت للطلب. تحقق من الإنترنت وحاول مجدداً."],
 ["Try again","Réessayer","حاول مرة أخرى"],
+["You already used this promo code.","Vous avez déjà utilisé ce code promo.","لقد استعملت رمز الخصم هذا من قبل."],
+["You already used this promo code. It was removed from your box - confirm your order again.","Vous avez déjà utilisé ce code promo. Il a été retiré de votre box - confirmez à nouveau votre commande.","لقد استعملت رمز الخصم هذا من قبل. تمت إزالته من صندوقك - أكّد طلبك مرة أخرى."],
 ["Remember me","Se souvenir de moi","تذكّرني"],
 ["Order received!","Commande reçue !","تم استلام طلبك!"],
 ["Thank you! Aya has your order and will bake it fresh. We deliver between 15:00 and 20:00 and you pay in cash on delivery.","Merci ! Aya a bien reçu votre commande et la préparera toute fraîche. Nous livrons entre 15h00 et 20h00 et vous payez en espèces à la livraison.","شكراً لك! وصل طلبك إلى آية وستخبزه طازجاً. نوصّل بين 15:00 و20:00 والدفع نقداً عند الاستلام."],

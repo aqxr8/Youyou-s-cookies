@@ -1,3 +1,5 @@
+# v8.1.0 - promo codes can only be used ONCE per account (checked by Firestore, saved with the order); admin promo list shows how many users used each code and who (name, email, date, order). Publish the new firestore.rules!
+
 # v4.3 - installable phone app (PWA): home-screen icon, full-screen app, install bar, offline screen.
 
 # v4.2 - French + Arabic, pen icon, user photos in admin

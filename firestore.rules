@@ -85,6 +85,22 @@ service cloud.firestore {
           && !(request.auth.uid in resource.data.usedBy));
     }
 
+    // One document per (promo code, account): its id is <promoId>_<uid>, so the same account can never
+    // create it twice. It is written in the SAME batch as the order, and must point to a real order of that user.
+    match /promo_uses/{useId} {
+      allow read: if isAdmin() || (signedIn() && useId.matches('.+_' + request.auth.uid));
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['promoId','code','uid','userEmail','userName','orderId','discountAmount','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && useId == request.resource.data.promoId + '_' + request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && existsAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId))
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.userId == request.auth.uid
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.promoCode == request.resource.data.code;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }

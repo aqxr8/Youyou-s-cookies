@@ -1,6 +1,6 @@
 /* Youyou's Cookies - service worker (makes the site installable and gives an offline screen).
    Orders, login, Firebase and /api calls are NEVER cached - they always go to the network. */
-const VERSION = 'yy-v1';
+const VERSION = 'yy-v2';
 const STATIC = 'yy-static-' + VERSION;
 const PAGES = 'yy-pages-' + VERSION;
 const PRECACHE = ['/offline', '/assets/images/logo.webp', '/assets/icons/icon-192.png', '/assets/icons/icon-512.png'];

@@ -667,7 +667,11 @@ function initCart() {
         await processFinalCheckout(phone, address);
       } catch (err) {
         console.error("Checkout error:", err);
-        alert("Something went wrong while sending your order. Please try again.");
+        if (err && err.message === "PROMO_USED") {
+          alert("You already used this promo code. It was removed from your box - confirm your order again.");
+        } else {
+          alert("Something went wrong while sending your order. Please try again.");
+        }
       } finally {
         confirmSubmitBtn.disabled = false;
         confirmSubmitBtn.textContent = "Confirm Order";
@@ -713,6 +717,7 @@ function initCart() {
             originalPrice: subtotal,
             totalAmount: finalTotal,
             promoCode: window.activePromo ? window.activePromo.code : null,
+            promo: window.activePromo && window.activePromo.id ? { id: window.activePromo.id, code: window.activePromo.code } : null,
             discountAmount: totalDiscount
           }),
           new Promise((resolve) => setTimeout(() => resolve(null), 6000))
@@ -722,8 +727,14 @@ function initCart() {
       }
     }
 
-    // 2) Mark the promo as used only if the order really was saved
-    if (orderId && window.activePromo && window.activePromo.id && window.currentUserObj) {
+    // 2) The promo use is saved together with the order (auth.js). Only if the Firestore rules are still the
+    //    old ones do we fall back to the old "usedBy" list.
+    if (!orderId && window.__orderSaveError === "promo_used") {
+      window.activePromo = null;
+      updateCartUI();
+      throw new Error("PROMO_USED");
+    }
+    if (orderId && window.__promoFallback && window.activePromo && window.activePromo.id && window.currentUserObj) {
       try {
         const { db, firestore } = await getPromoFirebaseContext();
         const promoRef = firestore.doc(db, "promo_codes", window.activePromo.id);
@@ -948,10 +959,20 @@ function initCart() {
 
       // 3. CHECK EXPIRED, DISABLED, OR ALREADY USED BY THIS USER
       const isExpired = data.expiresAt && new Date(data.expiresAt) <= new Date();
-      const isUsedByUser = Array.isArray(data.usedBy) && data.usedBy.includes(user.uid);
+      let isUsedByUser = Array.isArray(data.usedBy) && data.usedBy.includes(user.uid);
+      if (!isUsedByUser) {
+        try {
+          const useSnap = await firestore.getDoc(firestore.doc(db, "promo_uses", matchingDoc.id + "_" + user.uid));
+          isUsedByUser = useSnap.exists();
+        } catch (e) { /* old rules: the server check at checkout still applies */ }
+      }
       const isDisabled = data.active !== true;
 
-      if (isDisabled || isExpired || isUsedByUser) {
+      if (isUsedByUser) {
+        showMessage("You already used this promo code.", true);
+        return;
+      }
+      if (isDisabled || isExpired) {
         showMessage("This promo code is expired or already used.", true);
         return;
       }
@@ -1112,6 +1133,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const valFree = document.getElementById("val-free");
   const expiresInput = document.getElementById("new-promo-expires");
   let promoSnapshotDocs = [];
+  let promoUses = {};            // promoId -> [{uid,userName,userEmail,orderId,createdAt}]
+  let usersById = {};            // uid -> user doc data (for old records)
+  const openPromoIds = new Set();
 
   let feedback = document.getElementById("admin-promo-feedback");
   if (!feedback) {
@@ -1149,7 +1173,18 @@ document.addEventListener("DOMContentLoaded", () => {
     docs.forEach((promoDoc) => {
       const promo = promoDoc.data();
       const usedBy = Array.isArray(promo.usedBy) ? promo.usedBy : [];
-      const usedCount = usedBy.length;
+      // everyone who used it: new records (promo_uses) + old ones (usedBy list), without duplicates
+      const newUses = promoUses[promoDoc.id] || [];
+      const seenUids = new Set(newUses.map((u) => u.uid));
+      const oldUses = usedBy.filter((uid) => !seenUids.has(uid)).map((uid) => ({
+        uid: uid,
+        userName: (usersById[uid] && usersById[uid].username) || "",
+        userEmail: (usersById[uid] && usersById[uid].email) || "",
+        orderId: "",
+        createdAt: null
+      }));
+      const allUses = newUses.concat(oldUses);
+      const usedCount = allUses.length;
 
       // Timer & Expiration Calculation
       let isExpired = false;
@@ -1206,6 +1241,31 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       info.append(title, details);
 
+      if (usedCount > 0) {
+        const det = document.createElement("details");
+        det.className = "promo-users";
+        det.open = openPromoIds.has(promoDoc.id);
+        det.addEventListener("toggle", () => {
+          if (det.open) openPromoIds.add(promoDoc.id); else openPromoIds.delete(promoDoc.id);
+        });
+        const sum = document.createElement("summary");
+        sum.textContent = `Who used it (${usedCount})`;
+        det.appendChild(sum);
+        const ul = document.createElement("ul");
+        allUses
+          .slice()
+          .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+          .forEach((u) => {
+            const li = document.createElement("li");
+            const when = u.createdAt?.toDate ? u.createdAt.toDate().toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "";
+            const order = u.orderId ? "Order #" + String(u.orderId).slice(-6).toUpperCase() : "";
+            li.textContent = [u.userName || "(unknown)", u.userEmail, when, order].filter(Boolean).join(" · ");
+            ul.appendChild(li);
+          });
+        det.appendChild(ul);
+        info.appendChild(det);
+      }
+
       const actions = document.createElement("div");
       actions.className = "promo-actions";
       
@@ -1259,6 +1319,23 @@ document.addEventListener("DOMContentLoaded", () => {
       const context = await getPromoFirebaseContext();
       await requirePromoAdmin(context);
       const { db, firestore } = context;
+      try {
+        const us = await firestore.getDocs(firestore.collection(db, "users"));
+        us.forEach((d) => { usersById[d.id] = d.data(); });
+      } catch (e) { console.warn("Could not load users for the promo list:", e); }
+      firestore.onSnapshot(
+        firestore.collection(db, "promo_uses"),
+        (snapshot) => {
+          const map = {};
+          snapshot.forEach((d) => {
+            const x = d.data();
+            (map[x.promoId] = map[x.promoId] || []).push(x);
+          });
+          promoUses = map;
+          if (promoSnapshotDocs.length) renderPromos(promoSnapshotDocs);
+        },
+        (error) => console.warn("Could not load promo usage (publish the new firestore.rules):", error)
+      );
       firestore.onSnapshot(
         firestore.collection(db, "promo_codes"),
         (snapshot) => {

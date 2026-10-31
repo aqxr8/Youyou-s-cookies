@@ -111,3 +111,10 @@ html[dir="rtl"] .hero-tag{letter-spacing:0}
 .remember-me input{width:17px;height:17px;margin:0;accent-color:var(--caramel,#c0716a);cursor:pointer}
 .auth-options-row .forgot-link{font-size:.85rem;color:var(--caramel,#c0716a);text-decoration:none;font-weight:600}
 .auth-options-row .forgot-link:hover{text-decoration:underline}
+
+/* ---- admin promo codes: "who used it" list ---- */
+.promo-users{margin-top:8px;font-size:.85rem}
+.promo-users summary{cursor:pointer;font-weight:700;color:var(--caramel,#c0716a);user-select:none}
+.promo-users ul{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:6px;max-height:220px;overflow:auto}
+.promo-users li{padding:7px 10px;border-radius:8px;background:rgba(192,113,106,.1);color:var(--brown,#5b2b22);word-break:break-word}
+[data-theme="dark"] .promo-users li{background:rgba(255,255,255,.07);color:#f6d9d3}
