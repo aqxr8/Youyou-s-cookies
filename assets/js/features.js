@@ -192,9 +192,21 @@ function initQuiz() {
 const MENU_PRICES = {
   'Classic Cookie': 7, 'Extra Chocolate': 10, 'Red Velvet': 12, 'Oreo Cookie': 12,
   'Kinder Cookie': 13, 'Lemon Cookie': 13, 'Lotus Cookie': 15, 'Monster Cookie': 15,
-  'KitKat Cookie': 15, 'Loaded Fudge Brownie': 15,
+  'KitKat Cookie': 15, 'Classic Brownie': 10,
+  'Loaded Fudge Brownie': 10,   // old name, kept so carts saved before the rename still work (and get the right price)
   '10 Mini Cookies Box': 15, '15 Mini Cookies Box': 20, '20 Mini Cookies Box': 27, '30 Mini Cookies Box': 40
 };
+
+// Safety net: if a menu button's data-price ever differs from MENU_PRICES, say so in the browser console
+// (the cart always charges MENU_PRICES, so a mismatch means the menu card shows a different price).
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.add-to-cart[data-name]').forEach((b) => {
+    const n = b.getAttribute('data-name');
+    const p = Number(b.getAttribute('data-price'));
+    if (!Object.prototype.hasOwnProperty.call(MENU_PRICES, n)) console.warn('[menu] "' + n + '" is not in MENU_PRICES');
+    else if (MENU_PRICES[n] !== p) console.warn('[menu] price mismatch for "' + n + '": button ' + p + ' vs MENU_PRICES ' + MENU_PRICES[n]);
+  });
+});
 
 function sanitizeCart(raw) {
   const out = [];
