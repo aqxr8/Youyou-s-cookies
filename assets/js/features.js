@@ -191,7 +191,7 @@ function initQuiz() {
 // Anything in the saved cart that is not on this list, or has a different price, is corrected/dropped.
 const MENU_PRICES = {
   'Classic Cookie': 7, 'Extra Chocolate': 10, 'Red Velvet': 12, 'Oreo Cookie': 12,
-  'Kinder Cookie': 13, 'Lemon Cookie': 13, 'Lotus Cookie': 15, 'Monster Cookie': 15,
+  'Kinder Cookie': 13, 'Lotus Cookie': 15, 'Monster Cookie': 15,
   'KitKat Cookie': 15, 'Classic Brownie': 10,
   'Loaded Fudge Brownie': 10,   // old name, kept so carts saved before the rename still work (and get the right price)
   '10 Mini Cookies Box': 15, '15 Mini Cookies Box': 20, '20 Mini Cookies Box': 27, '30 Mini Cookies Box': 40
