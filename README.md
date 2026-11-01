@@ -70,3 +70,15 @@ falls back to the old, weaker method. Admin > Promo Codes shows how many users u
 `assets/css/cursors.css` (regular) + the cursor block at the end of `halloween.css` / `christmas.css`. Desktop with a mouse only (phones/tablets are untouched).
 Each theme has a normal cursor and a "clickable" cursor (links, buttons, FAQ, toggles). Text fields keep the normal I-beam.
 They are inline SVG (32x32) - to restyle, edit the `url("data:image/svg+xml,...")` in those files; the number pair after it is the click point.
+
+## Newsletter: new flavors, new items, new coupons (Admin > Newsletter)
+**Who gets it:** only customers who ticked "Email me about new flavors, new items and coupons" (at sign-up or in My Profile > Emails & News).
+Nobody is added automatically. Every email has an Unsubscribe link (and Gmail's own Unsubscribe button); people who unsubscribe are skipped.
+**How to send:** Admin > Newsletter > choose New flavor / New item / New coupon (fills a ready text in English, French and Arabic) > edit it >
+optionally pick an active coupon (its code and discount are shown in a box) > **Send a test to me** > **Send to subscribers**.
+Each customer gets the version in their language (English if you leave that language empty). `{name}` becomes their first name.
+Sending is done in batches of 5 with a progress bar; every send is saved in "Sent newsletters".
+**Setup:** same Gmail variables as the receipts (`GMAIL_APP_PASSWORD`, `GMAIL_USER`). Optional: `ADMIN_EMAIL` (default youyouscookies@gmail.com),
+`ADMIN_UID` (only if your admin login is not that email). A normal Gmail account sends about 500 emails a day.
+**Publish the new `firestore.rules`** (adds `unsubscribes` and `campaigns`). Customers who signed up before this update are not subscribed until they tick the box in their profile.
+Files: `api/send-campaign.js`, `unsubscribe.html`, `assets/js/unsubscribe.js`, newsletter code in `assets/js/auth.js`.

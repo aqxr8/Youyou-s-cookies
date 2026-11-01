@@ -77,6 +77,24 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Newsletter "unsubscribed" markers. The document id IS the user's secret unsubscribe token (from the link in every
+    // email), so only someone holding the token can read / create / delete that one marker. Nobody can list them
+    // except the admin. Re-subscribing = deleting the marker.
+    match /unsubscribes/{token} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if token.size() >= 20 && token.size() <= 64 && token.matches('[A-Za-z0-9]+')
+        && request.resource.data.keys().hasOnly(['at'])
+        && request.resource.data.at is timestamp;
+      allow update: if false;
+      allow delete: if true;
+    }
+
+    // Sent newsletters history (admin only)
+    match /campaigns/{id} {
+      allow read, write: if isAdmin();
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       // new accounts can only ever be "customer", with their own email

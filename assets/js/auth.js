@@ -105,6 +105,14 @@ function makeTrackingCode() {
   crypto.getRandomValues(a);
   return Array.from(a, (n) => TRACK_ALPHABET[n % TRACK_ALPHABET.length]).join("");
 }
+// Secret per-user token used in the unsubscribe link of every marketing email.
+function makeUnsubToken() {
+  const a = new Uint32Array(24);
+  crypto.getRandomValues(a);
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  return Array.from(a, (n) => chars[n % chars.length]).join("");
+}
+const siteLang = () => ((window.YYLang && window.YYLang()) || "en");
 const orderNumber = (id, data) =>
   data && /^[A-Z0-9]{8}$/.test(String(data.trackingCode || "")) ? data.trackingCode : String(id).slice(-6).toUpperCase();
 // Keeps the public tracking document in step with the order (only when the order has a tracking code).
@@ -556,6 +564,7 @@ onAuthStateChanged(auth, async (user) => {
       if (phoneInput) phoneInput.value = (userData && userData.phone) || "";
 
       loadCustomerOrderHistory(user, db);
+      initNewsletterToggle(user, userData);
     }
 
     if (PAGE === "admin") {
@@ -773,7 +782,11 @@ if (signupForm) {
         email: email,
         role: "customer",
         joinedAt: new Date(),
-        cart: getGuestCart()
+        cart: getGuestCart(),
+        marketingOptIn: Boolean(document.getElementById("newsletter-opt") && document.getElementById("newsletter-opt").checked),
+        marketingConsentAt: (document.getElementById("newsletter-opt") && document.getElementById("newsletter-opt").checked) ? new Date() : null,
+        unsubToken: makeUnsubToken(),
+        lang: siteLang()
       }, { merge: true });
       routeUser(cred.user);
     } catch (error) {
@@ -801,7 +814,11 @@ if (googleBtn) {
           email: cred.user.email,
           role: "customer",
           joinedAt: new Date(),
-          cart: getGuestCart()
+          cart: getGuestCart(),
+          marketingOptIn: Boolean(document.getElementById("newsletter-opt") && document.getElementById("newsletter-opt").checked),
+          marketingConsentAt: (document.getElementById("newsletter-opt") && document.getElementById("newsletter-opt").checked) ? new Date() : null,
+          unsubToken: makeUnsubToken(),
+          lang: siteLang()
         });
       }
       routeUser(cred.user);
@@ -870,6 +887,43 @@ function flashMsg(el, text, isError) {
   el.style.display = "block";
   el.style.color = isError ? "#c62828" : "#2e7d32";
   el.textContent = text;
+}
+
+// ---------- Newsletter opt-in (profile page) ----------
+// Effective state = user said yes (marketingOptIn) AND has not clicked "unsubscribe" in an email (unsubscribes/<token>).
+async function initNewsletterToggle(user, userData) {
+  const box = document.getElementById("profile-newsletter");
+  const msg = document.getElementById("newsletter-msg");
+  if (!box || box.dataset.bound) return;
+  box.dataset.bound = "1";
+  const token = (userData && userData.unsubToken) || "";
+  let unsubscribed = false;
+  if (token) {
+    try { unsubscribed = (await getDoc(doc(db, "unsubscribes", token))).exists(); } catch (e) { /* rules not published yet */ }
+  }
+  box.checked = Boolean(userData && userData.marketingOptIn) && !unsubscribed;
+  box.addEventListener("change", async () => {
+    const want = box.checked;
+    box.disabled = true;
+    try {
+      const tk = token || makeUnsubToken();
+      if (want && token) {
+        try { await deleteDoc(doc(db, "unsubscribes", token)); } catch (e) { /* nothing to remove */ }
+      }
+      const patch = want
+        ? { marketingOptIn: true, marketingConsentAt: new Date(), unsubToken: tk, lang: siteLang() }
+        : { marketingOptIn: false, unsubToken: tk, lang: siteLang() };
+      await updateDoc(doc(db, "users", user.uid), patch);
+      window.userDataObj = Object.assign({}, window.userDataObj, patch);
+      flashMsg(msg, want ? "You will get news about new flavors and coupons." : "You are unsubscribed from news emails.", false);
+    } catch (err) {
+      console.error("Newsletter preference failed:", err);
+      box.checked = !want;
+      flashMsg(msg, "Could not save your choice. Please try again.", true);
+    } finally {
+      box.disabled = false;
+    }
+  });
 }
 
 const profileForm = document.getElementById("profile-info-form");
@@ -1165,6 +1219,251 @@ function initAdminDashboard(db) {
   };
   bindSummaryButtons();
 
+  // ---------- NEWSLETTER (new flavors / items / coupons) ----------
+  const newsEl = (id) => document.getElementById(id);
+  const NEWS_LANGS = ["en", "fr", "ar"];
+  let newsLang = "en";
+  let unsubTokens = new Set();
+  let promoByCode = {};
+
+  const PRESETS = {
+    flavor: {
+      en: { subject: "A new flavor just landed 🍪", title: "A new flavor is here!", body: "Hi {name},\n\nWe just baked something new: [FLAVOR NAME]. [One line about how it tastes.]\n\nBe the first to try it. Fresh batches are baked every day.", cta: "Order now" },
+      fr: { subject: "Une nouvelle saveur vient d'arriver 🍪", title: "Une nouvelle saveur est là !", body: "Bonjour {name},\n\nNous venons de cuire quelque chose de nouveau : [NOM DE LA SAVEUR]. [Une phrase sur le goût.]\n\nSoyez les premiers à la goûter. Des fournées fraîches sont cuites chaque jour.", cta: "Commander" },
+      ar: { subject: "نكهة جديدة وصلت للتو 🍪", title: "نكهة جديدة بين يديك!", body: "مرحباً {name}،\n\nخبزنا للتو شيئاً جديداً: [اسم النكهة]. [جملة عن المذاق.]\n\nكن أول من يجرّبها. نخبز دفعات طازجة كل يوم.", cta: "اطلب الآن" }
+    },
+    item: {
+      en: { subject: "Something new on our menu", title: "New on the menu", body: "Hi {name},\n\nMeet our newest treat: [ITEM NAME]. [One line about it.]\n\nIt is on the menu now, baked fresh in small batches.", cta: "See the menu" },
+      fr: { subject: "Du nouveau sur notre menu", title: "Nouveau au menu", body: "Bonjour {name},\n\nDécouvrez notre dernière gourmandise : [NOM DU PRODUIT]. [Une phrase à son sujet.]\n\nElle est au menu dès maintenant, cuite fraîche en petites fournées.", cta: "Voir le menu" },
+      ar: { subject: "جديد في قائمتنا", title: "جديد في القائمة", body: "مرحباً {name}،\n\nتعرّف على أحدث حلوياتنا: [اسم المنتج]. [جملة عنه.]\n\nأصبحت الآن في القائمة، مخبوزة طازجة بكميات صغيرة.", cta: "شاهد القائمة" }
+    },
+    coupon: {
+      en: { subject: "A little gift for you 🎁", title: "Your coupon is here", body: "Hi {name},\n\nHere is a coupon just for you. Use the code below at checkout.\n\nIt is valid while it lasts, so don't wait too long!", cta: "Order now" },
+      fr: { subject: "Un petit cadeau pour vous 🎁", title: "Votre code promo est arrivé", body: "Bonjour {name},\n\nVoici un code promo rien que pour vous. Utilisez le code ci-dessous au moment de commander.\n\nIl est valable tant qu'il dure, ne tardez pas !", cta: "Commander" },
+      ar: { subject: "هدية صغيرة لك 🎁", title: "رمز الخصم وصل", body: "مرحباً {name}،\n\nإليك رمز خصم خاص بك. استعمل الرمز أدناه عند إتمام الطلب.\n\nصالح ما دام متاحاً، فلا تتأخر!", cta: "اطلب الآن" }
+    }
+  };
+
+  const subscribers = () => userDocs
+    .filter(({ data }) => data.marketingOptIn === true
+      && /^[A-Za-z0-9]{20,64}$/.test(String(data.unsubToken || ""))
+      && data.email && !unsubTokens.has(data.unsubToken))
+    .map(({ id, data }) => ({
+      id, email: String(data.email), name: String(data.username || ""),
+      lang: NEWS_LANGS.includes(data.lang) ? data.lang : "en", token: String(data.unsubToken)
+    }));
+
+  const renderAudience = () => {
+    const box = newsEl("news-audience");
+    if (!box) return;
+    const subs = subscribers();
+    const optedIn = userDocs.filter(({ data }) => data.marketingOptIn === true).length;
+    const by = { en: 0, fr: 0, ar: 0 };
+    subs.forEach((s) => { by[s.lang] += 1; });
+    box.innerHTML =
+      `<b>${subs.length}</b> subscriber(s) will receive your email (of ${userDocs.length} registered users). ` +
+      `Languages: EN ${by.en} · FR ${by.fr} · AR ${by.ar}.<br>` +
+      `<span style="color: var(--brown-soft); font-size:.85rem;">${optedIn - subs.length} opted in but have unsubscribed. Only people who ticked the box at sign-up or in their profile are included. A normal Gmail account can send about 500 emails per day.</span>` +
+      (subs.length > 400 ? `<br><b style="color:#c62828;">More than 400 subscribers: Gmail may stop sending after about 500 per day.</b>` : "") +
+      (subs.length ? `<details><summary>Show subscribers</summary><ul>${subs.map((s) => `<li>${esc(s.name || "—")} · ${esc(s.email)} · ${esc(s.lang.toUpperCase())}</li>`).join("")}</ul></details>` : "");
+    const sendBtn = newsEl("news-send");
+    if (sendBtn) sendBtn.disabled = subs.length === 0;
+  };
+
+  const couponTexts = (p) => {
+    const v = p.value;
+    const min = Number(p.minAmount) || 0;
+    const until = p.expiresAt && p.expiresAt.toDate ? p.expiresAt.toDate() : null;
+    const d = until ? until.toLocaleDateString("en-GB", { timeZone: TZ, day: "2-digit", month: "2-digit" }) : "";
+    let en, fr, ar;
+    if (p.type === "discount_percent") { en = `${v}% off your order`; fr = `${v} % de réduction`; ar = `خصم ${v}%`; }
+    else if (p.type === "discount_fixed") { en = `${v} DH off your order`; fr = `${v} DH de réduction`; ar = `خصم ${v} درهم`; }
+    else { en = `Free: ${v}`; fr = `Offert : ${v}`; ar = `هدية مجانية: ${v}`; }
+    if (min > 0) { en += ` (orders from ${min} DH)`; fr += ` (dès ${min} DH)`; ar += ` (للطلبات من ${min} درهم)`; }
+    if (d) { en += ` · until ${d}`; fr += ` · jusqu'au ${d}`; ar += ` · حتى ${d}`; }
+    return { en, fr, ar };
+  };
+
+  const readLang = (l) => ({
+    subject: (newsEl(`news-${l}-subject`) || {}).value || "",
+    title: (newsEl(`news-${l}-title`) || {}).value || "",
+    body: (newsEl(`news-${l}-body`) || {}).value || "",
+    cta: (newsEl(`news-${l}-cta`) || {}).value || ""
+  });
+  const writeLang = (l, v) => {
+    ["subject", "title", "body", "cta"].forEach((k) => {
+      const el = newsEl(`news-${l}-${k}`);
+      if (el && v && v[k] != null) el.value = v[k];
+    });
+  };
+  const collectContent = () => { const c = {}; NEWS_LANGS.forEach((l) => { c[l] = readLang(l); }); return c; };
+  const selectedCoupon = () => {
+    const code = (newsEl("news-coupon") || {}).value;
+    const p = code && promoByCode[code];
+    return p ? { code: p.code, text: couponTexts(p) } : null;
+  };
+
+  const newsProgress = (html) => { const el = newsEl("news-progress"); if (el) el.innerHTML = html; };
+  const newsErrorText = (err) => {
+    if (err.status === 404) return "The email service is not on your website yet. Deploy the whole project (the api/send-campaign.js file).";
+    if (err.code === "not_admin") return "The server does not recognise you as the admin. Log in again with the store account (or set ADMIN_UID in Vercel).";
+    if (err.code === "no_key") return "Gmail is not set up: add GMAIL_APP_PASSWORD (and GMAIL_USER) in Vercel, then redeploy.";
+    return "Could not send: " + (err.message || "unknown error");
+  };
+
+  // Sends in small batches so a long list never hits a time limit, with a live progress bar.
+  const sendInBatches = async (recipients, content, coupon, ctaPath) => {
+    const idToken = await auth.currentUser.getIdToken();
+    let sent = 0, failed = 0;
+    const failures = [];
+    const total = recipients.length;
+    const BATCH = 5;
+    for (let i = 0; i < total; i += BATCH) {
+      const chunk = recipients.slice(i, i + BATCH);
+      newsProgress(`Sending... ${i} of ${total}<div class="bar"><i style="width:${Math.round((i / total) * 100)}%"></i></div>`);
+      let res, data;
+      try {
+        res = await fetch("/api/send-campaign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken, recipients: chunk, content, coupon, ctaPath })
+        });
+        data = await res.json().catch(() => ({}));
+      } catch (netErr) {
+        const e = new Error("network problem"); e.status = 0; throw Object.assign(e, { partial: { sent, failed, failures } });
+      }
+      if (!res.ok) {
+        const e = new Error(data.error || "HTTP " + res.status);
+        e.status = res.status; e.code = data.code; e.partial = { sent, failed, failures };
+        throw e;
+      }
+      sent += data.sent || 0;
+      failed += data.failed || 0;
+      (data.results || []).filter((r) => !r.ok).forEach((r) => failures.push(r.email));
+    }
+    newsProgress(`Done: ${sent} of ${total} sent.<div class="bar"><i style="width:100%"></i></div>`);
+    return { sent, failed, failures };
+  };
+
+  const renderCampaigns = async () => {
+    const box = newsEl("news-history");
+    if (!box) return;
+    try {
+      const snap = await getDocs(collection(db, "campaigns"));
+      const rows = snap.docs.map((d) => d.data())
+        .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)).slice(0, 15);
+      box.innerHTML = rows.length
+        ? rows.map((c) => {
+            const when = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleString("en-GB", { timeZone: TZ, dateStyle: "medium", timeStyle: "short" }) : "";
+            return `<div class="row"><strong>${esc(c.subject || "")}</strong><span>${esc(when)} · ${esc(c.type || "")}${c.coupon ? " · code " + esc(c.coupon) : ""} · sent ${esc(c.sent)}/${esc(c.total)}${c.failed ? " (" + esc(c.failed) + " failed)" : ""}</span></div>`;
+          }).join("")
+        : "Nothing sent yet.";
+    } catch (e) {
+      box.textContent = "History is not available yet (publish the new firestore.rules).";
+    }
+  };
+
+  const initNewsletter = async () => {
+    if (!newsEl("news-pane")) return;
+    try { unsubTokens = new Set((await getDocs(collection(db, "unsubscribes"))).docs.map((d) => d.id)); }
+    catch (e) { console.warn("Could not read unsubscribes (publish the new firestore.rules):", e); }
+    renderAudience();
+    try {
+      const snap = await getDocs(collection(db, "promo_codes"));
+      const sel = newsEl("news-coupon");
+      snap.docs.map((d) => d.data()).filter((p) => p.active !== false && p.code && !(p.expiresAt?.toMillis && p.expiresAt.toMillis() < Date.now()))
+        .forEach((p) => {
+          promoByCode[p.code] = p;
+          if (sel) { const o = document.createElement("option"); o.value = p.code; o.textContent = `${p.code} — ${couponTexts(p).en}`; sel.appendChild(o); }
+        });
+    } catch (e) { console.warn("Could not load promo codes for the newsletter:", e); }
+    renderCampaigns();
+  };
+
+  const bindNewsletter = () => {
+    if (!newsEl("news-pane")) return;
+    document.querySelectorAll(".news-lang-btn").forEach((btn) => btn.addEventListener("click", () => {
+      newsLang = btn.getAttribute("data-news-lang");
+      document.querySelectorAll(".news-lang-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      document.querySelectorAll(".news-lang-pane").forEach((p) => p.classList.toggle("active", p.getAttribute("data-news-pane") === newsLang));
+    }));
+    const typeSel = newsEl("news-type");
+    const applyPreset = () => {
+      const p = PRESETS[typeSel.value];
+      if (!p) return;
+      NEWS_LANGS.forEach((l) => writeLang(l, p[l]));
+    };
+    if (typeSel) { typeSel.addEventListener("change", applyPreset); applyPreset(); }
+
+    const validate = (content) => {
+      const en = content.en;
+      if (!en.subject.trim() || !en.title.trim() || !en.body.trim()) {
+        newsProgress('<span class="err">Please fill in the English subject, title and message.</span>');
+        return false;
+      }
+      if (/\[[A-Z][A-Z ]+\]/.test(en.body) || /\[[A-Z][A-Z ]+\]/.test(en.title)) {
+        newsProgress('<span class="err">Replace the [PLACEHOLDERS] in the English message (like [FLAVOR NAME]) before sending.</span>');
+        return false;
+      }
+      return true;
+    };
+
+    const testBtn = newsEl("news-test");
+    if (testBtn) testBtn.addEventListener("click", async () => {
+      const content = collectContent();
+      if (!validate(content)) return;
+      const me = auth.currentUser;
+      if (!me || !me.email) { newsProgress('<span class="err">Log in again.</span>'); return; }
+      testBtn.disabled = true;
+      try {
+        const r = await sendInBatches([{ email: me.email, name: me.displayName || "Admin", lang: newsLang, token: makeUnsubToken() }],
+          content, selectedCoupon(), newsEl("news-cta-path").value);
+        newsProgress(r.sent ? `Test sent to ${esc(me.email)} (${newsLang.toUpperCase()} version). Check your inbox and spam folder.` : '<span class="err">The test email could not be sent.</span>');
+      } catch (err) { newsProgress(`<span class="err">${esc(newsErrorText(err))}</span>`); }
+      finally { testBtn.disabled = false; }
+    });
+
+    const sendBtn = newsEl("news-send");
+    if (sendBtn) sendBtn.addEventListener("click", async () => {
+      const content = collectContent();
+      if (!validate(content)) return;
+      const subs = subscribers();
+      if (!subs.length) { newsProgress('<span class="err">There are no subscribers yet.</span>'); return; }
+      const ok = await askConfirm({
+        title: "Send this newsletter?",
+        message: `"${content.en.subject}" will be emailed to ${subs.length} subscriber(s). You cannot undo this. Tip: send a test to yourself first.`,
+        confirmText: "Send now", cancelText: "Cancel"
+      });
+      if (!ok) return;
+      sendBtn.disabled = true;
+      const coupon = selectedCoupon();
+      let result = { sent: 0, failed: 0, failures: [] };
+      try {
+        result = await sendInBatches(subs.map(({ email, name, lang, token }) => ({ email, name, lang, token })),
+          content, coupon, newsEl("news-cta-path").value);
+        newsProgress(`Done: <b>${result.sent}</b> of ${subs.length} sent.` +
+          (result.failed ? ` <span class="err">${result.failed} failed: ${esc(result.failures.slice(0, 8).join(", "))}${result.failures.length > 8 ? "…" : ""}</span>` : "") +
+          '<div class="bar"><i style="width:100%"></i></div>');
+      } catch (err) {
+        result = err.partial || result;
+        newsProgress(`<span class="err">${esc(newsErrorText(err))}</span> (${result.sent} sent before it stopped)`);
+      }
+      if (result.sent || result.failed) {
+        try {
+          await addDoc(collection(db, "campaigns"), {
+            subject: content.en.subject, type: (typeSel && typeSel.value) || "custom", coupon: coupon ? coupon.code : "",
+            total: subs.length, sent: result.sent, failed: result.failed,
+            by: (auth.currentUser && auth.currentUser.email) || "", createdAt: serverTimestamp()
+          });
+          renderCampaigns();
+        } catch (e) { console.warn("Could not save the campaign history:", e); }
+      }
+      sendBtn.disabled = false;
+      renderAudience();
+    });
+  };
+  bindNewsletter();
+
   // ---------- ORDERS ----------
   const renderOrders = () => {
     renderSummary();
@@ -1387,6 +1686,7 @@ function initAdminDashboard(db) {
       console.error("Users load failed:", err);
       errorLine(usersBox, "Could not load users.");
     }
+    initNewsletter();
     recomputeStats();
     renderOrders();
     renderUsers();

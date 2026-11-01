@@ -82,5 +82,10 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/send-campaign.js": {
+      "maxDuration": 30
+    }
+  }
 }
