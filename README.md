@@ -60,3 +60,8 @@ falls back to the old, weaker method. Admin > Promo Codes shows how many users u
 - `christmas.js/css`: 1 - 31 Dec 2026. Test: `?christmas=1`, force off: `?christmas=0`. Keeps the light/dark switch (red & white by day, pine green at night).
 - Change the dates in the `FROM` / `TO` lines at the top of each .js file. To remove a theme for good, delete its 2 lines (`<link>` + `<script>`) in each page's `<head>`.
 - After the event, bump `VERSION` in `sw.js` if you change dates, so phones refresh their saved files.
+
+## Cookie cursors
+`assets/css/cursors.css` (regular) + the cursor block at the end of `halloween.css` / `christmas.css`. Desktop with a mouse only (phones/tablets are untouched).
+Each theme has a normal cursor and a "clickable" cursor (links, buttons, FAQ, toggles). Text fields keep the normal I-beam.
+They are inline SVG (32x32) - to restyle, edit the `url("data:image/svg+xml,...")` in those files; the number pair after it is the click point.

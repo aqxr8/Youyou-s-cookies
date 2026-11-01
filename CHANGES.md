@@ -1,3 +1,5 @@
+# v8.3.0 - cookie mouse cursors: regular (bitten choc-chip cookie), Halloween (jack-o-lantern cookie), Christmas (Santa-hat cookie), each with a clickable version. Desktop mouse only.
+
 # v8.2.0 - seasonal themes: Halloween now runs until 1 Nov 23:59 (Morocco time); NEW Christmas theme runs 1-31 Dec 2026 automatically. Both switch off by themselves.
 
 # v8.1.1-halloween - TEMPORARY Halloween theme (halloween.css/js). Auto-on 25-31 Oct 2026 (Morocco time), auto-off after. Revert = deploy the plain v8.1.1 zip.
