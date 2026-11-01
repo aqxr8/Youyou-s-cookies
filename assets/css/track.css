@@ -1,0 +1,19 @@
+/* track.css - "Track My Order" page */
+.track-result{margin-top:22px;text-align:center}
+.track-code{font-size:1.25rem;font-weight:800;letter-spacing:.08em;color:var(--caramel);margin-bottom:18px;direction:ltr}
+.track-steps{list-style:none;margin:0 0 18px;padding:0;display:flex;justify-content:space-between;gap:6px;position:relative}
+.track-steps::before{content:"";position:absolute;top:17px;left:16%;right:16%;height:3px;background:rgba(127,127,127,.3);z-index:0}
+.track-steps li{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;z-index:1;font-size:.82rem;color:var(--brown-soft);line-height:1.25}
+.track-steps .dot{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:var(--cream,#fff);border:3px solid rgba(127,127,127,.35);color:var(--brown-soft)}
+.track-steps li.done .dot{background:#57a05f;border-color:#57a05f;color:#fff}
+.track-steps li.done{color:var(--brown)}
+.track-steps li.active .dot{background:#f0ad4e;border-color:#f0ad4e;color:#fff;animation:trackPulse 1.6s ease-in-out infinite}
+.track-steps li.active{color:var(--brown);font-weight:700}
+@keyframes trackPulse{0%,100%{box-shadow:0 0 0 0 rgba(240,173,78,.55)}50%{box-shadow:0 0 0 9px rgba(240,173,78,0)}}
+.track-status{font-weight:700;color:var(--brown);margin:6px 0 12px}
+.track-meta{font-size:.85rem;color:var(--brown-soft);margin:4px 0}
+.track-msg{padding:12px 14px;border-radius:12px;font-weight:600;font-size:.95rem}
+.track-msg.error{background:rgba(217,83,79,.12);color:#c62828;border:1px solid rgba(217,83,79,.35)}
+.track-msg.info{background:rgba(127,127,127,.12);color:var(--brown-soft)}
+[data-theme="dark"] .track-msg.error{color:#ff9a9a}
+@media (prefers-reduced-motion:reduce){.track-steps li.active .dot{animation:none}}

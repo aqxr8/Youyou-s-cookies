@@ -751,12 +751,14 @@ function initCart() {
     if (!orderId) throw new Error("Order could not be saved");
 
     // 4) Clear the cart and show the confirmation on the site (no redirect)
-    const orderRef = "#" + String(orderId).slice(-6).toUpperCase();
+    const trackCode = window.__lastTrackingCode || "";
+    const orderRef = "#" + (trackCode || String(orderId).slice(-6).toUpperCase());
     const lang = (window.YYLang && window.YYLang()) || "en";
     const tr = (txt) => (window.YYT ? window.YYT(txt) : txt);
     const user = window.currentUserObj;
     const receipt = {
       orderRef: orderRef,
+      trackCode: trackCode,
       lang: lang,
       name: (user && (user.displayName || (window.userDataObj && window.userDataObj.username))) || "",
       items: cart.map((i) => ({ name: tr(i.name), price: i.price, quantity: i.quantity })),
@@ -841,7 +843,8 @@ function initCart() {
         <p style="color:var(--brown-soft);margin:0 0 6px;font-weight:600;">Order ${orderRef}</p>
         <p style="color:var(--brown);margin:0 0 18px;line-height:1.5;">Thank you! Aya has your order and will bake it fresh. We deliver between 15:00 and 20:00 and you pay in cash on delivery.</p>
         ${receiptBlock}
-        ${user ? '<a href="profile.html" class="btn btn-dark" style="display:block;margin-bottom:10px;background:var(--caramel);border-color:var(--caramel);">View my orders</a>' : ''}
+        ${receipt.trackCode ? '<a href="track.html?code=' + receipt.trackCode + '" class="btn btn-dark" style="display:block;margin-bottom:10px;background:var(--caramel);border-color:var(--caramel);">Track my order</a>' : ''}
+        ${user ? '<a href="profile.html" class="btn btn-outline" style="display:block;margin-bottom:10px;">View my orders</a>' : ''}
         <button type="button" id="order-success-close" class="btn btn-dark" style="width:100%;">Close</button>
       </div>`;
     document.body.appendChild(m);

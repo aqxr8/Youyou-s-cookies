@@ -97,6 +97,23 @@ function authMessage(err, fallback) {
 const STATUS_LABELS = { Processing: "In Progress", Delivered: "Delivered", Cancelled: "Cancelled" };
 const statusLabel = (status) => STATUS_LABELS[status] || STATUS_LABELS.Processing;
 
+// Customer-facing order number: an 8-letter tracking code (no 0/O/1/I so it is easy to read out loud).
+// Old orders (before tracking existed) fall back to the last 6 characters of the database id.
+const TRACK_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function makeTrackingCode() {
+  const a = new Uint32Array(8);
+  crypto.getRandomValues(a);
+  return Array.from(a, (n) => TRACK_ALPHABET[n % TRACK_ALPHABET.length]).join("");
+}
+const orderNumber = (id, data) =>
+  data && /^[A-Z0-9]{8}$/.test(String(data.trackingCode || "")) ? data.trackingCode : String(id).slice(-6).toUpperCase();
+// Keeps the public tracking document in step with the order (only when the order has a tracking code).
+function addTrackingUpdate(batch, data, status) {
+  if (data && /^[A-Z0-9]{8}$/.test(String(data.trackingCode || ""))) {
+    batch.update(doc(db, "order_tracking", data.trackingCode), { status: status, updatedAt: serverTimestamp() });
+  }
+}
+
 // Friendly "are you sure?" dialog. Resolves true (confirmed) or false (kept / closed / Esc / click outside).
 function askConfirm({ title, message, confirmText = "Yes", cancelText = "No", danger = false }) {
   return new Promise((resolve) => {
@@ -311,13 +328,24 @@ window.saveOrderToFirestore = async function (orderData) {
       ? { id: String(orderData.promo.id) } : null;
     window.__orderSaveError = "";
     window.__promoFallback = false;
+    window.__lastTrackingCode = "";
     let orderId = null;
 
+    // ONE atomic batch: the order, its public tracking document and (if a promo was used) the promo-use record.
+    const trackingCode = makeTrackingCode();
+    const orderRef = doc(collection(db, "orders"));
+    const batch = writeBatch(db);
+    batch.set(orderRef, Object.assign({}, finalData, { trackingCode: trackingCode }));
+    batch.set(doc(db, "order_tracking", trackingCode), {
+      orderId: orderRef.id,
+      status: "Processing",
+      itemCount: items.reduce((n, i) => n + i.quantity, 0),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    let useRef = null;
     if (promo) {
-      const orderRef = doc(collection(db, "orders"));
-      const useRef = doc(db, "promo_uses", promo.id + "_" + user.uid);
-      const batch = writeBatch(db);
-      batch.set(orderRef, finalData);
+      useRef = doc(db, "promo_uses", promo.id + "_" + user.uid);
       batch.set(useRef, {
         promoId: promo.id,
         code: promoCode,
@@ -328,24 +356,23 @@ window.saveOrderToFirestore = async function (orderData) {
         discountAmount: discountAmount,
         createdAt: serverTimestamp()
       });
-      try {
-        await batch.commit();
-        orderId = orderRef.id;
-      } catch (err) {
-        if (!err || err.code !== "permission-denied") throw err;
-        let alreadyUsed = false;
-        let rulesOutdated = false;
-        try { alreadyUsed = (await getDoc(useRef)).exists(); } catch (e2) { rulesOutdated = true; }
-        if (alreadyUsed) { window.__orderSaveError = "promo_used"; return null; }
-        if (!rulesOutdated) throw err;
-        // Firestore rules not updated yet: keep the shop working with the old (weaker) method
-        console.warn("promo_uses rules missing - publish the new firestore.rules");
-        const fallbackRef = await addDoc(collection(db, "orders"), finalData);
-        orderId = fallbackRef.id;
-        window.__promoFallback = true;
+    }
+    try {
+      await batch.commit();
+      orderId = orderRef.id;
+      window.__lastTrackingCode = trackingCode;
+    } catch (err) {
+      if (!err || err.code !== "permission-denied") throw err;
+      if (useRef) {
+        try {
+          if ((await getDoc(useRef)).exists()) { window.__orderSaveError = "promo_used"; return null; }
+        } catch (e2) { /* rules not updated yet */ }
       }
-    } else {
+      // The new Firestore rules are probably not published yet: keep the shop working the old way
+      // (no tracking code, promo recorded in the old "usedBy" list).
+      console.warn("New firestore.rules not published yet - saving the order the old way");
       orderId = (await addDoc(collection(db, "orders"), finalData)).id;
+      window.__promoFallback = Boolean(promo);
     }
     const docRef = { id: orderId };
 
@@ -357,7 +384,7 @@ window.saveOrderToFirestore = async function (orderData) {
       ? `• Promo Code Used: ${promoCode} (-${discountAmount.toFixed(2)} DH)`
       : `• Promo Code Used: None`;
 
-    const telegramMsg = `NEW ORDER RECEIVED #${docRef.id.slice(-6).toUpperCase()}
+    const telegramMsg = `NEW ORDER RECEIVED #${window.__lastTrackingCode || docRef.id.slice(-6).toUpperCase()}
 ───────────────────
 Customer: ${finalData.customerName}
 Phone: ${finalData.phone || "N/A"}
@@ -622,7 +649,8 @@ async function loadCustomerOrderHistory(user, db) {
         <div class="order-history-card">
           <div class="order-history-header">
             <div>
-              <strong style="color: var(--brown);">Order #${orderId.slice(-6).toUpperCase()}</strong>
+              <strong style="color: var(--brown);">Order #${esc(orderNumber(orderId, data))}</strong>
+              ${data.trackingCode ? `<a href="track.html?code=${esc(data.trackingCode)}" style="font-size:.78rem; margin-inline-start:8px; color: var(--caramel); font-weight:700;">Track</a>` : ""}
               <div style="font-size: 0.8rem; color: var(--brown-soft);">${esc(data.date || "Recently")}</div>
             </div>
             <span class="status-pill-badge ${statusClass}" id="customer-status-${orderId}" ${isCancelled ? 'style="background:#ffebee; color:#c62828;"' : ""}>
@@ -634,7 +662,7 @@ async function loadCustomerOrderHistory(user, db) {
             <div>
               ${priceDisplay}
             </div>
-            ${isProcessing ? `<button class="btn-cancel-order" data-id="${esc(orderId)}" style="background: transparent; border: 1px solid #d9534f; color: #d9534f; padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Cancel Order</button>` : ""}
+            ${isProcessing ? `<button class="btn-cancel-order" data-id="${esc(orderId)}" data-num="${esc(orderNumber(orderId, data))}" data-code="${esc(data.trackingCode || "")}" style="background: transparent; border: 1px solid #d9534f; color: #d9534f; padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Cancel Order</button>` : ""}
           </div>
         </div>
       `;
@@ -651,7 +679,7 @@ async function loadCustomerOrderHistory(user, db) {
         const orderId = btn.getAttribute("data-id");
         const sure = await askConfirm({
           title: "Cancel this order?",
-          message: `Order #${orderId.slice(-6).toUpperCase()} will be cancelled and we won't prepare it. This can't be undone, but you're always welcome to place a new order.`,
+          message: `Order #${btn.getAttribute("data-num") || orderId.slice(-6).toUpperCase()} will be cancelled and we won't prepare it. This can't be undone, but you're always welcome to place a new order.`,
           confirmText: "Yes, cancel order",
           cancelText: "No, keep my order",
           danger: true
@@ -661,7 +689,10 @@ async function loadCustomerOrderHistory(user, db) {
         btn.disabled = true;
         btn.textContent = "Cancelling...";
         try {
-          await updateDoc(doc(db, "orders", orderId), { status: "Cancelled" });
+          const cancelBatch = writeBatch(db);
+          cancelBatch.update(doc(db, "orders", orderId), { status: "Cancelled" });
+          addTrackingUpdate(cancelBatch, { trackingCode: btn.getAttribute("data-code") }, "Cancelled");
+          await cancelBatch.commit();
           btn.remove();
           const statusBadge = document.getElementById(`customer-status-${orderId}`);
           if (statusBadge) {
@@ -994,8 +1025,149 @@ function initAdminDashboard(db) {
     return btn ? btn.getAttribute("data-order-filter") : "all";
   };
 
+  // ---------- DAILY SUMMARY / CSV / PRINT ----------
+  const TZ = "Africa/Casablanca";
+  const dayFmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ });
+  const dayKey = (ts) => (ts && typeof ts.toDate === "function" ? dayFmt.format(ts.toDate()) : "");
+  const timeOf = (ts) => (ts && typeof ts.toDate === "function"
+    ? ts.toDate().toLocaleTimeString("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }) : "");
+  const dateInput = document.getElementById("os-date");
+  if (dateInput && !dateInput.value) dateInput.value = dayFmt.format(new Date());
+  const selectedDay = () => (dateInput && dateInput.value) || dayFmt.format(new Date());
+  const ordersOfDay = () => orderDocs.filter((o) => dayKey(o.data.createdAt) === selectedDay());
+  const money = (n) => (Math.round((Number(n) || 0) * 100) / 100).toFixed(2);
+
+  const bakeTotals = (list) => {
+    const map = {};
+    list.filter((o) => o.data.status !== "Cancelled").forEach((o) => {
+      (Array.isArray(o.data.items) ? o.data.items : []).forEach((i) => {
+        const name = String(i.name || "Item");
+        map[name] = (map[name] || 0) + (Number(i.quantity) || 0);
+      });
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  };
+
+  const renderSummary = () => {
+    const statsBox = document.getElementById("os-stats");
+    const bakeBox = document.getElementById("os-bake");
+    if (!statsBox || !bakeBox) return;
+    const list = ordersOfDay();
+    const count = (st) => list.filter((o) => (o.data.status || "Processing") === st).length;
+    const delivered = list.filter((o) => o.data.status === "Delivered").reduce((s, o) => s + (Number(o.data.totalAmount) || 0), 0);
+    const expected = list.filter((o) => o.data.status !== "Cancelled").reduce((s, o) => s + (Number(o.data.totalAmount) || 0), 0);
+    const stat = (value, label) => `<div class="os-stat"><b>${esc(value)}</b><span>${esc(label)}</span></div>`;
+    statsBox.innerHTML =
+      stat(list.length, "Orders") + stat(count("Processing"), "In progress") + stat(count("Delivered"), "Delivered") +
+      stat(count("Cancelled"), "Cancelled") + stat(money(expected) + " DH", "Expected (not cancelled)") +
+      stat(money(delivered) + " DH", "Collected (delivered)");
+    const totals = bakeTotals(list);
+    bakeBox.innerHTML = totals.length
+      ? `<h4>To bake (${esc(selectedDay())})</h4><ul>${totals.map(([n, q]) => `<li><b>${esc(q)}x</b> ${esc(n)}</li>`).join("")}</ul>`
+      : `<p style="color: var(--brown-soft); font-style: italic; margin:0;">No orders on ${esc(selectedDay())}.</p>`;
+  };
+  if (dateInput) dateInput.addEventListener("change", renderSummary);
+
+  const csvCell = (v) => {
+    let s = String(v ?? "");
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;      // stop spreadsheet formula injection
+    return '"' + s.replace(/"/g, '""') + '"';
+  };
+  const downloadCsv = (list, filename) => {
+    const head = ["Order number", "Date", "Time", "Status", "Customer", "Email", "Phone", "Address", "Items", "Promo code", "Discount (DH)", "Subtotal (DH)", "Total (DH)"];
+    const rows = list.map(({ id, data }) => [
+      orderNumber(id, data), dayKey(data.createdAt), timeOf(data.createdAt), statusLabel(data.status || "Processing"),
+      data.customerName || "", data.userEmail || "", data.phone || "", data.address || "",
+      (Array.isArray(data.items) ? data.items : []).map((i) => `${i.quantity}x ${i.name}`).join("; "),
+      data.promoCode || "", money(data.discountAmount), money(data.subtotalAmount || data.originalPrice), money(data.totalAmount)
+    ]);
+    const text = "\ufeff" + [head].concat(rows).map((r) => r.map(csvCell).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+
+  const slipHtml = ({ id, data }) => {
+    const items = Array.isArray(data.items) ? data.items : [];
+    const subtotal = Number(data.subtotalAmount || data.originalPrice) || items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const discount = Number(data.discountAmount) || 0;
+    const total = Number(data.totalAmount) || 0;
+    const delivery = Math.max(0, Math.round((total - (subtotal - discount)) * 100) / 100);
+    return `
+      <section class="slip">
+        <div class="c b big">YOUYOU'S COOKIES</div>
+        <div class="c small">Made with love · Settat</div>
+        <hr>
+        <div class="c num">#${esc(orderNumber(id, data))}</div>
+        <div class="c small">${esc(dayKey(data.createdAt))} ${esc(timeOf(data.createdAt))}</div>
+        <hr>
+        <div><b>${esc(data.customerName || "Guest")}</b></div>
+        <div>Tel: ${esc(data.phone || "-")}</div>
+        <div>Address: ${esc(data.address || "-")}</div>
+        <hr>
+        ${items.map((i) => `<div class="row"><span>${esc(i.quantity)}x ${esc(i.name)}</span><span>${money(i.price * i.quantity)}</span></div>`).join("")}
+        <hr>
+        <div class="row"><span>Subtotal</span><span>${money(subtotal)}</span></div>
+        ${discount > 0 ? `<div class="row"><span>Promo ${esc(data.promoCode || "")}</span><span>-${money(discount)}</span></div>` : ""}
+        ${delivery > 0 ? `<div class="row"><span>Delivery</span><span>${money(delivery)}</span></div>` : ""}
+        <div class="row b big"><span>TO COLLECT</span><span>${money(total)} DH</span></div>
+        <div class="c small">Cash on delivery</div>
+        ${data.status === "Cancelled" ? '<div class="c b" style="margin-top:6px">*** CANCELLED ***</div>' : ""}
+      </section>`;
+  };
+  const openPrint = (title, bodyHtml) => {
+    const w = window.open("", "_blank", "width=460,height=720");
+    if (!w) { alert("Please allow pop-ups for this site to print."); return; }
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>
+      @page{size:80mm auto;margin:4mm}
+      body{font-family:"Courier New",monospace;font-size:13px;width:72mm;margin:0 auto;color:#000}
+      .slip{padding:6px 0;page-break-after:always}.slip:last-child{page-break-after:auto}
+      .c{text-align:center}.b{font-weight:700}.big{font-size:16px}.small{font-size:11px}.num{font-size:26px;font-weight:700;letter-spacing:2px;text-align:center}
+      hr{border:0;border-top:1px dashed #000;margin:7px 0}.row{display:flex;justify-content:space-between;gap:8px}
+      .box{display:inline-block;width:11px;height:11px;border:1px solid #000;margin-right:6px}
+    </style></head><body>${bodyHtml}</body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { try { w.print(); } catch (e) { /* user can print manually */ } }, 350);
+  };
+
+  const bindSummaryButtons = () => {
+    const on = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener("click", fn); };
+    on("os-csv-day", () => {
+      const list = ordersOfDay();
+      if (!list.length) return alert("No orders on this day.");
+      downloadCsv(list, `youyou-orders-${selectedDay()}.csv`);
+    });
+    on("os-csv-all", () => {
+      if (!orderDocs.length) return alert("No orders yet.");
+      downloadCsv(orderDocs, `youyou-orders-all-${dayFmt.format(new Date())}.csv`);
+    });
+    on("os-print-slips", () => {
+      const list = ordersOfDay().filter((o) => o.data.status !== "Cancelled").slice().reverse();
+      if (!list.length) return alert("No orders to print for this day.");
+      openPrint("Order slips " + selectedDay(), list.map(slipHtml).join(""));
+    });
+    on("os-print-bake", () => {
+      const list = ordersOfDay();
+      const totals = bakeTotals(list);
+      if (!totals.length) return alert("Nothing to bake on this day.");
+      const active = list.filter((o) => o.data.status !== "Cancelled").length;
+      openPrint("Baking list " + selectedDay(), `
+        <section class="slip">
+          <div class="c b big">BAKING LIST</div>
+          <div class="c small">${esc(selectedDay())} · ${active} order(s)</div>
+          <hr>
+          ${totals.map(([n, q]) => `<div class="row"><span><span class="box"></span>${esc(n)}</span><span class="b">${esc(q)}</span></div>`).join("")}
+        </section>`);
+    });
+  };
+  bindSummaryButtons();
+
   // ---------- ORDERS ----------
   const renderOrders = () => {
+    renderSummary();
     if (!ordersBox) return;
     if (!orderDocs.length) { emptyLine(ordersBox, "No orders yet."); return; }
 
@@ -1025,7 +1197,7 @@ function initAdminDashboard(db) {
         <div class="admin-order-card ${cls}" data-id="${esc(id)}" data-status="${esc(status)}" style="${filter === "all" || filter === status ? "" : "display:none;"}">
           <div class="admin-order-header">
             <div>
-              <strong>Order #${esc(id.slice(-6).toUpperCase())}</strong>
+              <strong>Order #${esc(orderNumber(id, data))}</strong>
               <div style="font-size:.8rem; color: var(--brown-soft);">${esc(data.date || "")}</div>
             </div>
             <span class="status-pill-badge ${status === "Delivered" ? "delivered" : status === "Cancelled" ? "cancelled" : "processing"}">${esc(statusLabel(status))}</span>
@@ -1038,6 +1210,7 @@ function initAdminDashboard(db) {
           ${promoLine}
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:8px;">
             <strong style="color: var(--caramel); font-size:1.1rem;">${total.toFixed(2)} DH</strong>
+            <button type="button" class="admin-slip-btn" data-id="${esc(id)}" title="Print order slip">🖨 Slip</button>
             <div class="admin-status-group" role="group" aria-label="Order status" style="display:flex; gap:6px; flex-wrap:wrap;">
               ${statusBtn("Processing", "#f0ad4e")}
               ${statusBtn("Delivered", "#57a05f")}
@@ -1050,6 +1223,12 @@ function initAdminDashboard(db) {
 
   if (ordersBox) {
     ordersBox.addEventListener("click", async (e) => {
+      const slipBtn = e.target.closest(".admin-slip-btn");
+      if (slipBtn) {
+        const entry0 = orderDocs.find((o) => o.id === slipBtn.getAttribute("data-id"));
+        if (entry0) openPrint("Order " + orderNumber(entry0.id, entry0.data), slipHtml(entry0));
+        return;
+      }
       const btn = e.target.closest(".admin-status-btn");
       if (!btn || btn.disabled) return;
       const id = btn.getAttribute("data-id");
@@ -1060,7 +1239,7 @@ function initAdminDashboard(db) {
       if (next === "Cancelled") {
         const sure = await askConfirm({
           title: "Cancel this order?",
-          message: `Order #${id.slice(-6).toUpperCase()} for ${entry.data.customerName || "this customer"} will be marked as Cancelled and won't count as revenue. You can switch it back to In Progress later.`,
+          message: `Order #${orderNumber(id, entry.data)} for ${entry.data.customerName || "this customer"} will be marked as Cancelled and won't count as revenue. You can switch it back to In Progress later.`,
           confirmText: "Yes, cancel order",
           cancelText: "Keep order",
           danger: true
@@ -1071,7 +1250,10 @@ function initAdminDashboard(db) {
       const group = btn.closest(".admin-status-group");
       if (group) group.querySelectorAll("button").forEach((b) => (b.disabled = true));
       try {
-        await updateDoc(doc(db, "orders", id), { status: next });
+        const statusBatch = writeBatch(db);
+        statusBatch.update(doc(db, "orders", id), { status: next });
+        addTrackingUpdate(statusBatch, entry.data, next);
+        await statusBatch.commit();
         entry.data.status = next;
         recomputeStats();
         renderOrders();

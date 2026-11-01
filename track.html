@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track My Order | Youyou's Cookies</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/webp" sizes="48x48" href="assets/images/logo.webp">
+  <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261101z">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Pinyon+Script&family=Playfair+Display:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261101z">
+  <style>
+    .glass-card {
+      background: rgba(253, 251, 247, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+    [data-theme="dark"] .glass-card {
+      background: rgba(26, 20, 18, 0.85);
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+    }
+    .auth-header-icon {
+      margin-bottom: 8px;
+      display: inline-flex;
+      color: var(--caramel);
+    }
+    .reset-status {
+      margin-top: 15px;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      padding: 10px;
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .login-wrapper { padding: 15px; display: flex; align-items: center; justify-content: center; }
+      .auth-card.glass-card { width: 100%; max-width: 100%; padding: 25px 20px; box-sizing: border-box; }
+      .auth-input { font-size: 16px !important; }
+    }
+  </style>
+<script>try{if(localStorage.getItem('youyou_theme_v2')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+<link rel="stylesheet" href="assets/css/mobile.css?v=20261101z">
+<link rel="stylesheet" href="assets/css/i18n.css?v=20261101z">
+<script src="assets/js/i18n-dict-1.js?v=20261101z"></script>
+<script src="assets/js/i18n-dict-2.js?v=20261101z"></script>
+<script src="assets/js/i18n.js?v=20261101z"></script>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#c0716a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Youyou's">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/images/logo.webp">
+<link rel="stylesheet" href="assets/css/pwa.css?v=20261101z">
+<script src="assets/js/pwa.js?v=20261101z" defer></script>
+<link rel="stylesheet" href="assets/css/halloween.css?v=20261101z">
+<script src="assets/js/halloween.js?v=20261101z"></script>
+<link rel="stylesheet" href="assets/css/christmas.css?v=20261101z">
+<script src="assets/js/christmas.js?v=20261101z"></script>
+<link rel="stylesheet" href="assets/css/cursors.css?v=20261101z">
+<link rel="stylesheet" href="assets/css/track.css?v=20261101z">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Youyou's Cookies Home">
+        <div class="brand-logo-wrapper">
+          <video class="brand-logo logo-light" poster="assets/images/logo.webp" autoplay loop muted playsinline>
+            <source data-src="assets/videos/logo-light.mp4" type="video/mp4">
+            <img src="assets/images/logo.webp" alt="Youyou Cookies Logo">
+          </video>
+          <video class="brand-logo logo-dark" poster="assets/images/logo1.webp" autoplay loop muted playsinline>
+            <source data-src="assets/videos/logo-dark.mp4" type="video/mp4">
+            <img src="assets/images/logo1.webp" alt="Youyou Cookies Logo">
+          </video>
+        </div>
+        
+        <span class="brand-text">
+          <b>Youyou's Cookies</b>
+          <span class="desktop-only-text">MADE WITH LOVE</span>
+        </span>
+      </a>
+
+      <div class="status-pill desktop-action" data-status-pill role="status" title="Morocco Time Status">
+        <span class="status-dot"></span>
+        <span class="status-text">Closed</span>
+      </div>
+
+      <nav class="main-nav" id="main-nav" aria-label="Main Navigation">
+        <button class="nav-close" id="nav-close" aria-label="Close Menu">&times;</button>
+        <a href="index.html"><span class="nav-icon"></span> Home</a>
+        <a href="menu.html"><span class="nav-icon"></span> Menu</a>
+        <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
+        <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
+        
+        <div class="mobile-nav-actions">
+          <a href="login.html" id="mobile-user-link">
+            <span class="nav-icon" style="display:inline-flex; align-items:center;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>
+            </span> Account / Login
+          </a>
+          <button id="mobile-theme-toggle" class="theme-toggle" type="button" aria-label="Toggle Dark Mode" title="Toggle Theme">
+            <span class="moon-icon" style="display:none;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></span>
+            <span class="sun-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span>
+          </button>
+        </div>
+        
+        <div class="nav-decor">Baked fresh in Settat</div>
+      </nav>
+
+      <div class="header-actions">
+        <a href="login.html" id="user-icon-link" class="desktop-action" aria-label="User Account" title="Account / Login">
+          <div id="user-icon-wrapper" class="header-action-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/></svg>
+          </div>
+        </a>
+
+        <button id="theme-toggle" class="header-action-btn theme-toggle desktop-action" aria-label="Toggle Dark Mode" title="Toggle Theme">
+          <span class="moon-icon" style="display:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
+          </span>
+          <span class="sun-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          </span>
+        </button>
+
+        <a href="#" onclick="window.openBoxModal(); return false;" id="nav-cart-icon" class="header-action-btn cart-btn" aria-label="Open Sweet Box Cart" title="View Box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
+        </a>
+
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle Navigation Menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="nav-overlay" id="nav-overlay"></div>
+
+  <main class="login-wrapper" style="min-height: calc(100vh - 72px);">
+    <div class="auth-card glass-card reveal track-card">
+      <span class="auth-header-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+      </span>
+      <h2 id="auth-title">Track My Order</h2>
+      <p id="auth-subtitle" class="auth-subtitle">Enter the order number you got after checkout.</p>
+
+      <form id="track-form" novalidate>
+        <input type="text" id="track-code" class="auth-input" placeholder="Order number (8 letters)" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" required>
+        <button type="submit" class="btn-auth">Track</button>
+      </form>
+
+      <div id="track-result" class="track-result" aria-live="polite"></div>
+
+      <div class="switch-mode" style="margin-top: 25px;">
+        <a href="menu.html">Back to the menu</a>
+      </div>
+    </div>
+
+  <div id="cart-overlay" class="cart-overlay"></div>
+  <div id="cart-panel" class="cart-drawer">
+    <div class="cart-header">
+      <h3 style="display:flex; align-items:center; gap:8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        Your Sweet Box
+      </h3>
+      <button onclick="window.closeCart()" class="close-cart">&times;</button>
+    </div>
+    <div class="cart-body">
+      <ul id="cart-items" class="cart-items-list"></ul>
+    </div>
+    <div class="cart-footer" id="cart-footer">
+      <div class="promo-code-section" style="margin-bottom: 15px; border-bottom: 1px dashed rgba(74, 55, 40, 0.15); padding-bottom: 15px;">
+        <div class="promo-input-group" style="display: flex; gap: 8px;">
+          <input type="text" id="promo-code-input" class="auth-input pro-input" placeholder="Enter Promo Code" style="margin-bottom: 0; text-transform: uppercase;">
+          <button type="button" id="btn-apply-promo" class="btn btn-dark" style="padding: 10px 15px; min-width: 80px;" onclick="window.applyPromoCode()">Apply</button>
+        </div>
+        <div id="promo-message" class="promo-message" style="font-size: 0.85rem; margin-top: 8px; font-weight: 600; display: none;"></div>
+      </div>
+
+      <div class="cart-item-row" id="cart-discount-row" style="display: none; padding-bottom: 8px; margin-bottom: 8px; color: #57a05f; font-weight: bold;">
+        <span>Reward (<span id="applied-promo-name"></span>)</span>
+        <span id="cart-discount-amount"></span>
+      </div>
+      <div class="cart-total-row">
+        <span>Total:</span>
+        <span><strong style="color: var(--caramel);"><span id="cart-total">0</span> DH</strong></span>
+      </div>
+      <button id="checkout-btn" class="btn btn-whatsapp" style="width: 100%;">Open Box & Checkout</button>
+      <button id="clear-cart-btn" class="btn btn-outline" style="width: 100%; margin-top: 10px; font-size: 0.9rem; padding: 10px; color: var(--brown); border-color: rgba(74,55,40,0.3); background: transparent; transition: 0.2s; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        Empty Box
+      </button>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <b>Youyou's Cookies</b>
+          <div class="en">MADE WITH LOVE</div>
+          <p>Small-batch, handcrafted cookies baked with premium ingredients. Follow our sweet journey online!</p>
+        </div>
+        <div>
+          <h3 class="footer-title">Order Information</h3>
+          <ul>
+            <li><b>100% Online Bakery</b></li>
+            <li>Shipping All Settat</li>
+            <li>Payment: Cash on Delivery</li>
+            <li>Baking Days: All week</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="footer-title">Contact & Follow Us</h3>
+          <ul>
+            <li>
+              <a href="tel:+212789233029" style="display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328z"/></svg>
+                +212789233029
+              </a>
+            </li>
+            <li><a href="https://www.instagram.com/youyou_s_cookies/?__pwa=1" target="_blank" rel="noopener">Instagram · @youyou_s_cookies</a></li>
+            <li><a href="https://www.tiktok.com/@youyous.cookies" target="_blank" rel="noopener">TikTok · @youyous.cookies</a></li>
+            <li><a href="mailto:youyouscookies@gmail.com">Email · youyouscookies@gmail.com</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span class="year-now">2026</span> Youyou's Cookies. Made with love.</span><br>
+        <span style="font-size: 0.85em; opacity: 0.7; margin-top: 8px; display: inline-block;">
+          Website developed by <a href="https://www.instagram.com/aqxr8.1/" target="_blank" rel="noopener" style="text-decoration: underline; color: inherit;">MOTQRINE Mohamed</a>
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js?v=20261101z"></script>
+  <script src="assets/js/features.js?v=20261101z"></script>
+  <script type="module" src="assets/js/auth.js?v=20261101z"></script>
+<script type="module" src="assets/js/track.js?v=20261101z"></script>
+</body>
+</html>

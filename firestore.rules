@@ -21,7 +21,7 @@ service cloud.firestore {
       let d = request.resource.data;
       return d.keys().hasOnly(['userId','userEmail','customerName','phone','address','items',
                                'subtotalAmount','originalPrice','discountAmount','promoCode',
-                               'totalAmount','status','date','createdAt'])
+                               'totalAmount','status','date','createdAt','trackingCode'])
         && d.keys().hasAll(['userId','customerName','phone','address','items','totalAmount','status','createdAt'])
         && ((request.auth == null && d.userId == 'guest') || (signedIn() && d.userId == request.auth.uid))
         && d.status == 'Processing'
@@ -30,6 +30,7 @@ service cloud.firestore {
         && d.customerName is string && d.customerName.size() <= 80
         && d.phone is string && d.phone.size() <= 30
         && d.address is string && d.address.size() <= 400
+        && (!('trackingCode' in d) || (d.trackingCode is string && d.trackingCode.matches('[A-Z0-9]{8}')))
         && d.createdAt == request.time;
     }
 
@@ -47,6 +48,32 @@ service cloud.firestore {
           && resource.data.status == 'Processing'
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
           && request.resource.data.status == 'Cancelled');
+      allow delete: if isAdmin();
+    }
+
+    // Public order tracking: ONE small document per order, id = the 8-letter tracking code on the receipt.
+    // Anyone who knows the code can READ that single document (status only - no name, phone or address).
+    // Nobody can list/search them (so codes cannot be guessed by browsing). It is created in the same batch as the
+    // order, and only the admin (or the customer cancelling their own order) can change its status.
+    match /order_tracking/{code} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if code.matches('[A-Z0-9]{8}')
+        && request.resource.data.keys().hasOnly(['orderId','status','itemCount','createdAt','updatedAt'])
+        && request.resource.data.status == 'Processing'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && existsAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId))
+        && getAfter(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.trackingCode == code;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
+        && request.resource.data.updatedAt == request.time
+        && (
+          (isAdmin() && request.resource.data.status in ['Processing','Delivered','Cancelled'])
+          || (signedIn()
+              && request.resource.data.status == 'Cancelled'
+              && resource.data.status == 'Processing'
+              && get(/databases/$(database)/documents/orders/$(resource.data.orderId)).data.userId == request.auth.uid)
+        );
       allow delete: if isAdmin();
     }
 

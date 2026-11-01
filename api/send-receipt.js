@@ -1,17 +1,10 @@
-// Vercel serverless function: emails the customer a receipt (HTML email + PDF attachment).
+// Vercel serverless function: emails the customer a receipt (HTML email + PDF attachment) through Gmail.
 //
-// Two ways to send - set the variables in Vercel > Settings > Environment Variables, then redeploy:
-//
-//  A) Gmail (recommended, free, no domain needed, ~500 emails/day)
-//       GMAIL_APP_PASSWORD  16-letter App Password of the Gmail account (Google Account > Security >
-//                           2-Step Verification ON > App passwords)
-//       GMAIL_USER          optional, default youyouscookies@gmail.com
-//
-//  B) Brevo (free, 300 emails/day) - used only if GMAIL_APP_PASSWORD is not set
-//       BREVO_API_KEY       Brevo > SMTP & API > API keys  (sender must be verified in Brevo)
-//       RECEIPT_FROM_EMAIL  optional, default youyouscookies@gmail.com
-//
-//  RECEIPT_FROM_NAME optional (default "Youyou's Cookies").
+// Set these in Vercel > Settings > Environment Variables, then redeploy:
+//   GMAIL_APP_PASSWORD  (required) 16-letter App Password of the Gmail account
+//                       (Google Account > Security > 2-Step Verification ON > App passwords)
+//   GMAIL_USER          optional, default youyouscookies@gmail.com (use the account the App Password belongs to)
+//   RECEIPT_FROM_NAME   optional, default "Youyou's Cookies"
 //
 // Abuse protection (best effort, in memory): max 5 requests per IP per 10 min, max 3 emails per order number,
 // PDF must be a real PDF under 900 KB.
@@ -33,6 +26,7 @@ const TEXT = {
     subtotal: 'Subtotal', promo: 'Promo code', delivery: 'Delivery', free: 'Free', total: 'Total to pay',
     address: 'Delivery address', phone: 'Phone',
     pay: 'Payment: cash on delivery. Delivery every day between 15:00 and 20:00 (Morocco time).',
+    track: 'Track your order',
     help: 'Questions? Reply to this email or message us on Instagram @youyou_s_cookies.',
     bye: 'Made with love, Youyou\'s Cookies'
   },
@@ -44,6 +38,7 @@ const TEXT = {
     subtotal: 'Sous-total', promo: 'Code promo', delivery: 'Livraison', free: 'Gratuite', total: 'Total à payer',
     address: 'Adresse de livraison', phone: 'Téléphone',
     pay: 'Paiement : à la livraison. Livraison tous les jours entre 15h00 et 20h00 (heure du Maroc).',
+    track: 'Suivre votre commande',
     help: 'Une question ? Répondez à cet e-mail ou écrivez-nous sur Instagram @youyou_s_cookies.',
     bye: 'Fait avec amour, Youyou\'s Cookies'
   },
@@ -55,6 +50,7 @@ const TEXT = {
     subtotal: 'المجموع الفرعي', promo: 'رمز الخصم', delivery: 'التوصيل', free: 'مجاني', total: 'المبلغ المستحق',
     address: 'عنوان التوصيل', phone: 'الهاتف',
     pay: 'الدفع: نقداً عند الاستلام. التوصيل كل يوم بين 15:00 و20:00 (بتوقيت المغرب).',
+    track: 'تتبّع طلبك',
     help: 'عندك سؤال؟ ردّ على هذا البريد أو راسلنا على إنستغرام @youyou_s_cookies.',
     bye: 'صُنع بحب، Youyou\'s Cookies'
   }
@@ -68,6 +64,7 @@ function buildText(t, d) {
   L.push(`${t.delivery}: ${d.deliveryFee > 0 ? money(d.deliveryFee) + ' DH' : t.free}`, `${t.total}: ${money(d.total)} DH`, '');
   if (d.address) L.push(`${t.address}: ${d.address}`);
   if (d.phone) L.push(`${t.phone}: ${d.phone}`);
+  if (d.trackUrl) L.push('', `${t.track}: ${d.trackUrl}`);
   L.push('', t.pay, '', t.help, t.bye);
   return L.join('\n');
 }
@@ -123,6 +120,7 @@ function buildHtml(t, d) {
           ${d.phone ? `<strong>${t.phone}:</strong> ${esc(d.phone)}` : ''}
         </td></tr>
         <tr><td style="padding:14px 24px 26px;text-align:${align};font-size:13px;color:#7a5a52;line-height:1.5;">
+          ${d.trackUrl ? `<a href="${esc(d.trackUrl)}" style="display:inline-block;background:#c0716a;color:#ffffff;text-decoration:none;font-weight:700;padding:11px 22px;border-radius:999px;margin-bottom:14px;">${t.track}</a><br>` : ''}
           ${t.pay}<br><br>${t.help}<br><br><strong style="color:#c0716a;">${t.bye}</strong>
         </td></tr>
       </table>
@@ -136,12 +134,8 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     return res.status(200).json({
       ok: true,
-      provider: (String(process.env.EMAIL_PROVIDER || '').toLowerCase() === 'brevo' ? 'brevo'
-        : String(process.env.EMAIL_PROVIDER || '').toLowerCase() === 'gmail' ? 'gmail'
-        : process.env.GMAIL_APP_PASSWORD ? 'gmail' : 'brevo'),
       gmailConfigured: Boolean(process.env.GMAIL_APP_PASSWORD),
-      brevoKeyConfigured: Boolean(process.env.BREVO_API_KEY),
-      sender: process.env.GMAIL_USER || process.env.RECEIPT_FROM_EMAIL || 'youyouscookies@gmail.com'
+      sender: process.env.GMAIL_USER || 'youyouscookies@gmail.com'
     });
   }
   if (req.method !== 'POST') {
@@ -149,12 +143,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.BREVO_API_KEY;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
-  const wanted = String(process.env.EMAIL_PROVIDER || '').toLowerCase();
-  const useGmail = wanted === 'brevo' ? false : wanted === 'gmail' ? true : Boolean(gmailPass);
-  if (useGmail ? !gmailPass : !apiKey) {
-    return res.status(500).json({ error: useGmail ? 'GMAIL_APP_PASSWORD is not set in Vercel.' : 'BREVO_API_KEY is not set in Vercel.', code: 'no_key' });
+  if (!gmailPass) {
+    return res.status(500).json({ error: 'GMAIL_APP_PASSWORD is not set in Vercel.', code: 'no_key' });
   }
 
   // --- rate limit (best effort) ---
@@ -198,8 +189,12 @@ export default async function handler(req, res) {
   });
   const name = String(body.name || '').slice(0, 60) || (lang === 'ar' ? 'عزيزي الزبون' : lang === 'fr' ? 'cher client' : 'there');
 
+  const trackCode = /^[A-Z0-9]{8}$/.test(String(body.trackCode || '')) ? String(body.trackCode) : '';
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').replace(/[^a-zA-Z0-9.\-:]/g, '');
+  const trackUrl = trackCode && host ? `https://${host}/track?code=${trackCode}` : '';
+
   const html = buildHtml(t, {
-    lang, name, orderRef: '#' + orderRef.replace(/^#/, ''), date, items, subtotal, discount, deliveryFee, total,
+    lang, name, orderRef: '#' + orderRef.replace(/^#/, ''), date, items, subtotal, discount, deliveryFee, total, trackUrl,
     promoCode: String(body.promoCode || '').slice(0, 40),
     address: String(body.address || '').slice(0, 300),
     phone: String(body.phone || '').slice(0, 30)
@@ -211,54 +206,28 @@ export default async function handler(req, res) {
   const pdfName = `Youyou-receipt-${orderRef.replace(/^#/, '')}.pdf`;
 
   const text = buildText(t, {
-    name, orderRef: '#' + orderRef.replace(/^#/, ''), date, items, subtotal, discount, deliveryFee, total,
+    name, orderRef: '#' + orderRef.replace(/^#/, ''), date, items, subtotal, discount, deliveryFee, total, trackUrl,
     promoCode: String(body.promoCode || '').slice(0, 40),
     address: String(body.address || '').slice(0, 300),
     phone: String(body.phone || '').slice(0, 30)
   });
   const subject = t.subject('#' + orderRef.replace(/^#/, ''));
   try {
-    if (useGmail) {
-      // ---- Gmail (App Password) ----
-      const user = process.env.GMAIL_USER || 'youyouscookies@gmail.com';
-      const nodemailer = (await import('nodemailer')).default;
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com', port: 465, secure: true,
-        auth: { user, pass: String(gmailPass).replace(/\s+/g, '') }
-      });
-      await transporter.sendMail({
-        from: `"${process.env.RECEIPT_FROM_NAME || "Youyou's Cookies"}" <${user}>`,
-        to: email,
-        replyTo: user,
-        subject,
-        html,
-        text,
-        attachments: pdfBase64 ? [{ filename: pdfName, content: pdfBase64, encoding: 'base64', contentType: 'application/pdf' }] : []
-      });
-    } else {
-      // ---- Brevo ----
-      const r = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: { 'api-key': apiKey, 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          sender: {
-            name: process.env.RECEIPT_FROM_NAME || "Youyou's Cookies",
-            email: process.env.RECEIPT_FROM_EMAIL || 'youyouscookies@gmail.com'
-          },
-          to: [{ email }],
-          replyTo: { email: process.env.RECEIPT_FROM_EMAIL || 'youyouscookies@gmail.com' },
-          subject,
-          htmlContent: html,
-          textContent: text,
-          ...(pdfBase64 ? { attachment: [{ name: pdfName, content: pdfBase64 }] } : {})
-        })
-      });
-      if (!r.ok) {
-        const detail = await r.text().catch(() => '');
-        console.error('Brevo error:', r.status, detail.slice(0, 300));
-        return res.status(502).json({ error: 'Email provider rejected the message.', code: 'brevo_' + r.status, detail: detail.slice(0, 300) });
-      }
-    }
+    const user = process.env.GMAIL_USER || 'youyouscookies@gmail.com';
+    const nodemailer = (await import('nodemailer')).default;
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com', port: 465, secure: true,
+      auth: { user, pass: String(gmailPass).replace(/\s+/g, '') }
+    });
+    await transporter.sendMail({
+      from: `"${process.env.RECEIPT_FROM_NAME || "Youyou's Cookies"}" <${user}>`,
+      to: email,
+      replyTo: user,
+      subject,
+      html,
+      text,
+      attachments: pdfBase64 ? [{ filename: pdfName, content: pdfBase64, encoding: 'base64', contentType: 'application/pdf' }] : []
+    });
     perOrder.set(orderRef, sent + 1);
     return res.status(200).json({ success: true, pdf: Boolean(pdfBase64) });
   } catch (error) {

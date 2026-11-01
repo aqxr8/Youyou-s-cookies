@@ -1,0 +1,16 @@
+/* admin-extras.css - daily summary, baking list, print slips, CSV buttons */
+.orders-summary{background:rgba(127,127,127,.08);border:1px solid rgba(127,127,127,.22);border-radius:16px;padding:16px;margin-bottom:20px}
+.os-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.os-date{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--brown)}
+.os-date input{padding:8px 10px;border-radius:8px;border:1px solid rgba(127,127,127,.4);font-family:inherit;background:var(--white,#fff);color:var(--brown)}
+.os-actions{display:flex;gap:8px;flex-wrap:wrap}
+.os-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.os-stat{background:var(--white,#fff);border:1px solid rgba(127,127,127,.2);border-radius:12px;padding:10px 12px;text-align:center}
+.os-stat b{display:block;font-size:1.35rem;color:var(--caramel);line-height:1.2}
+.os-stat span{font-size:.78rem;color:var(--brown-soft)}
+.os-bake{margin-top:14px}
+.os-bake h4{margin:0 0 8px;font-size:.95rem;color:var(--brown)}
+.os-bake ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.os-bake li{background:var(--white,#fff);border:1px dashed rgba(127,127,127,.45);border-radius:999px;padding:6px 14px;font-size:.88rem;color:var(--brown)}
+.os-bake li b{color:var(--caramel)}
+.admin-slip-btn{padding:7px 13px;border-radius:8px;font-size:.82rem;font-weight:700;font-family:inherit;border:1px solid var(--brown-soft,#888);background:transparent;color:var(--brown);cursor:pointer}
