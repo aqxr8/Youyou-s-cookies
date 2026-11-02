@@ -92,9 +92,9 @@ function authMessage(err, fallback) {
   return map[err && err.code] || fallback || "An error occurred.";
 }
 
-// Order statuses are stored as Processing / Delivered / Cancelled (the Firestore rules rely on these exact words).
+// Order statuses are stored as Processing / Delivered / Returned / Cancelled (the Firestore rules rely on these exact words).
 // "Processing" is shown to people as "In Progress".
-const STATUS_LABELS = { Processing: "In Progress", Delivered: "Delivered", Cancelled: "Cancelled" };
+const STATUS_LABELS = { Processing: "In Progress", Delivered: "Delivered", Returned: "Returned", Cancelled: "Cancelled" };
 const statusLabel = (status) => STATUS_LABELS[status] || STATUS_LABELS.Processing;
 
 // Customer-facing order number: an 8-letter tracking code (no 0/O/1/I so it is easy to read out loud).
@@ -112,6 +112,8 @@ function makeUnsubToken() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
   return Array.from(a, (n) => chars[n % chars.length]).join("");
 }
+// Same person, any phone format: +212 6 12.. / 06 12.. / 0612.. all give the same 9-digit key.
+const phoneKeyOf = (p) => { const d = String(p || "").replace(/\D/g, ""); return d.length >= 9 ? d.slice(-9) : ""; };
 const siteLang = () => ((window.YYLang && window.YYLang()) || "en");
 const orderNumber = (id, data) =>
   data && /^[A-Z0-9]{8}$/.test(String(data.trackingCode || "")) ? data.trackingCode : String(id).slice(-6).toUpperCase();
@@ -343,7 +345,7 @@ window.saveOrderToFirestore = async function (orderData) {
     const trackingCode = makeTrackingCode();
     const orderRef = doc(collection(db, "orders"));
     const batch = writeBatch(db);
-    batch.set(orderRef, Object.assign({}, finalData, { trackingCode: trackingCode }));
+    batch.set(orderRef, Object.assign({}, finalData, { trackingCode: trackingCode, phoneKey: phoneKeyOf(finalData.phone) }));
     batch.set(doc(db, "order_tracking", trackingCode), {
       orderId: orderRef.id,
       status: "Processing",
@@ -379,7 +381,13 @@ window.saveOrderToFirestore = async function (orderData) {
       // The new Firestore rules are probably not published yet: keep the shop working the old way
       // (no tracking code, promo recorded in the old "usedBy" list).
       console.warn("New firestore.rules not published yet - saving the order the old way");
-      orderId = (await addDoc(collection(db, "orders"), finalData)).id;
+      try {
+        orderId = (await addDoc(collection(db, "orders"), finalData)).id;
+      } catch (err2) {
+        // With the new rules a blacklisted phone / account is refused here. We never say why (no names, no lists).
+        if (err2 && err2.code === "permission-denied") { window.__orderSaveError = "blocked"; return null; }
+        throw err2;
+      }
       window.__promoFallback = Boolean(promo);
     }
     const docRef = { id: orderId };
@@ -621,13 +629,14 @@ async function loadCustomerOrderHistory(user, db) {
       const orderId = docSnap.id;
       const isDelivered = data.status === "Delivered";
       const isCancelled = data.status === "Cancelled";
+      const isReturned = data.status === "Returned";
       const isProcessing = data.status === "Processing";
 
       if (isDelivered) totalSpent += Number(data.totalAmount) || 0;
 
       let statusClass = "processing";
       if (isDelivered) statusClass = "delivered";
-      if (isCancelled) statusClass = "cancelled";
+      if (isCancelled || isReturned) statusClass = "cancelled";
 
       const itemsList = Array.isArray(data.items)
         ? data.items.map((i) => `${esc(i.quantity)}x ${esc(i.name)}`).join(", ")
@@ -1109,11 +1118,11 @@ function initAdminDashboard(db) {
     const list = ordersOfDay();
     const count = (st) => list.filter((o) => (o.data.status || "Processing") === st).length;
     const delivered = list.filter((o) => o.data.status === "Delivered").reduce((s, o) => s + (Number(o.data.totalAmount) || 0), 0);
-    const expected = list.filter((o) => o.data.status !== "Cancelled").reduce((s, o) => s + (Number(o.data.totalAmount) || 0), 0);
+    const expected = list.filter((o) => o.data.status !== "Cancelled" && o.data.status !== "Returned").reduce((s, o) => s + (Number(o.data.totalAmount) || 0), 0);
     const stat = (value, label) => `<div class="os-stat"><b>${esc(value)}</b><span>${esc(label)}</span></div>`;
     statsBox.innerHTML =
       stat(list.length, "Orders") + stat(count("Processing"), "In progress") + stat(count("Delivered"), "Delivered") +
-      stat(count("Cancelled"), "Cancelled") + stat(money(expected) + " DH", "Expected (not cancelled)") +
+      stat(count("Returned"), "Returned") + stat(count("Cancelled"), "Cancelled") + stat(money(expected) + " DH", "Expected (not cancelled/returned)") +
       stat(money(delivered) + " DH", "Collected (delivered)");
     const totals = bakeTotals(list);
     bakeBox.innerHTML = totals.length
@@ -1464,6 +1473,182 @@ function initAdminDashboard(db) {
   };
   bindNewsletter();
 
+  // ---------- BLACKLIST ----------
+  const BL_REASONS = ["Refused the delivery", "Returned the order", "Fake order / wrong address", "Did not answer the phone", "Other"];
+  let blacklist = [];            // [{id, data}]
+  let blSet = new Set();         // document ids: p_<9 digits>, e_<email>, u_<uid>
+  const isBlockedOrder = (data) => {
+    const pk = phoneKeyOf(data.phone);
+    return Boolean(
+      (pk && blSet.has("p_" + pk)) ||
+      (data.userEmail && data.userEmail !== "Guest" && blSet.has("e_" + String(data.userEmail).toLowerCase())) ||
+      (data.userId && data.userId !== "guest" && blSet.has("u_" + data.userId))
+    );
+  };
+  const orderStatsFor = (b) => {
+    const k = b.id, t = (b.data || {}).type;
+    const mine = orderDocs.filter(({ data }) =>
+      t === "phone" ? "p_" + phoneKeyOf(data.phone) === k
+        : t === "email" ? "e_" + String(data.userEmail || "").toLowerCase() === k
+        : "u_" + data.userId === k);
+    const c = (st) => mine.filter((o) => (o.data.status || "Processing") === st).length;
+    return `${mine.length} order(s): ${c("Delivered")} delivered · ${c("Returned")} returned · ${c("Cancelled")} cancelled`;
+  };
+
+  const makeBlock = ({ type, value, reason, note, name }) => {
+    value = String(value || "").trim();
+    let key, shown;
+    if (type === "phone") {
+      const pk = phoneKeyOf(value);
+      if (!pk) throw new Error("Enter a phone number with at least 9 digits.");
+      key = "p_" + pk; shown = value;
+    } else if (type === "email") {
+      const e = value.toLowerCase();
+      if (!/^[^\s@<>"'\/]+@[^\s@<>"'\/]+\.[^\s@<>"'\/]{2,}$/.test(e)) throw new Error("Enter a valid email address.");
+      key = "e_" + e; shown = e;
+    } else {
+      if (!/^[A-Za-z0-9]{20,40}$/.test(value)) throw new Error("An account ID is about 28 letters and digits (use the Block button on an order instead).");
+      key = "u_" + value; shown = value;
+    }
+    return {
+      key,
+      data: {
+        type, value: shown, key, reason: BL_REASONS.includes(reason) ? reason : "Other",
+        note: String(note || "").slice(0, 200), name: String(name || "").slice(0, 80),
+        createdAt: serverTimestamp(), by: (auth.currentUser && auth.currentUser.email) || ""
+      }
+    };
+  };
+  const saveBlocks = async (items) => {
+    const b = writeBatch(db);
+    items.forEach(({ key, data }) => b.set(doc(db, "blacklist", key), data));
+    await b.commit();
+    await loadBlacklist();
+  };
+
+  const blMsg = (html) => { const el = document.getElementById("bl-msg"); if (el) el.innerHTML = html; };
+  const renderBlacklist = () => {
+    const box = document.getElementById("bl-list");
+    if (!box) return;
+    const q = ((document.getElementById("bl-search") || {}).value || "").trim().toLowerCase();
+    const rows = blacklist
+      .filter(({ data }) => !q || [data.value, data.name, data.reason, data.note, data.type].join(" ").toLowerCase().includes(q))
+      .sort((a, b) => (b.data.createdAt?.toMillis?.() || 0) - (a.data.createdAt?.toMillis?.() || 0));
+    const cnt = document.getElementById("bl-count");
+    if (cnt) cnt.textContent = `${blacklist.length} blocked`;
+    box.innerHTML = rows.length
+      ? rows.map((b) => {
+          const d = b.data;
+          const when = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString("en-GB", { timeZone: TZ, day: "2-digit", month: "short", year: "numeric" }) : "";
+          return `<div class="bl-item">
+            <div><span class="bl-type">${esc(d.type)}</span><b>${esc(d.value)}</b>${d.name ? " · " + esc(d.name) : ""}
+              <div class="meta">${esc(d.reason || "")}${d.note ? " — " + esc(d.note) : ""}<br>${esc(when)} · ${esc(orderStatsFor(b))}</div></div>
+            <button type="button" class="bl-remove" data-key="${esc(b.id)}">Remove</button>
+          </div>`;
+        }).join("")
+      : `<p style="color: var(--brown-soft); font-style: italic; margin:0;">${blacklist.length ? "No match." : "Nobody is blocked."}</p>`;
+  };
+  const loadBlacklist = async () => {
+    try {
+      const snap = await getDocs(collection(db, "blacklist"));
+      blacklist = snap.docs.map((d) => ({ id: d.id, data: d.data() }));
+      blSet = new Set(blacklist.map((b) => b.id));
+    } catch (e) {
+      console.warn("Could not read the blacklist (publish the new firestore.rules):", e);
+      const box = document.getElementById("bl-list");
+      if (box) box.textContent = "The blacklist is not available yet. Publish the new firestore.rules in Firebase.";
+      return;
+    }
+    renderBlacklist();
+    renderOrders();
+  };
+
+  // Small dialog: choose what to block for this order's customer, and why.
+  const openBlockDialog = (entry, presetReason) => new Promise((resolve) => {
+    const d = entry.data;
+    const pk = phoneKeyOf(d.phone);
+    const hasEmail = d.userEmail && d.userEmail !== "Guest";
+    const hasAccount = d.userId && d.userId !== "guest";
+    const overlay = document.createElement("div");
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.style.cssText = "position:fixed; inset:0; z-index:5000; display:grid; place-items:center; padding:16px; background:rgba(0,0,0,.6); backdrop-filter:blur(4px);";
+    const row = (id, label, checked, disabled) => `<label style="display:flex; gap:10px; align-items:flex-start; margin:8px 0; font-weight:600; cursor:${disabled ? "not-allowed" : "pointer"}; opacity:${disabled ? ".5" : "1"};"><input type="checkbox" id="${id}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""} style="margin-top:4px;"><span>${label}</span></label>`;
+    overlay.innerHTML = `<div style="background:var(--cream-light,#fff); color:var(--brown,#333); width:100%; max-width:440px; padding:24px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,.3);">
+      <h3 style="margin:0 0 6px; font-size:1.3rem;">🚫 Block this customer?</h3>
+      <p style="margin:0 0 12px; font-size:.9rem; opacity:.85;">${esc(d.customerName || "Guest")} · order #${esc(orderNumber(entry.id, d))}. They will not be able to place new orders with what you tick below.</p>
+      ${row("bd-phone", "Phone: " + esc(d.phone || "—"), Boolean(pk), !pk)}
+      ${row("bd-account", "Account (logged-in orders)", Boolean(hasAccount), !hasAccount)}
+      ${row("bd-email", "Email: " + esc(hasEmail ? d.userEmail : "guest order, no email"), false, !hasEmail)}
+      <label style="display:block; margin-top:12px; font-weight:700; font-size:.88rem;">Reason
+        <select id="bd-reason" style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:10px; border-radius:10px; border:1px solid rgba(127,127,127,.4); font-family:inherit;">${BL_REASONS.map((r) => `<option ${r === presetReason ? "selected" : ""}>${esc(r)}</option>`).join("")}</select></label>
+      <label style="display:block; margin-top:10px; font-weight:700; font-size:.88rem;">Note (optional)
+        <input id="bd-note" type="text" maxlength="200" value="${esc("Order #" + orderNumber(entry.id, d))}" style="display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:10px; border-radius:10px; border:1px solid rgba(127,127,127,.4); font-family:inherit;"></label>
+      <div id="bd-err" style="color:#c62828; font-weight:600; font-size:.85rem; min-height:1.2em; margin-top:8px;"></div>
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px; flex-wrap:wrap;">
+        <button type="button" id="bd-cancel" style="padding:10px 18px; border-radius:10px; border:1px solid rgba(127,127,127,.5); background:transparent; font-weight:700; cursor:pointer; font-family:inherit; color:inherit;">Not now</button>
+        <button type="button" id="bd-ok" style="padding:10px 18px; border-radius:10px; border:0; background:#d9534f; color:#fff; font-weight:800; cursor:pointer; font-family:inherit;">Block</button>
+      </div></div>`;
+    document.body.appendChild(overlay);
+    const close = (v) => { overlay.remove(); resolve(v); };
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(false); });
+    overlay.querySelector("#bd-cancel").addEventListener("click", () => close(false));
+    overlay.querySelector("#bd-ok").addEventListener("click", async () => {
+      const reason = overlay.querySelector("#bd-reason").value;
+      const note = overlay.querySelector("#bd-note").value;
+      const items = [];
+      try {
+        if (overlay.querySelector("#bd-phone").checked) items.push(makeBlock({ type: "phone", value: d.phone, reason, note, name: d.customerName }));
+        if (overlay.querySelector("#bd-account").checked) items.push(makeBlock({ type: "account", value: d.userId, reason, note, name: d.customerName }));
+        if (overlay.querySelector("#bd-email").checked) items.push(makeBlock({ type: "email", value: d.userEmail, reason, note, name: d.customerName }));
+        if (!items.length) { overlay.querySelector("#bd-err").textContent = "Tick at least one thing to block."; return; }
+        overlay.querySelector("#bd-ok").disabled = true;
+        await saveBlocks(items);
+        close(true);
+      } catch (err) {
+        overlay.querySelector("#bd-ok").disabled = false;
+        overlay.querySelector("#bd-err").textContent = err.message || "Could not save. Publish the new firestore.rules and try again.";
+      }
+    });
+  });
+
+  const bindBlacklist = () => {
+    const add = document.getElementById("bl-add-btn");
+    if (add) add.addEventListener("click", async () => {
+      try {
+        const item = makeBlock({
+          type: document.getElementById("bl-type").value, value: document.getElementById("bl-value").value,
+          reason: document.getElementById("bl-reason").value, note: document.getElementById("bl-note").value, name: ""
+        });
+        add.disabled = true;
+        await saveBlocks([item]);
+        document.getElementById("bl-value").value = "";
+        document.getElementById("bl-note").value = "";
+        blMsg("Added to the blacklist.");
+      } catch (err) {
+        blMsg(`<span class="err">${esc(err.message || "Could not save. Publish the new firestore.rules.")}</span>`);
+      } finally { add.disabled = false; }
+    });
+    const search = document.getElementById("bl-search");
+    if (search) search.addEventListener("input", renderBlacklist);
+    const list = document.getElementById("bl-list");
+    if (list) list.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".bl-remove");
+      if (!btn) return;
+      const key = btn.getAttribute("data-key");
+      const entry = blacklist.find((b) => b.id === key);
+      const ok = await askConfirm({
+        title: "Remove from the blacklist?",
+        message: `${entry ? entry.data.value : key} will be able to order again.`,
+        confirmText: "Remove", cancelText: "Keep blocked", danger: true
+      });
+      if (!ok) return;
+      try { await deleteDoc(doc(db, "blacklist", key)); await loadBlacklist(); blMsg("Removed."); }
+      catch (err) { blMsg('<span class="err">Could not remove. Check your connection.</span>'); }
+    });
+  };
+  bindBlacklist();
+
   // ---------- ORDERS ----------
   const renderOrders = () => {
     renderSummary();
@@ -1473,7 +1658,10 @@ function initAdminDashboard(db) {
     const filter = activeOrderFilter();
     ordersBox.innerHTML = orderDocs.map(({ id, data }) => {
       const status = data.status || "Processing";
-      const cls = status === "Delivered" ? "is-delivered" : status === "Cancelled" ? "is-cancelled" : "is-pending";
+      const cls = status === "Delivered" ? "is-delivered" : status === "Cancelled" ? "is-cancelled" : status === "Returned" ? "is-returned" : "is-pending";
+      const blocked = isBlockedOrder(data);
+      const pkey = phoneKeyOf(data.phone);
+      const returnedBefore = pkey ? orderDocs.filter((o) => o.id !== id && o.data.status === "Returned" && phoneKeyOf(o.data.phone) === pkey).length : 0;
       const items = Array.isArray(data.items)
         ? data.items.map((i) => `${esc(i.quantity)}x ${esc(i.name)}`).join("<br>")
         : "—";
@@ -1499,10 +1687,10 @@ function initAdminDashboard(db) {
               <strong>Order #${esc(orderNumber(id, data))}</strong>
               <div style="font-size:.8rem; color: var(--brown-soft);">${esc(data.date || "")}</div>
             </div>
-            <span class="status-pill-badge ${status === "Delivered" ? "delivered" : status === "Cancelled" ? "cancelled" : "processing"}">${esc(statusLabel(status))}</span>
+            <span class="status-pill-badge ${status === "Delivered" ? "delivered" : status === "Cancelled" ? "cancelled" : status === "Returned" ? "returned" : "processing"}">${esc(statusLabel(status))}</span>
           </div>
           <div style="margin-bottom:8px;"><strong>${esc(data.customerName || "Guest")}</strong>
-            <span style="color: var(--brown-soft); font-size:.85rem;"> · ${esc(data.userEmail || "Guest")}</span></div>
+            <span style="color: var(--brown-soft); font-size:.85rem;"> · ${esc(data.userEmail || "Guest")}</span>${returnedBefore > 0 ? `<span class="admin-warn-chip">⚠ ${returnedBefore} returned before</span>` : ""}</div>
           <div style="margin-bottom:8px;">${phoneHtml}</div>
           <div style="margin-bottom:8px; font-size:.9rem;">📍 ${esc(data.address || "—")}</div>
           <div style="margin-bottom:10px; font-size:.9rem; color: var(--brown-soft);">${items}</div>
@@ -1510,9 +1698,11 @@ function initAdminDashboard(db) {
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:8px;">
             <strong style="color: var(--caramel); font-size:1.1rem;">${total.toFixed(2)} DH</strong>
             <button type="button" class="admin-slip-btn" data-id="${esc(id)}" title="Print order slip">🖨 Slip</button>
+            ${blocked ? '<span class="admin-blocked-badge">🚫 Blocked</span>' : `<button type="button" class="admin-block-btn" data-id="${esc(id)}" title="Stop this customer from ordering again">🚫 Block</button>`}
             <div class="admin-status-group" role="group" aria-label="Order status" style="display:flex; gap:6px; flex-wrap:wrap;">
               ${statusBtn("Processing", "#f0ad4e")}
               ${statusBtn("Delivered", "#57a05f")}
+              ${statusBtn("Returned", "#f0883e")}
               ${statusBtn("Cancelled", "#d9534f")}
             </div>
           </div>
@@ -1526,6 +1716,12 @@ function initAdminDashboard(db) {
       if (slipBtn) {
         const entry0 = orderDocs.find((o) => o.id === slipBtn.getAttribute("data-id"));
         if (entry0) openPrint("Order " + orderNumber(entry0.id, entry0.data), slipHtml(entry0));
+        return;
+      }
+      const blockBtn = e.target.closest(".admin-block-btn");
+      if (blockBtn) {
+        const entryB = orderDocs.find((o) => o.id === blockBtn.getAttribute("data-id"));
+        if (entryB) await openBlockDialog(entryB, "Refused the delivery");
         return;
       }
       const btn = e.target.closest(".admin-status-btn");
@@ -1546,6 +1742,17 @@ function initAdminDashboard(db) {
         if (!sure) return;
       }
 
+      if (next === "Returned") {
+        const sure = await askConfirm({
+          title: "Mark as returned?",
+          message: `Order #${orderNumber(id, entry.data)} was refused or sent back by ${entry.data.customerName || "the customer"}. It will not count as revenue. Next you can block this customer.`,
+          confirmText: "Yes, returned",
+          cancelText: "Keep status",
+          danger: true
+        });
+        if (!sure) return;
+      }
+
       const group = btn.closest(".admin-status-group");
       if (group) group.querySelectorAll("button").forEach((b) => (b.disabled = true));
       try {
@@ -1557,6 +1764,9 @@ function initAdminDashboard(db) {
         recomputeStats();
         renderOrders();
         renderUsers();
+        if (next === "Returned" && !isBlockedOrder(entry.data)) {
+          await openBlockDialog(entry, "Returned the order");
+        }
       } catch (err) {
         console.error("Status update failed:", err);
         alert("Could not update the order status. Check Firestore rules and your connection.");
@@ -1687,6 +1897,7 @@ function initAdminDashboard(db) {
       errorLine(usersBox, "Could not load users.");
     }
     initNewsletter();
+    loadBlacklist();
     recomputeStats();
     renderOrders();
     renderUsers();

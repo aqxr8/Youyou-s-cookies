@@ -39,3 +39,21 @@
 .news-h3{margin:26px 0 10px;font-size:1.1rem;color:var(--brown)}
 .news-history .row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid rgba(127,127,127,.2);border-radius:10px;margin-bottom:8px;background:var(--white,#fff);font-size:.9rem}
 .news-history .row span{color:var(--brown-soft)}
+
+/* ---- Blacklist ---- */
+.bl-add{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end;margin-bottom:8px}
+.bl-add label{display:block;font-weight:700;font-size:.88rem;color:var(--brown)}
+.bl-add input,.bl-add select,.bl-toolbar input{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:10px 12px;border-radius:10px;border:1px solid rgba(127,127,127,.4);font-family:inherit;font-size:.95rem;background:var(--white,#fff);color:var(--brown)}
+.bl-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0 12px}
+.bl-toolbar input{margin-top:0;flex:1;min-width:200px}
+.bl-list{display:grid;gap:10px}
+.bl-item{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;padding:12px 14px;border:1px solid rgba(217,83,79,.35);border-left:5px solid #d9534f;border-radius:12px;background:var(--white,#fff)}
+.bl-item b{color:var(--brown)}
+.bl-item .meta{font-size:.82rem;color:var(--brown-soft);margin-top:3px;line-height:1.5}
+.bl-type{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:#d9534f;color:#fff;border-radius:6px;padding:2px 8px;margin-inline-end:8px}
+.bl-remove{padding:7px 14px;border-radius:8px;border:1px solid #d9534f;background:transparent;color:#d9534f;font-weight:700;cursor:pointer;font-family:inherit}
+.admin-block-btn{padding:7px 13px;border-radius:8px;font-size:.82rem;font-weight:700;font-family:inherit;border:1px solid #d9534f;background:transparent;color:#d9534f;cursor:pointer}
+.admin-blocked-badge{display:inline-block;background:#d9534f;color:#fff;font-weight:800;font-size:.78rem;border-radius:8px;padding:6px 12px}
+.admin-warn-chip{display:inline-block;background:#fff3cd;color:#8a5a00;border:1px solid #f0d58a;font-weight:700;font-size:.78rem;border-radius:8px;padding:4px 10px;margin-inline-start:6px}
+.status-pill-badge.returned{background:#fdebd8;color:#b45309}
+.admin-order-card.is-returned{border-left:5px solid #f0883e}

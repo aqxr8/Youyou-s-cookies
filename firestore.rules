@@ -21,8 +21,8 @@ service cloud.firestore {
       let d = request.resource.data;
       return d.keys().hasOnly(['userId','userEmail','customerName','phone','address','items',
                                'subtotalAmount','originalPrice','discountAmount','promoCode',
-                               'totalAmount','status','date','createdAt','trackingCode'])
-        && d.keys().hasAll(['userId','customerName','phone','address','items','totalAmount','status','createdAt'])
+                               'totalAmount','status','date','createdAt','trackingCode','phoneKey'])
+        && d.keys().hasAll(['userId','customerName','phone','address','items','totalAmount','status','createdAt','phoneKey'])
         && ((request.auth == null && d.userId == 'guest') || (signedIn() && d.userId == request.auth.uid))
         && d.status == 'Processing'
         && d.items is list && d.items.size() > 0 && d.items.size() <= 50
@@ -31,6 +31,14 @@ service cloud.firestore {
         && d.phone is string && d.phone.size() <= 30
         && d.address is string && d.address.size() <= 400
         && (!('trackingCode' in d) || (d.trackingCode is string && d.trackingCode.matches('[A-Z0-9]{8}')))
+        // ---- BLACKLIST: refuse the order if this phone / account / email is on the admin's blacklist ----
+        // phoneKey must be the LAST 9 DIGITS of the phone (so +212 6.. and 06.. are the same person)
+        && d.phoneKey is string && d.phoneKey.matches('[0-9]{9}')
+        && d.phone.replace('[^0-9]', '').matches('.*' + d.phoneKey)
+        && !exists(/databases/$(database)/documents/blacklist/$('p_' + d.phoneKey))
+        && !(signedIn() && exists(/databases/$(database)/documents/blacklist/$('u_' + request.auth.uid)))
+        && !(signedIn() && ('email' in request.auth.token)
+             && exists(/databases/$(database)/documents/blacklist/$('e_' + request.auth.token.email.lower())))
         && d.createdAt == request.time;
     }
 
@@ -41,7 +49,7 @@ service cloud.firestore {
         // admin may only change the status
         (isAdmin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-          && request.resource.data.status in ['Processing', 'Delivered', 'Cancelled'])
+          && request.resource.data.status in ['Processing', 'Delivered', 'Returned', 'Cancelled'])
         // a customer may only cancel their OWN order while it is still Processing
         || (signedIn()
           && resource.data.userId == request.auth.uid
@@ -68,7 +76,7 @@ service cloud.firestore {
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
         && request.resource.data.updatedAt == request.time
         && (
-          (isAdmin() && request.resource.data.status in ['Processing','Delivered','Cancelled'])
+          (isAdmin() && request.resource.data.status in ['Processing','Delivered','Returned','Cancelled'])
           || (signedIn()
               && request.resource.data.status == 'Cancelled'
               && resource.data.status == 'Processing'
@@ -91,6 +99,12 @@ service cloud.firestore {
     }
 
     // Sent newsletters history (admin only)
+    // Blacklist (admin only). Document ids: p_<last 9 digits of phone>, e_<email in lowercase>, u_<account uid>.
+    // The order rule above only checks that these documents EXIST - customers can never read the list.
+    match /blacklist/{key} {
+      allow read, write: if isAdmin();
+    }
+
     match /campaigns/{id} {
       allow read, write: if isAdmin();
     }

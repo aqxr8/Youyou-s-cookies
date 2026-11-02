@@ -82,3 +82,12 @@ Sending is done in batches of 5 with a progress bar; every send is saved in "Sen
 `ADMIN_UID` (only if your admin login is not that email). A normal Gmail account sends about 500 emails a day.
 **Publish the new `firestore.rules`** (adds `unsubscribes` and `campaigns`). Customers who signed up before this update are not subscribed until they tick the box in their profile.
 Files: `api/send-campaign.js`, `unsubscribe.html`, `assets/js/unsubscribe.js`, newsletter code in `assets/js/auth.js`.
+
+## Blacklist (Admin > Blacklist) + "Returned" status
+- New order status **Returned** (customer refused / sent the order back). It does not count as revenue; marking it offers to block the customer.
+- **Block** button on every order (phone / account / email) and a manual form in the Blacklist tab (phone, email or account ID, with a reason and note).
+- The block is enforced by **Firestore rules** (not just the website): each order stores `phoneKey` = last 9 digits of the phone, so `+212 6..`, `06..` and `212 6..` are the same person.
+  A blocked customer's order is refused by the database; the website shows a neutral message ("We can't accept this order online right now...") and never says why. Customers cannot read the list.
+- Orders from the same phone that were Returned before show a yellow "returned before" warning on the admin order card.
+- Limits: a person can still use a different phone number (and a guest has no account/email to block). Orders placed before this update have no `phoneKey` but can still be matched in the admin list.
+- **Publish the new `firestore.rules`.** Until you do, nothing is blocked (the website falls back to the old way so orders keep working).

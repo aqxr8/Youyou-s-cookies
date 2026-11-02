@@ -7,10 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | YouYou's Cookies</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261102n">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261102b">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Pinyon+Script&family=Playfair+Display:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261102n">
-  <link rel="stylesheet" href="assets/css/pro.css?v=20261102n">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261102b">
+  <link rel="stylesheet" href="assets/css/pro.css?v=20261102b">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style>
@@ -422,11 +422,11 @@
     }
   </style>
 <script>try{if(localStorage.getItem('youyou_theme_v2')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
-<link rel="stylesheet" href="assets/css/mobile.css?v=20261102n">
-<link rel="stylesheet" href="assets/css/i18n.css?v=20261102n">
-<script src="assets/js/i18n-dict-1.js?v=20261102n"></script>
-<script src="assets/js/i18n-dict-2.js?v=20261102n"></script>
-<script src="assets/js/i18n.js?v=20261102n"></script>
+<link rel="stylesheet" href="assets/css/mobile.css?v=20261102b">
+<link rel="stylesheet" href="assets/css/i18n.css?v=20261102b">
+<script src="assets/js/i18n-dict-1.js?v=20261102b"></script>
+<script src="assets/js/i18n-dict-2.js?v=20261102b"></script>
+<script src="assets/js/i18n.js?v=20261102b"></script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#c0716a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -434,10 +434,10 @@
 <meta name="apple-mobile-web-app-title" content="Youyou's">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/images/logo.webp">
-<link rel="stylesheet" href="assets/css/pwa.css?v=20261102n">
-<script src="assets/js/pwa.js?v=20261102n" defer></script>
-<link rel="stylesheet" href="assets/css/cursors.css?v=20261102n">
-<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261102n">
+<link rel="stylesheet" href="assets/css/pwa.css?v=20261102b">
+<script src="assets/js/pwa.js?v=20261102b" defer></script>
+<link rel="stylesheet" href="assets/css/cursors.css?v=20261102b">
+<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261102b">
 </head>
 <body class="page-pro">
 
@@ -594,6 +594,10 @@
         <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M4 4.85v.9h1v-.9H4zm7 0v.9h1v-.9h-1zm-7 1.8v.9h1v-.9H4zm7 0v.9h1v-.9h-1zm-7 1.8v.9h1v-.9H4zm7 0v.9h1v-.9h-1zm-7 1.8v.9h1v-.9H4zm7 0v.9h1v-.9h-1z"/><path d="M1.5 3A1.5 1.5 0 0 0 0 4.5V6a.5.5 0 0 0 .5.5 1.5 1.5 0 1 1 0 3 .5.5 0 0 0-.5.5v1.5A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5V10a.5.5 0 0 0-.5-.5 1.5 1.5 0 0 1 0-3 .5.5 0 0 0 .5-.5V4.5A1.5 1.5 0 0 0 14.5 3h-13zM1 4.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v1.05a2.5 2.5 0 0 0 0 4.9V11.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V9.95a2.5 2.5 0 0 0 0-4.9V4.5z"/></svg>
         Promo Codes
       </button>
+      <button class="tab-btn" data-tab="blacklist-pane">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+        Blacklist
+      </button>
       <button class="tab-btn" data-tab="news-pane">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
         Newsletter
@@ -609,6 +613,7 @@
             <button class="filter-btn active" data-order-filter="all">All Orders</button>
             <button class="filter-btn" data-order-filter="Processing">In Progress</button>
             <button class="filter-btn" data-order-filter="Delivered">Delivered</button>
+            <button class="filter-btn" data-order-filter="Returned">Returned</button>
             <button class="filter-btn" data-order-filter="Cancelled">Cancelled</button>
           </div>
         </div>
@@ -660,6 +665,45 @@
     </div>
 
     <!-- Promo Codes Pane -->
+    <!-- Blacklist Pane -->
+    <div id="blacklist-pane" class="admin-section-pane">
+      <div class="admin-card-container" style="border-top: 4px solid #d9534f;">
+        <div class="pro-card-header" style="margin-bottom: 8px;">
+          <h2 class="pro-card-title" style="font-size: 1.6rem;">Blacklist: customers who can no longer order</h2>
+        </div>
+        <p class="news-hint" style="margin-bottom:16px;">A blocked phone number, email or account is refused when it tries to order. The block is enforced by the database, so it cannot be bypassed from the website. Customers are never told why, and cannot see this list. Tip: when you mark an order <b>Returned</b>, the site offers to block that customer.</p>
+
+        <div class="bl-add">
+          <label>Block by
+            <select id="bl-type">
+              <option value="phone">Phone number</option>
+              <option value="email">Email</option>
+              <option value="account">Account ID</option>
+            </select>
+          </label>
+          <label>Value <input type="text" id="bl-value" maxlength="120" placeholder="06 12 34 56 78"></label>
+          <label>Reason
+            <select id="bl-reason">
+              <option>Refused the delivery</option>
+              <option>Returned the order</option>
+              <option>Fake order / wrong address</option>
+              <option>Did not answer the phone</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>Note (optional) <input type="text" id="bl-note" maxlength="200" placeholder="Name, what happened..."></label>
+          <button type="button" class="filter-btn active" id="bl-add-btn">🚫 Add to blacklist</button>
+        </div>
+        <div id="bl-msg" class="news-progress" role="status" aria-live="polite"></div>
+
+        <div class="bl-toolbar">
+          <input type="text" id="bl-search" placeholder="Search the blacklist...">
+          <span id="bl-count" class="news-hint" style="margin:0;"></span>
+        </div>
+        <div id="bl-list" class="bl-list">Loading...</div>
+      </div>
+    </div>
+
     <!-- Newsletter Pane -->
     <div id="news-pane" class="admin-section-pane">
       <div class="admin-card-container" style="border-top: 4px solid var(--caramel);">
@@ -801,9 +845,9 @@
 
   </main>
 
-  <script src="assets/js/main.js?v=20261102n"></script>
-  <script type="module" src="assets/js/auth.js?v=20261102n"></script>
-  <script src="assets/js/features.js?v=20261102n"></script>
+  <script src="assets/js/main.js?v=20261102b"></script>
+  <script type="module" src="assets/js/auth.js?v=20261102b"></script>
+  <script src="assets/js/features.js?v=20261102b"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {

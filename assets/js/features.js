@@ -679,7 +679,9 @@ function initCart() {
         await processFinalCheckout(phone, address);
       } catch (err) {
         console.error("Checkout error:", err);
-        if (err && err.message === "PROMO_USED") {
+        if (err && err.message === "ORDER_BLOCKED") {
+          alert("We can't accept this order online right now. Please contact us on Instagram @youyou_s_cookies.");
+        } else if (err && err.message === "PROMO_USED") {
           alert("You already used this promo code. It was removed from your box - confirm your order again.");
         } else {
           alert("Something went wrong while sending your order. Please try again.");
@@ -741,6 +743,9 @@ function initCart() {
 
     // 2) The promo use is saved together with the order (auth.js). Only if the Firestore rules are still the
     //    old ones do we fall back to the old "usedBy" list.
+    if (!orderId && window.__orderSaveError === "blocked") {
+      throw new Error("ORDER_BLOCKED");
+    }
     if (!orderId && window.__orderSaveError === "promo_used") {
       window.activePromo = null;
       updateCartUI();

@@ -47,6 +47,14 @@ function render(code, d) {
       <p class="track-meta">If this is a mistake, message us on Instagram @youyou_s_cookies.</p>`;
     return;
   }
+  if (status === "Returned") {
+    box.innerHTML = `
+      <div class="track-code">Order #${esc(code)}</div>
+      <div class="track-msg error">This order was returned.</div>
+      <p class="track-meta">Placed: ${esc(fmt(d.createdAt))}</p>
+      <p class="track-meta">If this is a mistake, message us on Instagram @youyou_s_cookies.</p>`;
+    return;
+  }
   const delivered = status === "Delivered";
   const steps = [
     { label: "Order received", state: "done" },
