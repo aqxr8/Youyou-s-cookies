@@ -7,10 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | YouYou's Cookies</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261102b">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261102c">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Pinyon+Script&family=Playfair+Display:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261102b">
-  <link rel="stylesheet" href="assets/css/pro.css?v=20261102b">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261102c">
+  <link rel="stylesheet" href="assets/css/pro.css?v=20261102c">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style>
@@ -422,11 +422,11 @@
     }
   </style>
 <script>try{if(localStorage.getItem('youyou_theme_v2')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
-<link rel="stylesheet" href="assets/css/mobile.css?v=20261102b">
-<link rel="stylesheet" href="assets/css/i18n.css?v=20261102b">
-<script src="assets/js/i18n-dict-1.js?v=20261102b"></script>
-<script src="assets/js/i18n-dict-2.js?v=20261102b"></script>
-<script src="assets/js/i18n.js?v=20261102b"></script>
+<link rel="stylesheet" href="assets/css/mobile.css?v=20261102c">
+<link rel="stylesheet" href="assets/css/i18n.css?v=20261102c">
+<script src="assets/js/i18n-dict-1.js?v=20261102c"></script>
+<script src="assets/js/i18n-dict-2.js?v=20261102c"></script>
+<script src="assets/js/i18n.js?v=20261102c"></script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#c0716a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -434,10 +434,10 @@
 <meta name="apple-mobile-web-app-title" content="Youyou's">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/images/logo.webp">
-<link rel="stylesheet" href="assets/css/pwa.css?v=20261102b">
-<script src="assets/js/pwa.js?v=20261102b" defer></script>
-<link rel="stylesheet" href="assets/css/cursors.css?v=20261102b">
-<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261102b">
+<link rel="stylesheet" href="assets/css/pwa.css?v=20261102c">
+<script src="assets/js/pwa.js?v=20261102c" defer></script>
+<link rel="stylesheet" href="assets/css/cursors.css?v=20261102c">
+<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261102c">
 </head>
 <body class="page-pro">
 
@@ -708,10 +708,13 @@
     <div id="news-pane" class="admin-section-pane">
       <div class="admin-card-container" style="border-top: 4px solid var(--caramel);">
         <div class="pro-card-header" style="margin-bottom: 16px;">
-          <h2 class="pro-card-title" style="font-size: 1.6rem;">Newsletter: new flavors, items &amp; coupons</h2>
+          <h2 class="pro-card-title" style="font-size: 1.6rem;">Newsletter: email all accounts about new flavors, items &amp; coupons</h2>
         </div>
 
-        <div id="news-audience" class="news-audience">Loading subscribers...</div>
+        <div id="news-audience" class="news-audience">Loading accounts...</div>
+        <label class="news-hint" style="display:flex; gap:8px; align-items:center; margin:-6px 0 16px; cursor:pointer;">
+          <input type="checkbox" id="news-only-accepted"> Only send to people who already accepted the Privacy Policy (safer)
+        </label>
 
         <div class="news-form">
           <div class="news-row">
@@ -763,7 +766,7 @@
 
           <div class="news-actions">
             <button type="button" class="filter-btn" id="news-test">✉ Send a test to me (shows the language tab you are on)</button>
-            <button type="button" class="filter-btn active" id="news-send">🚀 Send to subscribers</button>
+            <button type="button" class="filter-btn active" id="news-send">🚀 Send to all accounts</button>
           </div>
           <div id="news-progress" class="news-progress" role="status" aria-live="polite"></div>
         </div>
@@ -845,9 +848,9 @@
 
   </main>
 
-  <script src="assets/js/main.js?v=20261102b"></script>
-  <script type="module" src="assets/js/auth.js?v=20261102b"></script>
-  <script src="assets/js/features.js?v=20261102b"></script>
+  <script src="assets/js/main.js?v=20261102c"></script>
+  <script type="module" src="assets/js/auth.js?v=20261102c"></script>
+  <script src="assets/js/features.js?v=20261102c"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {

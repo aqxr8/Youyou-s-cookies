@@ -558,6 +558,7 @@ function initCart() {
           <textarea id="confirm-address-input" style="width:100%; padding:12px; border:1px solid rgba(74,55,40,0.2); border-radius:8px; font-family:inherit; background: #fff; color: var(--brown); min-height:80px; resize: vertical;" placeholder="Neighborhood, street, building..."></textarea>
         </div>
         <button id="confirm-submit-order" class="btn btn-dark" style="width:100%; padding: 14px; font-size: 1.1rem; background: var(--caramel); border-color: var(--caramel);">Confirm Order</button>
+        <p style="margin: 10px 0 0; text-align: center; font-size: .78rem; color: var(--brown-soft);">By confirming you accept our <a href="privacy.html" target="_blank" rel="noopener" style="color: var(--caramel); font-weight: 700;">Privacy Policy</a>.</p>
       </div>
     `;
     document.body.appendChild(confirmModal);

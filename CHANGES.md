@@ -1,3 +1,5 @@
+# v8.7.0 - Privacy Policy & Terms page (EN/FR/AR), required accept box at sign-up (newsletter tick removed), policy screen for existing users at login, newsletter to all accounts (opt-out via link/profile).
+
 # v8.6.0 - Blacklist system (phone / email / account) enforced by Firestore rules + new "Returned" order status, Block buttons and warnings in the admin. Publish the new firestore.rules!
 
 # v8.5.0 - Newsletter system: opt-in at sign-up + profile, unsubscribe page/link, admin Newsletter tab (EN/FR/AR, coupon box, test send, batch sending, history), api/send-campaign.js. Publish the new firestore.rules!

@@ -114,6 +114,17 @@ function makeUnsubToken() {
 }
 // Same person, any phone format: +212 6 12.. / 06 12.. / 0612.. all give the same 9-digit key.
 const phoneKeyOf = (p) => { const d = String(p || "").replace(/\D/g, ""); return d.length >= 9 ? d.slice(-9) : ""; };
+// Bump this date when the Privacy Policy changes in an important way: everyone is asked to accept it again at next login.
+const POLICY_VERSION = "2026-11-02";
+const policyFields = () => ({ policyAccepted: true, policyVersion: POLICY_VERSION, policyAcceptedAt: new Date() });
+const showAuthError = (text) => {
+  const errEl = document.getElementById("error-msg");
+  if (errEl) { errEl.style.display = "block"; errEl.textContent = text; }
+};
+const policyBoxUnticked = () => {
+  const box = document.getElementById("policy-accept");
+  return Boolean(box && !box.checked);
+};
 const siteLang = () => ((window.YYLang && window.YYLang()) || "en");
 const orderNumber = (id, data) =>
   data && /^[A-Z0-9]{8}$/.test(String(data.trackingCode || "")) ? data.trackingCode : String(id).slice(-6).toUpperCase();
@@ -534,6 +545,8 @@ onAuthStateChanged(auth, async (user) => {
       console.warn("Cart merge error:", cartSyncErr);
     }
 
+    ensurePolicyAccepted(user, userData);
+
     if (PAGE === "profile") {
       if (user.email === ADMIN_EMAIL) {
         window.location.href = "admin.html";
@@ -782,6 +795,11 @@ if (signupForm) {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
+    if (policyBoxUnticked()) {
+      showAuthError("Please accept the Privacy Policy & Terms to create your account.");
+      return;
+    }
+
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const cleanName = String(username || "").trim().slice(0, 80);
@@ -792,8 +810,7 @@ if (signupForm) {
         role: "customer",
         joinedAt: new Date(),
         cart: getGuestCart(),
-        marketingOptIn: Boolean(document.getElementById("newsletter-opt") && document.getElementById("newsletter-opt").checked),
-        marketingConsentAt: (document.getElementById("newsletter-opt") && document.getElementById("newsletter-opt").checked) ? new Date() : null,
+        ...policyFields(),
         unsubToken: makeUnsubToken(),
         lang: siteLang()
       }, { merge: true });
@@ -811,6 +828,10 @@ if (signupForm) {
 const googleBtn = document.getElementById("google-btn");
 if (googleBtn) {
   googleBtn.addEventListener("click", async () => {
+    if (policyBoxUnticked()) {
+      showAuthError("Please accept the Privacy Policy & Terms to create your account.");
+      return;
+    }
     try {
       await applyRememberMe();
       const cred = await signInWithPopup(auth, googleProvider);
@@ -824,8 +845,7 @@ if (googleBtn) {
           role: "customer",
           joinedAt: new Date(),
           cart: getGuestCart(),
-          marketingOptIn: Boolean(document.getElementById("newsletter-opt") && document.getElementById("newsletter-opt").checked),
-          marketingConsentAt: (document.getElementById("newsletter-opt") && document.getElementById("newsletter-opt").checked) ? new Date() : null,
+          ...(document.getElementById("policy-accept") && document.getElementById("policy-accept").checked ? policyFields() : {}),
           unsubToken: makeUnsubToken(),
           lang: siteLang()
         });
@@ -898,6 +918,82 @@ function flashMsg(el, text, isError) {
   el.textContent = text;
 }
 
+// ---------- Privacy Policy gate ----------
+// Shown after login to anyone who has not accepted the CURRENT policy version (all old accounts the first time).
+// It blocks the page until they accept; "Decline" logs them out. Not shown to the admin or on the policy page itself.
+function ensurePolicyAccepted(user, userData) {
+  if (!user || (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase())) return;
+  if (/privacy/i.test(location.pathname)) return;
+  if (userData && userData.policyAccepted === true && userData.policyVersion === POLICY_VERSION) return;
+  if (document.getElementById("policy-gate")) return;
+
+  const overlay = document.createElement("div");
+  overlay.id = "policy-gate";
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-labelledby", "policy-gate-title");
+  overlay.style.cssText = "position:fixed; inset:0; z-index:6000; display:grid; place-items:center; padding:16px; overflow:auto; background:rgba(0,0,0,.72); backdrop-filter:blur(5px);";
+  overlay.innerHTML = `
+    <div style="background:var(--cream-light,#fff); color:var(--brown,#333); width:100%; max-width:480px; padding:28px 26px 24px; border-radius:18px; box-shadow:0 24px 50px rgba(0,0,0,.4);">
+      <div data-i18n-skip style="display:flex; gap:6px; justify-content:flex-end; margin:-6px 0 8px;">
+        <button type="button" data-gate-lang="en" lang="en" style="padding:4px 12px; border-radius:999px; border:1px solid rgba(127,127,127,.5); background:transparent; color:inherit; font-weight:700; font-size:.78rem; cursor:pointer;">EN</button>
+        <button type="button" data-gate-lang="fr" lang="fr" style="padding:4px 12px; border-radius:999px; border:1px solid rgba(127,127,127,.5); background:transparent; color:inherit; font-weight:700; font-size:.78rem; cursor:pointer;">FR</button>
+        <button type="button" data-gate-lang="ar" lang="ar" style="padding:4px 12px; border-radius:999px; border:1px solid rgba(127,127,127,.5); background:transparent; color:inherit; font-weight:700; font-size:.85rem; cursor:pointer;">عربي</button>
+      </div>
+      <h3 id="policy-gate-title" style="margin:0 0 8px; font-size:1.5rem;">Our Privacy Policy</h3>
+      <p style="margin:0 0 12px; line-height:1.55; font-size:.95rem;">We have added a Privacy Policy &amp; Terms. To keep using your account, please read and accept it.</p>
+      <ul style="margin:0 0 12px; padding-inline-start:1.2em; font-size:.9rem; line-height:1.55;">
+        <li>We use your name, email, phone and address only to take, deliver and track your orders.</li>
+        <li>We send order receipts and updates, and news about new flavors, items and coupons. You can unsubscribe any time.</li>
+        <li>We never sell your data.</li>
+        <li>Customers who repeatedly refuse or return orders can be blocked from ordering.</li>
+      </ul>
+      <p style="margin:0 0 14px;"><a href="privacy.html" target="_blank" rel="noopener" style="color:var(--caramel,#c0716a); font-weight:700;">Read the full Privacy Policy &amp; Terms</a></p>
+      <label class="remember-me" for="policy-gate-box" style="display:flex; gap:10px; align-items:flex-start; margin:0 0 14px; cursor:pointer; font-weight:700;">
+        <input type="checkbox" id="policy-gate-box" style="margin-top:4px;">
+        <span>I have read and accept the Privacy Policy &amp; Terms</span>
+      </label>
+      <div id="policy-gate-err" role="alert" style="color:#c62828; font-weight:600; font-size:.85rem; min-height:1.2em; margin-bottom:8px;"></div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+        <button type="button" id="policy-gate-no" style="padding:11px 18px; border-radius:10px; border:1px solid rgba(127,127,127,.55); background:transparent; color:inherit; font-weight:700; cursor:pointer; font-family:inherit;">Decline and log out</button>
+        <button type="button" id="policy-gate-yes" disabled style="padding:11px 20px; border-radius:10px; border:0; background:var(--caramel,#c0716a); color:#fff; font-weight:800; cursor:pointer; font-family:inherit; opacity:.55;">Accept and continue</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const prevOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+
+  const box = overlay.querySelector("#policy-gate-box");
+  const yes = overlay.querySelector("#policy-gate-yes");
+  const no = overlay.querySelector("#policy-gate-no");
+  const err = overlay.querySelector("#policy-gate-err");
+  overlay.querySelectorAll("[data-gate-lang]").forEach((b) => b.addEventListener("click", () => {
+    if (window.YYSetLang) window.YYSetLang(b.getAttribute("data-gate-lang"));
+  }));
+  box.addEventListener("change", () => { yes.disabled = !box.checked; yes.style.opacity = box.checked ? "1" : ".55"; });
+
+  yes.addEventListener("click", async () => {
+    if (!box.checked) return;
+    yes.disabled = true; no.disabled = true;
+    try {
+      await setDoc(doc(db, "users", user.uid), policyFields(), { merge: true });
+      window.userDataObj = Object.assign({}, window.userDataObj, policyFields());
+      document.body.style.overflow = prevOverflow;
+      overlay.remove();
+    } catch (e) {
+      console.error("Could not save the policy acceptance:", e);
+      err.textContent = "Could not save. Please try again.";
+      yes.disabled = false; no.disabled = false;
+    }
+  });
+  no.addEventListener("click", async () => {
+    no.disabled = true; yes.disabled = true;
+    try { await signOut(auth); } catch (e) { /* ignore */ }
+    window.location.href = "index.html";
+  });
+  setTimeout(() => { try { box.focus(); } catch (e) { /* ignore */ } }, 50);
+}
+
 // ---------- Newsletter opt-in (profile page) ----------
 // Effective state = user said yes (marketingOptIn) AND has not clicked "unsubscribe" in an email (unsubscribes/<token>).
 async function initNewsletterToggle(user, userData) {
@@ -910,7 +1006,9 @@ async function initNewsletterToggle(user, userData) {
   if (token) {
     try { unsubscribed = (await getDoc(doc(db, "unsubscribes", token))).exists(); } catch (e) { /* rules not published yet */ }
   }
-  box.checked = Boolean(userData && userData.marketingOptIn) && !unsubscribed;
+  // Everyone with an account gets news emails unless they opted out (here, or with the Unsubscribe link in an email).
+  const optedOut = Boolean(userData && (userData.newsOptOut === true || (userData.marketingOptIn === false && userData.marketingConsentAt)));
+  box.checked = !optedOut && !unsubscribed;
   box.addEventListener("change", async () => {
     const want = box.checked;
     box.disabled = true;
@@ -920,8 +1018,8 @@ async function initNewsletterToggle(user, userData) {
         try { await deleteDoc(doc(db, "unsubscribes", token)); } catch (e) { /* nothing to remove */ }
       }
       const patch = want
-        ? { marketingOptIn: true, marketingConsentAt: new Date(), unsubToken: tk, lang: siteLang() }
-        : { marketingOptIn: false, unsubToken: tk, lang: siteLang() };
+        ? { newsOptOut: false, marketingOptIn: true, marketingConsentAt: new Date(), unsubToken: tk, lang: siteLang() }
+        : { newsOptOut: true, marketingOptIn: false, unsubToken: tk, lang: siteLang() };
       await updateDoc(doc(db, "users", user.uid), patch);
       window.userDataObj = Object.assign({}, window.userDataObj, patch);
       flashMsg(msg, want ? "You will get news about new flavors and coupons." : "You are unsubscribed from news emails.", false);
@@ -1253,28 +1351,49 @@ function initAdminDashboard(db) {
     }
   };
 
+  // Everyone with an account gets the news, except people who opted out (profile switch or the Unsubscribe link).
+  const onlyAccepted = () => Boolean((newsEl("news-only-accepted") || {}).checked);
+  const baseEligible = ({ data }) => {
+    if (!data.email) return false;
+    if (data.newsOptOut === true) return false;
+    if (data.marketingOptIn === false && data.marketingConsentAt) return false;   // ticked once, then unticked
+    if (data.unsubToken && unsubTokens.has(data.unsubToken)) return false;
+    return true;
+  };
   const subscribers = () => userDocs
-    .filter(({ data }) => data.marketingOptIn === true
-      && /^[A-Za-z0-9]{20,64}$/.test(String(data.unsubToken || ""))
-      && data.email && !unsubTokens.has(data.unsubToken))
+    .filter((u) => baseEligible(u) && (!onlyAccepted() || u.data.policyAcceptedAt))
     .map(({ id, data }) => ({
       id, email: String(data.email), name: String(data.username || ""),
-      lang: NEWS_LANGS.includes(data.lang) ? data.lang : "en", token: String(data.unsubToken)
+      lang: NEWS_LANGS.includes(data.lang) ? data.lang : "en",
+      token: /^[A-Za-z0-9]{20,64}$/.test(String(data.unsubToken || "")) ? String(data.unsubToken) : ""
     }));
+
+  // Old accounts have no unsubscribe token yet: create one for each before sending (the unsubscribe link needs it).
+  const ensureTokens = async (subs) => {
+    const missing = subs.filter((s) => !s.token);
+    for (let i = 0; i < missing.length; i += 400) {
+      const b = writeBatch(db);
+      missing.slice(i, i + 400).forEach((s) => { s.token = makeUnsubToken(); b.update(doc(db, "users", s.id), { unsubToken: s.token }); });
+      await b.commit();
+    }
+    missing.forEach((s) => { const u = userDocs.find((x) => x.id === s.id); if (u) u.data.unsubToken = s.token; });
+  };
 
   const renderAudience = () => {
     const box = newsEl("news-audience");
     if (!box) return;
     const subs = subscribers();
-    const optedIn = userDocs.filter(({ data }) => data.marketingOptIn === true).length;
+    const eligible = userDocs.filter(baseEligible);
+    const accepted = eligible.filter((u) => u.data.policyAcceptedAt).length;
     const by = { en: 0, fr: 0, ar: 0 };
     subs.forEach((s) => { by[s.lang] += 1; });
     box.innerHTML =
-      `<b>${subs.length}</b> subscriber(s) will receive your email (of ${userDocs.length} registered users). ` +
+      `<b>${subs.length}</b> account(s) will receive your email (of ${userDocs.length} registered accounts). ` +
       `Languages: EN ${by.en} · FR ${by.fr} · AR ${by.ar}.<br>` +
-      `<span style="color: var(--brown-soft); font-size:.85rem;">${optedIn - subs.length} opted in but have unsubscribed. Only people who ticked the box at sign-up or in their profile are included. A normal Gmail account can send about 500 emails per day.</span>` +
-      (subs.length > 400 ? `<br><b style="color:#c62828;">More than 400 subscribers: Gmail may stop sending after about 500 per day.</b>` : "") +
-      (subs.length ? `<details><summary>Show subscribers</summary><ul>${subs.map((s) => `<li>${esc(s.name || "—")} · ${esc(s.email)} · ${esc(s.lang.toUpperCase())}</li>`).join("")}</ul></details>` : "");
+      `<span style="color: var(--brown-soft); font-size:.85rem;">${accepted} of the ${eligible.length} eligible accounts accepted the Privacy Policy, ${eligible.length - accepted} have not yet (they are asked at their next login). ` +
+      `${userDocs.length - eligible.length} account(s) are left out: unsubscribed, opted out, or no email. A normal Gmail account can send about 500 emails per day.</span>` +
+      (subs.length > 400 ? `<br><b style="color:#c62828;">More than 400 recipients: Gmail may stop sending after about 500 per day.</b>` : "") +
+      (subs.length ? `<details><summary>Show recipients</summary><ul>${subs.map((s) => `<li>${esc(s.name || "—")} · ${esc(s.email)} · ${esc(s.lang.toUpperCase())}</li>`).join("")}</ul></details>` : "");
     const sendBtn = newsEl("news-send");
     if (sendBtn) sendBtn.disabled = subs.length === 0;
   };
@@ -1396,6 +1515,8 @@ function initAdminDashboard(db) {
       document.querySelectorAll(".news-lang-btn").forEach((b) => b.classList.toggle("active", b === btn));
       document.querySelectorAll(".news-lang-pane").forEach((p) => p.classList.toggle("active", p.getAttribute("data-news-pane") === newsLang));
     }));
+    const onlyBox = newsEl("news-only-accepted");
+    if (onlyBox) onlyBox.addEventListener("change", renderAudience);
     const typeSel = newsEl("news-type");
     const applyPreset = () => {
       const p = PRESETS[typeSel.value];
@@ -1437,10 +1558,10 @@ function initAdminDashboard(db) {
       const content = collectContent();
       if (!validate(content)) return;
       const subs = subscribers();
-      if (!subs.length) { newsProgress('<span class="err">There are no subscribers yet.</span>'); return; }
+      if (!subs.length) { newsProgress('<span class="err">There is nobody to send to yet.</span>'); return; }
       const ok = await askConfirm({
         title: "Send this newsletter?",
-        message: `"${content.en.subject}" will be emailed to ${subs.length} subscriber(s). You cannot undo this. Tip: send a test to yourself first.`,
+        message: `"${content.en.subject}" will be emailed to ${subs.length} account(s). You cannot undo this. Tip: send a test to yourself first.`,
         confirmText: "Send now", cancelText: "Cancel"
       });
       if (!ok) return;
@@ -1448,6 +1569,7 @@ function initAdminDashboard(db) {
       const coupon = selectedCoupon();
       let result = { sent: 0, failed: 0, failures: [] };
       try {
+        await ensureTokens(subs);
         result = await sendInBatches(subs.map(({ email, name, lang, token }) => ({ email, name, lang, token })),
           content, coupon, newsEl("news-cta-path").value);
         newsProgress(`Done: <b>${result.sent}</b> of ${subs.length} sent.` +

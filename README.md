@@ -91,3 +91,10 @@ Files: `api/send-campaign.js`, `unsubscribe.html`, `assets/js/unsubscribe.js`, n
 - Orders from the same phone that were Returned before show a yellow "returned before" warning on the admin order card.
 - Limits: a person can still use a different phone number (and a guest has no account/email to block). Orders placed before this update have no `phoneKey` but can still be matched in the admin list.
 - **Publish the new `firestore.rules`.** Until you do, nothing is blocked (the website falls back to the old way so orders keep working).
+
+## Privacy Policy, accept box and "email all accounts" (v8.7.0)
+- **privacy.html**: Privacy Policy & Terms in English, French and Arabic (the page shows the visitor's language). Linked in every footer, in sign-up and in the checkout window. Written as a plain-language template: have it read by someone who knows Moroccan law (Law 09-08 / CNDP) and adjust it to what you really do.
+- **Sign-up:** the "Email me about new flavors..." tick box is replaced by a REQUIRED box: "I have read and accept the Privacy Policy & Terms, including news emails ... (I can unsubscribe any time)". Works for email and Google sign-up.
+- **Old accounts:** after logging in (or when an already-logged-in customer opens any page) a screen asks them to accept. They cannot use the site until they click "Accept and continue"; "Decline and log out" signs them out. Acceptance is saved on their account (`policyAccepted`, `policyVersion`, `policyAcceptedAt`). The admin and the policy page itself are not blocked.
+- **Changing the policy:** edit privacy.html and change `POLICY_VERSION` in `assets/js/auth.js` - everybody is asked to accept again at next login.
+- **Newsletter now goes to ALL accounts** with an email, except people who unsubscribed (link in the email) or switched it off in My Profile > Emails & News. A box "Only send to people who already accepted the Privacy Policy" lets you narrow it. Old accounts get their unsubscribe link automatically when you send.

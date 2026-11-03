@@ -19,13 +19,13 @@ const esc = (v) => String(v == null ? '' : v)
 
 const T = {
   en: { dir: 'ltr', hi: (n) => `Hi ${n},`, coupon: 'Your coupon code', cta: 'Order now',
-        why: "You are receiving this because you asked for news from Youyou's Cookies.", unsub: 'Unsubscribe',
+        why: "You are receiving this because you have an account at Youyou's Cookies.", unsub: 'Unsubscribe',
         there: 'there', bye: "Made with love, Youyou's Cookies" },
   fr: { dir: 'ltr', hi: (n) => `Bonjour ${n},`, coupon: 'Votre code promo', cta: 'Commander',
-        why: "Vous recevez ce message car vous avez demandé des nouvelles de Youyou's Cookies.", unsub: 'Se désabonner',
+        why: "Vous recevez ce message car vous avez un compte chez Youyou's Cookies.", unsub: 'Se désabonner',
         there: 'cher client', bye: "Fait avec amour, Youyou's Cookies" },
   ar: { dir: 'rtl', hi: (n) => `مرحباً ${n}،`, coupon: 'رمز الخصم الخاص بك', cta: 'اطلب الآن',
-        why: "تصلك هذه الرسالة لأنك طلبت أخبار Youyou's Cookies.", unsub: 'إلغاء الاشتراك',
+        why: "تصلك هذه الرسالة لأنك تملك حساباً في Youyou's Cookies.", unsub: 'إلغاء الاشتراك',
         there: 'عزيزي الزبون', bye: "صُنع بحب، Youyou's Cookies" }
 };
 

@@ -1,0 +1,15 @@
+/* policy.css - Privacy Policy & Terms page (3 languages in the page, the active one is shown) */
+.policy-card{max-width:860px!important;width:calc(100% - 32px);text-align:start}
+.policy-lang{display:none;line-height:1.7;color:var(--brown)}
+html:not([data-lang="fr"]):not([data-lang="ar"]) .policy-lang[data-pl="en"],
+html[data-lang="en"] .policy-lang[data-pl="en"],
+html[data-lang="fr"] .policy-lang[data-pl="fr"],
+html[data-lang="ar"] .policy-lang[data-pl="ar"]{display:block}
+.policy-lang h2{font-size:1.9rem;margin:0 0 4px}
+.policy-lang h3{font-size:1.1rem;margin:22px 0 6px;color:var(--caramel)}
+.policy-lang p,.policy-lang li{font-size:.95rem}
+.policy-lang ul{margin:6px 0 0;padding-inline-start:1.3em}
+.policy-lang li{margin-bottom:6px}
+.policy-updated{color:var(--brown-soft);font-size:.85rem;margin:0 0 6px}
+.policy-accept{margin-top:24px;padding:14px 16px;border-radius:12px;background:rgba(127,127,127,.12);font-weight:600}
+.policy-link{color:var(--caramel);font-weight:700}
