@@ -1,3 +1,5 @@
+# v8.8.0 - Based on v8.7.0 (the Simple email style of 8.7.1 is NOT included). Admin revenue now excludes delivery fees (top box, daily summary, CSV, user directory).
+
 # v8.7.0 - Privacy Policy & Terms page (EN/FR/AR), required accept box at sign-up (newsletter tick removed), policy screen for existing users at login, newsletter to all accounts (opt-out via link/profile).
 
 # v8.6.0 - Blacklist system (phone / email / account) enforced by Firestore rules + new "Returned" order status, Block buttons and warnings in the admin. Publish the new firestore.rules!

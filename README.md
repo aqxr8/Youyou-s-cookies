@@ -98,3 +98,11 @@ Files: `api/send-campaign.js`, `unsubscribe.html`, `assets/js/unsubscribe.js`, n
 - **Old accounts:** after logging in (or when an already-logged-in customer opens any page) a screen asks them to accept. They cannot use the site until they click "Accept and continue"; "Decline and log out" signs them out. Acceptance is saved on their account (`policyAccepted`, `policyVersion`, `policyAcceptedAt`). The admin and the policy page itself are not blocked.
 - **Changing the policy:** edit privacy.html and change `POLICY_VERSION` in `assets/js/auth.js` - everybody is asked to accept again at next login.
 - **Newsletter now goes to ALL accounts** with an email, except people who unsubscribed (link in the email) or switched it off in My Profile > Emails & News. A box "Only send to people who already accepted the Privacy Policy" lets you narrow it. Old accounts get their unsubscribe link automatically when you send.
+
+## Revenue = products only, delivery fees excluded (v8.8.0)
+Everywhere in the admin, "revenue" is now what the cookies earned: the items minus any discount, WITHOUT the delivery fee.
+- Top box: "Revenue (delivered, no delivery fees)".
+- Orders tab daily summary: Expected revenue, Revenue delivered, and a separate "Delivery fees (delivered)" box so you can still reconcile the cash you collect.
+- User directory: "X DH delivered (no delivery fees)". The loyalty rank still uses what the customer paid (same as on their own profile).
+- CSV export: new columns "Revenue without delivery", "Delivery fee" and "Total paid by customer".
+The delivery fee is not stored on the order; it is worked out as total paid minus revenue, so it also works for old orders.

@@ -126,6 +126,16 @@ const policyBoxUnticked = () => {
   return Boolean(box && !box.checked);
 };
 const siteLang = () => ((window.YYLang && window.YYLang()) || "en");
+// REVENUE = what the cookies earned: the products minus any discount, WITHOUT the delivery fee.
+// (The delivery fee is not stored on the order; it is totalAmount - revenue.)
+const itemsSubtotal = (data) => (Array.isArray(data && data.items)
+  ? data.items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 0), 0) : 0);
+const orderRevenue = (data) => {
+  const sub = Number(data.subtotalAmount) || itemsSubtotal(data) || Number(data.originalPrice) || 0;
+  if (!sub) return Math.max(0, Number(data.totalAmount) || 0);      // nothing else to go on (very old order)
+  return Math.max(0, Math.round((sub - (Number(data.discountAmount) || 0)) * 100) / 100);
+};
+const orderDelivery = (data) => Math.max(0, Math.round(((Number(data.totalAmount) || 0) - orderRevenue(data)) * 100) / 100);
 const orderNumber = (id, data) =>
   data && /^[A-Z0-9]{8}$/.test(String(data.trackingCode || "")) ? data.trackingCode : String(id).slice(-6).toUpperCase();
 // Keeps the public tracking document in step with the order (only when the order has a tracking code).
@@ -1172,7 +1182,7 @@ function initAdminDashboard(db) {
   const recomputeStats = () => {
     let revenue = 0, pending = 0;
     orderDocs.forEach((o) => {
-      if (o.data.status === "Delivered") revenue += Number(o.data.totalAmount) || 0;
+      if (o.data.status === "Delivered") revenue += orderRevenue(o.data);
       if (o.data.status === "Processing") pending += 1;
     });
     if (statRevenue) statRevenue.textContent = `${Math.round(revenue * 100) / 100} DH`;
@@ -1215,13 +1225,16 @@ function initAdminDashboard(db) {
     if (!statsBox || !bakeBox) return;
     const list = ordersOfDay();
     const count = (st) => list.filter((o) => (o.data.status || "Processing") === st).length;
-    const delivered = list.filter((o) => o.data.status === "Delivered").reduce((s, o) => s + (Number(o.data.totalAmount) || 0), 0);
-    const expected = list.filter((o) => o.data.status !== "Cancelled" && o.data.status !== "Returned").reduce((s, o) => s + (Number(o.data.totalAmount) || 0), 0);
+    const deliveredOrders = list.filter((o) => o.data.status === "Delivered");
+    const delivered = deliveredOrders.reduce((s, o) => s + orderRevenue(o.data), 0);
+    const deliveryFees = deliveredOrders.reduce((s, o) => s + orderDelivery(o.data), 0);
+    const expected = list.filter((o) => o.data.status !== "Cancelled" && o.data.status !== "Returned").reduce((s, o) => s + orderRevenue(o.data), 0);
     const stat = (value, label) => `<div class="os-stat"><b>${esc(value)}</b><span>${esc(label)}</span></div>`;
     statsBox.innerHTML =
       stat(list.length, "Orders") + stat(count("Processing"), "In progress") + stat(count("Delivered"), "Delivered") +
-      stat(count("Returned"), "Returned") + stat(count("Cancelled"), "Cancelled") + stat(money(expected) + " DH", "Expected (not cancelled/returned)") +
-      stat(money(delivered) + " DH", "Collected (delivered)");
+      stat(count("Returned"), "Returned") + stat(count("Cancelled"), "Cancelled") + stat(money(expected) + " DH", "Expected revenue (no delivery fees)") +
+      stat(money(delivered) + " DH", "Revenue delivered (no delivery fees)") +
+      stat(money(deliveryFees) + " DH", "Delivery fees (delivered)");
     const totals = bakeTotals(list);
     bakeBox.innerHTML = totals.length
       ? `<h4>To bake (${esc(selectedDay())})</h4><ul>${totals.map(([n, q]) => `<li><b>${esc(q)}x</b> ${esc(n)}</li>`).join("")}</ul>`
@@ -1235,12 +1248,13 @@ function initAdminDashboard(db) {
     return '"' + s.replace(/"/g, '""') + '"';
   };
   const downloadCsv = (list, filename) => {
-    const head = ["Order number", "Date", "Time", "Status", "Customer", "Email", "Phone", "Address", "Items", "Promo code", "Discount (DH)", "Subtotal (DH)", "Total (DH)"];
+    const head = ["Order number", "Date", "Time", "Status", "Customer", "Email", "Phone", "Address", "Items", "Promo code", "Discount (DH)", "Subtotal (DH)", "Revenue without delivery (DH)", "Delivery fee (DH)", "Total paid by customer (DH)"];
     const rows = list.map(({ id, data }) => [
       orderNumber(id, data), dayKey(data.createdAt), timeOf(data.createdAt), statusLabel(data.status || "Processing"),
       data.customerName || "", data.userEmail || "", data.phone || "", data.address || "",
       (Array.isArray(data.items) ? data.items : []).map((i) => `${i.quantity}x ${i.name}`).join("; "),
-      data.promoCode || "", money(data.discountAmount), money(data.subtotalAmount || data.originalPrice), money(data.totalAmount)
+      data.promoCode || "", money(data.discountAmount), money(data.subtotalAmount || data.originalPrice),
+      money(orderRevenue(data)), money(orderDelivery(data)), money(data.totalAmount)
     ]);
     const text = "\ufeff" + [head].concat(rows).map((r) => r.map(csvCell).join(",")).join("\r\n");
     const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
@@ -1908,12 +1922,16 @@ function initAdminDashboard(db) {
   const renderUsers = () => {
     if (!usersBox) return;
     if (!userDocs.length) { emptyLine(usersBox, "No registered users yet."); return; }
-    const spentByUser = {};
+    const spentByUser = {};     // what the customer paid (used for the loyalty rank, same as on their profile)
+    const revenueByUser = {};   // revenue without delivery fees
     const countByUser = {};
     orderDocs.forEach(({ data }) => {
       if (!data.userId || data.userId === "guest") return;
       countByUser[data.userId] = (countByUser[data.userId] || 0) + 1;
-      if (data.status === "Delivered") spentByUser[data.userId] = (spentByUser[data.userId] || 0) + (Number(data.totalAmount) || 0);
+      if (data.status === "Delivered") {
+        spentByUser[data.userId] = (spentByUser[data.userId] || 0) + (Number(data.totalAmount) || 0);
+        revenueByUser[data.userId] = (revenueByUser[data.userId] || 0) + orderRevenue(data);
+      }
     });
     usersBox.innerHTML = userDocs.map(({ id, data }) => {
       const spent = spentByUser[id] || 0;
@@ -1927,7 +1945,7 @@ function initAdminDashboard(db) {
             <div style="min-width:0;">
               <strong>${esc(data.username || "—")}</strong>
               <div style="font-size:.85rem; color: var(--brown-soft); word-break:break-all;">${esc(data.email || "")}${data.phone ? " · " + esc(data.phone) : ""}</div>
-              <div style="font-size:.8rem; color: var(--brown-soft);">${countByUser[id] || 0} order(s) · ${spent} DH delivered</div>
+              <div style="font-size:.8rem; color: var(--brown-soft);">${countByUser[id] || 0} order(s) · ${Math.round((revenueByUser[id] || 0) * 100) / 100} DH delivered (no delivery fees)</div>
             </div>
           </div>
           <span class="status-pill-badge" style="background:${rank.bg}; color:${rank.color}; border:1px solid ${rank.color}40; display:inline-flex; gap:6px; align-items:center;">${rank.icon} ${esc(rank.name)}</span>
