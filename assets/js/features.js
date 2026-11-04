@@ -187,37 +187,144 @@ function initQuiz() {
 
 // --- CLOUD-SYNCED CART MECHANIC ---
 
-// Official prices (DH). KEEP IN SYNC with the data-price values in menu.html.
-// Anything in the saved cart that is not on this list, or has a different price, is corrected/dropped.
-const MENU_PRICES = {
-  'Classic Cookie': 7, 'Extra Chocolate': 10, 'Red Velvet': 12, 'Oreo Cookie': 12,
-  'Kinder Cookie': 13, 'Lotus Cookie': 15, 'Monster Cookie': 15,
-  'KitKat Cookie': 15, 'Classic Brownie': 10,
-  'Loaded Fudge Brownie': 10,   // old name, kept so carts saved before the rename still work (and get the right price)
-  '10 Mini Cookies Box': 15, '15 Mini Cookies Box': 20, '20 Mini Cookies Box': 27, '30 Mini Cookies Box': 40
-};
+// ============================================================================
+// MENU = the database (collection "menu_items", only the admin can change it).
+// The list below is only the FIRST-PAINT / OFFLINE fallback and the data the admin dashboard imports
+// with "Import current menu". Prices that customers pay come from the database and are enforced by
+// firestore.rules (when the menu lock is on).
+// ============================================================================
+const DEFAULT_MENU = [{"id": "classic-cookie", "name": "Classic Cookie", "price": 7, "category": "cookies", "desc": "The authentic taste that everyone loves. Simple, good, and comforting.", "image": "assets/images/classic-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 10}, {"id": "classic-brownie", "name": "Classic Brownie", "price": 10, "category": "cookies", "desc": "A rich, ultra-fudgy brownie topped with crushed Oreo and Lotus for the ultimate indulgence.", "image": "assets/images/classic-brownie.webp", "badge": "New Treat", "badgeStyle": "", "available": true, "sortOrder": 20}, {"id": "monster-cookie", "name": "Monster Cookie", "price": 15, "category": "cookies", "desc": "A playful, bright blue treat packed with sweet surprises and topped with a whole Oreo.", "image": "assets/images/monster-cookie.webp", "badge": "New Flavor", "badgeStyle": "", "available": true, "sortOrder": 30}, {"id": "kitkat-cookie", "name": "KitKat Cookie", "price": 15, "category": "cookies", "desc": "Our classic thick dough crowned with crispy, melting KitKat bars.", "image": "assets/images/kitkat-cookie.webp", "badge": "New Flavor", "badgeStyle": "", "available": true, "sortOrder": 40}, {"id": "extra-chocolate", "name": "Extra Chocolate", "price": 10, "category": "cookies", "desc": "For true chocolate lovers. Rich, intense, and super indulgent.", "image": "assets/images/extra-chocolate.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 50}, {"id": "oreo-cookie", "name": "Oreo Cookie", "price": 12, "category": "cookies", "desc": "Crushed Oreo chunks for a 100% indulgent treat.", "image": "assets/images/oreo-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 60}, {"id": "red-velvet", "name": "Red Velvet", "price": 12, "category": "cookies", "desc": "Soft, melt-in-your-mouth, and irresistible. The sweetness of red velvet in every bite.", "image": "assets/images/red-velvet.webp", "badge": "Monthly Special", "badgeStyle": "", "available": true, "sortOrder": 70}, {"id": "kinder-cookie", "name": "Kinder Cookie", "price": 13, "category": "cookies", "desc": "The unique taste of Kinder chocolate in every bite.", "image": "assets/images/kinder-cookie.webp", "badge": "Monthly Special", "badgeStyle": "", "available": true, "sortOrder": 80}, {"id": "lotus-cookie", "name": "Lotus Cookie", "price": 15, "category": "cookies", "desc": "Caramelized and crunchy sweetness with an irresistible taste.", "image": "assets/images/lotus-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 90}, {"id": "10-mini-cookies-box", "name": "10 Mini Cookies Box", "price": 15, "category": "boxes", "desc": "A perfect little sample box of our bite-sized favorites.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 100}, {"id": "15-mini-cookies-box", "name": "15 Mini Cookies Box", "price": 20, "category": "boxes", "desc": "Our highly requested bite-sized mix. Perfect for gifts or personal cravings.", "image": "assets/images/mini-box.webp", "badge": "Best Choice", "badgeStyle": "box-badge", "available": true, "sortOrder": 110}, {"id": "20-mini-cookies-box", "name": "20 Mini Cookies Box", "price": 27, "category": "boxes", "desc": "Great for sharing with friends, family, or keeping all to yourself!", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 120}, {"id": "30-mini-cookies-box", "name": "30 Mini Cookies Box", "price": 40, "category": "boxes", "desc": "The ultimate party box. Enough sweet treats for everyone.", "image": "assets/images/mini-box.webp", "badge": "Party Size", "badgeStyle": "box-badge", "available": true, "sortOrder": 130}];
 
-// Safety net: if a menu button's data-price ever differs from MENU_PRICES, say so in the browser console
-// (the cart always charges MENU_PRICES, so a mismatch means the menu card shows a different price).
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.add-to-cart[data-name]').forEach((b) => {
-    const n = b.getAttribute('data-name');
-    const p = Number(b.getAttribute('data-price'));
-    if (!Object.prototype.hasOwnProperty.call(MENU_PRICES, n)) console.warn('[menu] "' + n + '" is not in MENU_PRICES');
-    else if (MENU_PRICES[n] !== p) console.warn('[menu] price mismatch for "' + n + '": button ' + p + ' vs MENU_PRICES ' + MENU_PRICES[n]);
-  });
-});
+const MENU_PROJECT = 'youyous-cookies';
+const MENU_KEY = 'AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk'; // public Firebase web key (not a secret)
+const MENU_CACHE_KEY = 'youyou_menu_v2';
+const MAX_CART_LINES = 5; // the database allows at most 5 different items per order (see firestore.rules)
+
+const YYMenu = window.YYMenu = { items: [], byId: {}, byName: {}, source: 'default' };
+
+function menuSortItems(list) {
+  return list.slice().sort((a, b) => (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0) || String(a.name).localeCompare(String(b.name)));
+}
+
+function applyMenu(list, source) {
+  YYMenu.items = menuSortItems(list);
+  YYMenu.byId = {};
+  YYMenu.byName = {};
+  YYMenu.items.forEach((it) => { YYMenu.byId[it.id] = it; YYMenu.byName[it.name] = it; });
+  YYMenu.source = source;
+}
+
+// Firestore REST value -> plain JS value
+function menuFromRest(doc) {
+  const f = (doc && doc.fields) || {};
+  const val = (v) => {
+    if (!v) return undefined;
+    if ('stringValue' in v) return v.stringValue;
+    if ('integerValue' in v) return Number(v.integerValue);
+    if ('doubleValue' in v) return Number(v.doubleValue);
+    if ('booleanValue' in v) return v.booleanValue;
+    return undefined;
+  };
+  const id = String(doc.name || '').split('/').pop();
+  const price = val(f.price);
+  const name = val(f.name);
+  if (!id || typeof name !== 'string' || !(price > 0)) return null;
+  return {
+    id, name, price,
+    category: val(f.category) === 'boxes' ? 'boxes' : 'cookies',
+    desc: val(f.desc) || '', image: val(f.image) || '',
+    badge: val(f.badge) || '', badgeStyle: val(f.badgeStyle) === 'box-badge' ? 'box-badge' : '',
+    available: val(f.available) !== false,
+    sortOrder: Number(val(f.sortOrder)) || 0
+  };
+}
+
+function menuSaveCache(list) {
+  try { localStorage.setItem(MENU_CACHE_KEY, JSON.stringify({ t: Date.now(), items: list })); }
+  catch (e) {
+    try { // quota: keep everything except the big uploaded pictures
+      localStorage.setItem(MENU_CACHE_KEY, JSON.stringify({ t: Date.now(), items: list.map((i) => Object.assign({}, i, { image: /^data:/.test(i.image) ? '' : i.image })) }));
+    } catch (e2) { /* ignore */ }
+  }
+}
+
+function menuLoadCache() {
+  try {
+    const c = JSON.parse(localStorage.getItem(MENU_CACHE_KEY) || 'null');
+    if (c && Array.isArray(c.items) && c.items.length) return c.items.filter((i) => i && i.id && i.name && i.price > 0);
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
+async function menuFetchFromDb() {
+  const out = [];
+  let token = '';
+  for (let page = 0; page < 5; page++) {
+    const url = 'https://firestore.googleapis.com/v1/projects/' + MENU_PROJECT + '/databases/(default)/documents/menu_items?pageSize=100&key=' + MENU_KEY + (token ? '&pageToken=' + encodeURIComponent(token) : '');
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('menu http ' + r.status);
+    const j = await r.json();
+    (j.documents || []).forEach((d) => { const it = menuFromRest(d); if (it) out.push(it); });
+    token = j.nextPageToken || '';
+    if (!token) break;
+  }
+  return out;
+}
+
+const SAFE_IMG = /^(assets\/images\/[A-Za-z0-9._-]+|data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+)$/;
+const menuEsc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function renderMenuPage() {
+  const cookiesGrid = document.getElementById('cookies');
+  const boxesGrid = document.getElementById('boxes-grid');
+  if (!cookiesGrid || !boxesGrid) return;
+  const card = (it) => {
+    const img = SAFE_IMG.test(it.image || '') ? it.image : 'assets/images/classic-cookie.webp';
+    const badge = it.badge ? '<span class="badge' + (it.badgeStyle ? ' ' + menuEsc(it.badgeStyle) : '') + '">' + menuEsc(it.badge) + '</span>' : '';
+    const btn = it.available === false
+      ? '<button class="add-to-box-btn" type="button" disabled style="opacity:.55;cursor:not-allowed">Sold out</button>'
+      : '<button class="add-to-box-btn add-to-cart" data-id="' + menuEsc(it.id) + '" data-name="' + menuEsc(it.name) + '" data-price="' + menuEsc(it.price) + '">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"/><path d="M8 7.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V12a.5.5 0 0 1-1 0v-1.5H6a.5.5 0 0 1 0-1h1.5V8a.5.5 0 0 1 .5-.5z"/></svg> Add to Box</button>';
+    return '<div class="new-menu-card reveal visible" data-menu-id="' + menuEsc(it.id) + '"><div class="card-img"><img src="' + menuEsc(img) + '" alt="' + menuEsc(it.name) + '" loading="lazy" decoding="async">' + badge + '</div>' +
+      '<div class="card-info"><div class="card-header"><h3>' + menuEsc(it.name) + '</h3><span class="price">' + menuEsc(it.price) + ' DH</span></div>' +
+      '<p class="desc">' + menuEsc(it.desc) + '</p>' + btn + '</div></div>';
+  };
+  cookiesGrid.innerHTML = YYMenu.items.filter((i) => i.category === 'cookies').map(card).join('');
+  boxesGrid.innerHTML = YYMenu.items.filter((i) => i.category === 'boxes').map(card).join('');
+  if (typeof init3DHoverEffect === 'function') init3DHoverEffect();
+}
+
+function menuChanged() {
+  window.dispatchEvent(new CustomEvent('menu-updated'));
+  renderMenuPage();
+}
+
+// 1) paint at once from the saved copy (or the built-in list)  2) refresh from the database
+applyMenu(menuLoadCache() || DEFAULT_MENU, menuLoadCache() ? 'cache' : 'default');
+document.addEventListener('DOMContentLoaded', renderMenuPage);
+YYMenu.ready = (async () => {
+  try {
+    const list = await menuFetchFromDb();
+    if (list.length) { applyMenu(list, 'db'); menuSaveCache(list); menuChanged(); }
+  } catch (e) { console.warn('[menu] could not load the menu from the database, using the saved copy:', e); }
+})();
+window.YYMenuDefaults = DEFAULT_MENU;
+
+function menuLookup(idOrName, name) {
+  return (idOrName && YYMenu.byId[idOrName]) || (name && YYMenu.byName[name]) || null;
+}
 
 function sanitizeCart(raw) {
   const out = [];
   if (!Array.isArray(raw)) return out;
   raw.forEach((item) => {
     if (!item || typeof item.name !== 'string') return;
-    if (!Object.prototype.hasOwnProperty.call(MENU_PRICES, item.name)) return;
+    const m = menuLookup(typeof item.id === 'string' ? item.id : '', item.name);
+    if (!m || m.available === false) return;
     const qty = Math.min(99, Math.max(1, parseInt(item.quantity, 10) || 1));
-    const existing = out.find((i) => i.name === item.name);
+    const existing = out.find((i) => i.id === m.id);
     if (existing) existing.quantity = Math.min(99, existing.quantity + qty);
-    else out.push({ name: item.name, price: MENU_PRICES[item.name], quantity: qty });
+    else if (out.length < MAX_CART_LINES) out.push({ id: m.id, name: m.name, price: m.price, quantity: qty });
   });
   return out;
 }
@@ -266,19 +373,30 @@ function initCart() {
     updateCartUI();
   });
 
+  // The menu changed in the database (price / item removed / sold out): re-price the box right away.
+  window.addEventListener('menu-updated', () => {
+    cart = sanitizeCart(cart);
+    window.cart = cart;
+    saveCart();
+  });
+
   document.addEventListener('click', (e) => {
     const button = e.target.closest('.add-to-cart');
     if (!button) return;
 
-    const name = button.getAttribute('data-name');
-    if (!name || !Object.prototype.hasOwnProperty.call(MENU_PRICES, name)) return;
-    const price = MENU_PRICES[name];
+    const m = menuLookup(button.getAttribute('data-id'), button.getAttribute('data-name'));
+    if (!m || m.available === false) return;
+    const name = m.name;
     
-    const existing = cart.find(i => i.name === name);
+    const existing = cart.find(i => i.id === m.id);
     if (existing) {
       existing.quantity = Math.min(99, existing.quantity + 1);
     } else {
-      cart.push({ name, price, quantity: 1 });
+      if (cart.length >= MAX_CART_LINES) {
+        alert('You can order up to ' + MAX_CART_LINES + ' different items at a time. Please place a second order for the rest, thank you!');
+        return;
+      }
+      cart.push({ id: m.id, name: m.name, price: m.price, quantity: 1 });
     }
     
     saveCart();

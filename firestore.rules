@@ -16,6 +16,44 @@ service cloud.firestore {
     }
     function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
 
+    // ---------------- MENU LOCK ----------------
+    // The menu lives in /menu_items (only the admin can change it). When the admin turns the lock ON
+    // (document /settings/menu_lock, created by the admin dashboard > Menu tab), every order line must be
+    // a real, available menu item sold at EXACTLY the price stored in the database, and subtotalAmount
+    // must equal the sum of the lines. Max 5 different items per order (Firestore allows 10 document
+    // reads per rule check: 3 for the blacklist + 1 for the lock + up to 5 menu items = 9).
+    // Emergency off switch: delete /settings/menu_lock in the Firebase console (or press Unlock in the dashboard).
+    function menuLockOn() { return exists(/databases/$(database)/documents/settings/menu_lock); }
+    function menuLineOk(items, i) {
+      return items.size() <= i || (
+        items[i].keys().hasOnly(['id', 'name', 'price', 'quantity'])
+        && items[i].id is string && items[i].id.size() > 0 && items[i].id.size() <= 80
+        && items[i].quantity is int && items[i].quantity >= 1 && items[i].quantity <= 99
+        && items[i].price is number
+        && menuMatches(items[i])
+      );
+    }
+    function menuMatches(it) {
+      let m = get(/databases/$(database)/documents/menu_items/$(it.id)).data;
+      return m.available == true && m.price == it.price;
+    }
+    function menuLine(items, i) { return items.size() <= i ? 0 : items[i].price * items[i].quantity; }
+    function menuSubtotal(items) {
+      return menuLine(items, 0) + menuLine(items, 1) + menuLine(items, 2) + menuLine(items, 3) + menuLine(items, 4);
+    }
+    function menuOk(d) {
+      return !menuLockOn() || (
+        d.items.size() <= 5
+        && menuLineOk(d.items, 0) && menuLineOk(d.items, 1) && menuLineOk(d.items, 2)
+        && menuLineOk(d.items, 3) && menuLineOk(d.items, 4)
+        && ('subtotalAmount' in d) && d.subtotalAmount == menuSubtotal(d.items)
+        // without a promo code nobody can pay less than the items + delivery (free from 100 DH)
+        && ((('promoCode' in d) && d.promoCode is string && d.promoCode.size() > 0 && signedIn()
+             && d.discountAmount is number && d.discountAmount >= 0 && d.discountAmount <= d.subtotalAmount)
+            || d.totalAmount >= d.subtotalAmount + (d.subtotalAmount >= 100 ? 0 : 15))
+      );
+    }
+
     // Orders can be placed by guests OR signed-in customers, with strict shape/size checks.
     function validOrder() {
       let d = request.resource.data;
@@ -26,6 +64,7 @@ service cloud.firestore {
         && ((request.auth == null && d.userId == 'guest') || (signedIn() && d.userId == request.auth.uid))
         && d.status == 'Processing'
         && d.items is list && d.items.size() > 0 && d.items.size() <= 50
+        && menuOk(d)
         && d.totalAmount is number && d.totalAmount >= 0 && d.totalAmount <= 3000
         && (!('userEmail' in d) || (d.userEmail is string && d.userEmail.size() <= 200))
         && (!signedIn() || !('userEmail' in d) || !('email' in request.auth.token) || d.userEmail.lower() == request.auth.token.email.lower())
@@ -104,6 +143,33 @@ service cloud.firestore {
     // Blacklist (admin only). Document ids: p_<last 9 digits of phone>, e_<email in lowercase>, u_<account uid>.
     // The order rule above only checks that these documents EXIST - customers can never read the list.
     match /blacklist/{key} {
+      allow read, write: if isAdmin();
+    }
+
+    // ---------------- MENU (public read, admin-only write) ----------------
+    match /menu_items/{itemId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && validMenuItem(request.resource.data) && itemId.matches('[A-Za-z0-9_-]{1,80}');
+      allow delete: if isAdmin();
+    }
+    function validMenuItem(d) {
+      return d.keys().hasOnly(['name','price','category','desc','image','badge','badgeStyle','available','sortOrder','updatedAt'])
+        && d.keys().hasAll(['name','price','category','available'])
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 60
+        && d.price is number && d.price > 0 && d.price <= 1000
+        && d.category in ['cookies', 'boxes']
+        && d.available is bool
+        && (!('desc' in d) || (d.desc is string && d.desc.size() <= 300))
+        && (!('badge' in d) || (d.badge is string && d.badge.size() <= 30))
+        && (!('badgeStyle' in d) || d.badgeStyle in ['', 'box-badge'])
+        && (!('sortOrder' in d) || d.sortOrder is number)
+        && (!('image' in d) || (d.image is string && d.image.size() <= 200000
+              && (d.image.matches('assets/images/[A-Za-z0-9._-]+')
+                  || d.image.matches('data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+'))));
+    }
+
+    // Admin settings (menu lock switch)
+    match /settings/{id} {
       allow read, write: if isAdmin();
     }
 

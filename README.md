@@ -112,3 +112,7 @@ The delivery fee is not stored on the order; it is worked out as total paid minu
 - Secrets live ONLY in Vercel env vars: `GMAIL_APP_PASSWORD`, `TELEGRAM_BOT_TOKEN`. `TELEGRAM_CHAT_IDS` (comma separated). Optional: `SITE_URL` (default https://youyouscookies.vercel.app).
 - `/api/telegram` and `/api/send-receipt` only work for a real order created in the last 10 / 30 minutes.
 - `Content-Security-Policy-Report-Only` in `vercel.json` shows what a full policy would block; once the console is clean, rename it to `Content-Security-Policy`.
+
+## Menu (v8.9.0)
+- Items live in Firestore `menu_items`; edit them in the admin dashboard > Menu tab. The list inside `assets/js/features.js` (`DEFAULT_MENU`) is only a first-paint/offline fallback and the data used by "Import current menu".
+- Price lock: Menu tab > Turn lock ON/OFF (document `settings/menu_lock`). If customers ever cannot order, press OFF (or delete that document in the Firebase console).

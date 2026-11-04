@@ -307,6 +307,7 @@ window.saveOrderToFirestore = async function (orderData) {
     const items = (Array.isArray(orderData.items) ? orderData.items : [])
       .slice(0, 50)
       .map((i) => ({
+        id: String((i && i.id) || "").slice(0, 80),
         name: String((i && i.name) || "Item").slice(0, 60),
         price: Math.max(0, Number(i && i.price) || 0),
         quantity: Math.min(99, Math.max(1, parseInt(i && i.quantity, 10) || 1))
@@ -2017,6 +2018,246 @@ function initAdminDashboard(db) {
     });
   }
 
+  // ---------- MENU MANAGER (menu_items in the database; only the admin can write) ----------
+  const menuEl = (id) => document.getElementById(id);
+  let menuRows = [];          // [{id, data}] sorted
+  let menuLocked = false;
+
+  const menuSay = (msg, bad) => {
+    const f = menuEl("menu-feedback");
+    if (!f) return;
+    f.textContent = msg || "";
+    f.style.color = bad ? "#b3261e" : "#2e7d32";
+  };
+
+  const menuSlug = (n) => String(n).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "item";
+  const menuImgOk = (v) => /^(assets\/images\/[A-Za-z0-9._-]+|data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+)$/.test(String(v || ""));
+
+  const menuReadLock = async () => {
+    try { menuLocked = (await getDoc(doc(db, "settings", "menu_lock"))).exists(); }
+    catch (e) { menuLocked = false; console.warn("Could not read the menu lock (publish the new firestore.rules):", e); }
+    const st = menuEl("menu-lock-state");
+    const tg = menuEl("menu-lock-toggle");
+    if (st) st.textContent = menuLocked ? "🔒 Price lock is ON - the database refuses orders that do not match this menu." : "🔓 Price lock is OFF - orders are not checked against this menu.";
+    if (tg) { tg.style.display = menuRows.length ? "" : "none"; tg.textContent = menuLocked ? "Turn lock OFF" : "Turn lock ON"; }
+  };
+
+  const menuResize = (file) => new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let max = 640, q = 0.82, out = "";
+      for (let i = 0; i < 8; i++) {
+        const k = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.width * k));
+        c.height = Math.max(1, Math.round(img.height * k));
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        out = c.toDataURL("image/jpeg", q);
+        if (out.length <= 150000) return resolve(out);
+        max = Math.round(max * 0.8); q = Math.max(0.5, q - 0.08);
+      }
+      reject(new Error("Photo too large"));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Not an image")); };
+    img.src = url;
+  });
+
+  const menuRender = () => {
+    const box = menuEl("menu-admin-list");
+    if (!box) return;
+    const imp = menuEl("menu-import");
+    if (imp) imp.style.display = menuRows.length ? "none" : "";
+    if (!menuRows.length) { box.innerHTML = '<p class="news-hint">The menu in the database is empty. Press <b>Import current menu</b> to copy the 13 items your website has today (then edit them freely).</p>'; return; }
+    box.innerHTML = menuRows.map(({ id, data: m }, i) => {
+      const img = menuImgOk(m.image) ? m.image : "";
+      return `<div class="admin-promo-item${m.available === false ? " disabled" : ""}" data-menu-row="${esc(id)}" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        ${img ? `<img src="${esc(img)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:10px;">` : ""}
+        <div style="flex:1; min-width:160px;"><strong>${esc(m.name)}</strong> <span style="opacity:.75;">· ${esc(m.price)} DH · ${m.category === "boxes" ? "box" : "cookie"}${m.badge ? " · " + esc(m.badge) : ""}</span>
+          <div style="font-size:.85rem; opacity:.7;">${esc(m.desc || "")}</div></div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="filter-btn" data-menu-act="up" data-id="${esc(id)}" ${i === 0 ? "disabled" : ""} aria-label="Move up">▲</button>
+          <button type="button" class="filter-btn" data-menu-act="down" data-id="${esc(id)}" ${i === menuRows.length - 1 ? "disabled" : ""} aria-label="Move down">▼</button>
+          <button type="button" class="filter-btn" data-menu-act="toggle" data-id="${esc(id)}">${m.available === false ? "Mark available" : "Mark sold out"}</button>
+          <button type="button" class="filter-btn" data-menu-act="edit" data-id="${esc(id)}">Edit</button>
+          <button type="button" class="filter-btn" data-menu-act="delete" data-id="${esc(id)}" style="color:#b3261e;">Remove</button>
+        </div></div>`;
+    }).join("");
+  };
+
+  const menuLoad = async () => {
+    try {
+      const snap = await getDocs(collection(db, "menu_items"));
+      menuRows = snap.docs.map((d) => ({ id: d.id, data: d.data() }))
+        .sort((a, b) => (Number(a.data.sortOrder) || 0) - (Number(b.data.sortOrder) || 0) || String(a.data.name).localeCompare(String(b.data.name)));
+    } catch (e) {
+      console.error("Menu load failed:", e);
+      const box = menuEl("menu-admin-list");
+      if (box) box.textContent = "Could not load the menu. Publish the new firestore.rules first.";
+      return;
+    }
+    await menuReadLock();
+    menuRender();
+  };
+
+  const menuResetForm = () => {
+    const f = menuEl("menu-form");
+    if (f) f.reset();
+    menuEl("menu-edit-id").value = "";
+    menuEl("menu-form-title").textContent = "Add a new item";
+    menuEl("menu-cancel").style.display = "none";
+    const pv = menuEl("menu-img-preview"); pv.style.display = "none"; pv.removeAttribute("src");
+    menuEl("menu-available").checked = true;
+  };
+
+  const initMenuManager = () => {
+    if (!menuEl("menu-pane")) return;
+    if (menuEl("menu-pane").dataset.bound !== "1") {
+      menuEl("menu-pane").dataset.bound = "1";
+
+      menuEl("menu-image-file").addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        try {
+          const url = await menuResize(file);
+          const pv = menuEl("menu-img-preview"); pv.src = url; pv.style.display = "";
+          menuSay("");
+        } catch (err) { menuSay("That photo could not be used: " + err.message, true); e.target.value = ""; }
+      });
+
+      menuEl("menu-cancel").addEventListener("click", menuResetForm);
+
+      menuEl("menu-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = menuEl("menu-name").value.trim();
+        const price = Number(menuEl("menu-price").value);
+        if (!name || !(price > 0) || price > 1000) { menuSay("Enter a name and a price between 1 and 1000 DH.", true); return; }
+        const editId = menuEl("menu-edit-id").value;
+        const existing = editId ? (menuRows.find((r) => r.id === editId) || {}).data : null;
+        const pv = menuEl("menu-img-preview");
+        const newImg = pv.style.display !== "none" && /^data:image\//.test(pv.getAttribute("src") || "") ? pv.getAttribute("src") : "";
+        const data = {
+          name, price,
+          category: menuEl("menu-category").value === "boxes" ? "boxes" : "cookies",
+          desc: menuEl("menu-desc").value.trim().slice(0, 300),
+          badge: menuEl("menu-badge").value.trim().slice(0, 30),
+          badgeStyle: menuEl("menu-badge-style").value === "box-badge" ? "box-badge" : "",
+          available: menuEl("menu-available").checked,
+          image: newImg || (existing && existing.image) || "",
+          sortOrder: existing ? (Number(existing.sortOrder) || 0) : (menuRows.reduce((m, r) => Math.max(m, Number(r.data.sortOrder) || 0), 0) + 10),
+          updatedAt: serverTimestamp()
+        };
+        if (!data.image) delete data.image;
+        const btn = menuEl("menu-save"); btn.disabled = true;
+        try {
+          let id = editId;
+          if (!id) {
+            id = menuSlug(name);
+            if (menuRows.some((r) => r.id === id)) id = id + "-" + Math.random().toString(36).slice(2, 6);
+          }
+          await setDoc(doc(db, "menu_items", id), data);
+          menuSay(editId ? "Saved." : "Added to the menu.");
+          menuResetForm();
+          await menuLoad();
+        } catch (err) {
+          console.error("Menu save failed:", err);
+          menuSay("Could not save. Check that the new firestore.rules are published and you are logged in as the admin.", true);
+        } finally { btn.disabled = false; }
+      });
+
+      menuEl("menu-admin-list").addEventListener("click", async (e) => {
+        const b = e.target.closest("[data-menu-act]");
+        if (!b || b.disabled) return;
+        const id = b.getAttribute("data-id");
+        const act = b.getAttribute("data-menu-act");
+        const idx = menuRows.findIndex((r) => r.id === id);
+        if (idx < 0) return;
+        const row = menuRows[idx];
+        try {
+          if (act === "edit") {
+            const m = row.data;
+            menuEl("menu-edit-id").value = id;
+            menuEl("menu-name").value = m.name || "";
+            menuEl("menu-price").value = m.price;
+            menuEl("menu-category").value = m.category === "boxes" ? "boxes" : "cookies";
+            menuEl("menu-desc").value = m.desc || "";
+            menuEl("menu-badge").value = m.badge || "";
+            menuEl("menu-badge-style").value = m.badgeStyle === "box-badge" ? "box-badge" : "";
+            menuEl("menu-available").checked = m.available !== false;
+            const pv = menuEl("menu-img-preview");
+            if (menuImgOk(m.image)) { pv.src = m.image; pv.style.display = ""; } else { pv.style.display = "none"; pv.removeAttribute("src"); }
+            menuEl("menu-image-file").value = "";
+            menuEl("menu-form-title").textContent = "Edit: " + (m.name || "");
+            menuEl("menu-cancel").style.display = "";
+            menuEl("menu-form").scrollIntoView({ behavior: "smooth", block: "start" });
+          } else if (act === "toggle") {
+            await updateDoc(doc(db, "menu_items", id), { available: row.data.available === false, updatedAt: serverTimestamp() });
+            await menuLoad();
+          } else if (act === "delete") {
+            const ok = await askConfirm({ title: "Remove this item?", message: `"${row.data.name}" will disappear from the menu. Past orders keep their details.`, confirmText: "Remove", cancelText: "Cancel", danger: true });
+            if (!ok) return;
+            await deleteDoc(doc(db, "menu_items", id));
+            await menuLoad();
+          } else if (act === "up" || act === "down") {
+            const other = menuRows[act === "up" ? idx - 1 : idx + 1];
+            if (!other) return;
+            // renumber everything so positions are always 10, 20, 30 ... and swap the two neighbours
+            const order = menuRows.map((r) => r.id);
+            const j = act === "up" ? idx - 1 : idx + 1;
+            [order[idx], order[j]] = [order[j], order[idx]];
+            const batch = writeBatch(db);
+            order.forEach((rid, n) => batch.update(doc(db, "menu_items", rid), { sortOrder: (n + 1) * 10 }));
+            await batch.commit();
+            await menuLoad();
+          }
+        } catch (err) {
+          console.error("Menu action failed:", err);
+          menuSay("That did not work. Check your connection and the Firestore rules.", true);
+        }
+      });
+
+      menuEl("menu-import").addEventListener("click", async () => {
+        const defaults = window.YYMenuDefaults || [];
+        if (!defaults.length) { menuSay("The built-in menu list was not found. Reload the page.", true); return; }
+        const ok = await askConfirm({ title: "Import the current menu?", message: `This copies the ${defaults.length} items your website has today into the database and turns the price lock ON.`, confirmText: "Import", cancelText: "Cancel" });
+        if (!ok) return;
+        const btn = menuEl("menu-import"); btn.disabled = true;
+        try {
+          const batch = writeBatch(db);
+          defaults.forEach((m) => {
+            batch.set(doc(db, "menu_items", m.id), {
+              name: m.name, price: m.price, category: m.category, desc: m.desc || "", image: m.image || "",
+              badge: m.badge || "", badgeStyle: m.badgeStyle || "", available: true, sortOrder: m.sortOrder || 0, updatedAt: serverTimestamp()
+            });
+          });
+          await batch.commit();
+          await setDoc(doc(db, "settings", "menu_lock"), { on: true, at: serverTimestamp() });
+          menuSay("Menu imported and price lock turned ON.");
+          await menuLoad();
+        } catch (err) {
+          console.error("Menu import failed:", err);
+          menuSay("Import failed. Publish the new firestore.rules and try again.", true);
+        } finally { btn.disabled = false; }
+      });
+
+      menuEl("menu-lock-toggle").addEventListener("click", async () => {
+        const btn = menuEl("menu-lock-toggle"); btn.disabled = true;
+        try {
+          if (menuLocked) {
+            const ok = await askConfirm({ title: "Turn the price lock OFF?", message: "Orders will no longer be checked against this menu. Use this only if customers cannot order.", confirmText: "Turn OFF", cancelText: "Keep ON", danger: true });
+            if (ok) await deleteDoc(doc(db, "settings", "menu_lock"));
+          } else {
+            await setDoc(doc(db, "settings", "menu_lock"), { on: true, at: serverTimestamp() });
+          }
+          await menuReadLock();
+        } catch (err) { console.error(err); menuSay("Could not change the lock.", true); }
+        finally { btn.disabled = false; }
+      });
+    }
+    menuLoad();
+  };
+
   // ---------- LOAD ----------
   (async () => {
     try {
@@ -2037,6 +2278,7 @@ function initAdminDashboard(db) {
       errorLine(usersBox, "Could not load users.");
     }
     initNewsletter();
+    initMenuManager();
     loadBlacklist();
     recomputeStats();
     renderOrders();
