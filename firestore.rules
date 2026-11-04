@@ -27,6 +27,8 @@ service cloud.firestore {
         && d.status == 'Processing'
         && d.items is list && d.items.size() > 0 && d.items.size() <= 50
         && d.totalAmount is number && d.totalAmount >= 0 && d.totalAmount <= 3000
+        && (!('userEmail' in d) || (d.userEmail is string && d.userEmail.size() <= 200))
+        && (!signedIn() || !('userEmail' in d) || !('email' in request.auth.token) || d.userEmail.lower() == request.auth.token.email.lower())
         && d.customerName is string && d.customerName.size() <= 80
         && d.phone is string && d.phone.size() <= 30
         && d.address is string && d.address.size() <= 400

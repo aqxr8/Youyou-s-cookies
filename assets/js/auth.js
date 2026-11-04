@@ -439,7 +439,7 @@ Total Price: ${totalAmount.toFixed(2)} DH
     fetch("/api/telegram", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: telegramMsg })
+      body: JSON.stringify({ message: telegramMsg, trackCode: window.__lastTrackingCode || "" })
     }).catch(err => console.warn("Telegram alert failed:", err));
 
     if (user) {

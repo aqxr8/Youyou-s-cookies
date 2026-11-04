@@ -8,7 +8,7 @@ import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk",
+  apiKey: FIRE_BASE_API_KEY,
   authDomain: "youyous-cookies.firebaseapp.com",
   projectId: "youyous-cookies",
   storageBucket: "youyous-cookies.firebasestorage.app",

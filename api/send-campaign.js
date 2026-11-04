@@ -11,7 +11,9 @@
 //      FIREBASE_API_KEY (optional - defaults to the public web key already used by the site)
 //  - A normal Gmail account can send about 500 emails a day (Google Workspace: 2000).
 
-const DEFAULT_KEY = 'AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk';
+import { EMAIL_RE, SITE_URL } from './_guard.js';
+
+const DEFAULT_KEY = 'AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk'; // public Firebase web key (not a secret)
 const MAX_BATCH = 8;
 
 const esc = (v) => String(v == null ? '' : v)
@@ -88,14 +90,15 @@ async function verifyAdmin(idToken) {
   if (!idToken || typeof idToken !== 'string' || idToken.length > 4000) return null;
   const key = process.env.FIREBASE_API_KEY || DEFAULT_KEY;
   const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(key)}`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken })
+    method: 'POST', headers: { 'Content-Type': 'application/json', Referer: SITE_URL + '/' }, body: JSON.stringify({ idToken })
   });
   if (!r.ok) return null;
   const j = await r.json().catch(() => ({}));
   const u = j && j.users && j.users[0];
   if (!u) return null;
   const adminEmail = String(process.env.ADMIN_EMAIL || 'youyouscookies@gmail.com').toLowerCase();
-  const okEmail = String(u.email || '').toLowerCase() === adminEmail;
+  // The email must be VERIFIED by Firebase (an unverified password account that merely claims the admin address is refused).
+  const okEmail = u.emailVerified === true && String(u.email || '').toLowerCase() === adminEmail;
   const okUid = process.env.ADMIN_UID && u.localId === process.env.ADMIN_UID;
   return okEmail || okUid ? u : null;
 }
@@ -108,6 +111,7 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+  res.setHeader('Cache-Control', 'no-store');
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
   if (!gmailPass) return res.status(500).json({ error: 'GMAIL_APP_PASSWORD is not set in Vercel.', code: 'no_key' });
 
@@ -124,7 +128,7 @@ export default async function handler(req, res) {
     name: clip(r && r.name, 60).trim(),
     lang: ['en', 'fr', 'ar'].includes(r && r.lang) ? r.lang : 'en',
     token: String((r && r.token) || '').replace(/[^A-Za-z0-9]/g, '')
-  })).filter((r) => /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']{2,}$/.test(r.email) && r.token.length >= 20 && r.token.length <= 64);
+  })).filter((r) => EMAIL_RE.test(r.email) && r.token.length >= 20 && r.token.length <= 64);
   if (!recipients.length) return res.status(400).json({ error: 'No valid recipients.', code: 'no_recipients' });
 
   const content = {};
@@ -139,11 +143,9 @@ export default async function handler(req, res) {
   const coupon = body.coupon && /^[A-Za-z0-9_-]{2,30}$/.test(String(body.coupon.code || '')) ? body.coupon : null;
   const couponText = (l) => clip(coupon && coupon.text && (coupon.text[l] || coupon.text.en), 120);
 
-  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').replace(/[^a-zA-Z0-9.\-:]/g, '');
-  if (!host) return res.status(400).json({ error: 'Unknown host.' });
   let path = String(body.ctaPath || '/menu');
   if (!/^\/[A-Za-z0-9/_\-.?=&#%]*$/.test(path) || path.startsWith('//') || path.length > 120) path = '/menu';
-  const ctaUrl = `https://${host}${path}`;
+  const ctaUrl = `${SITE_URL}${path}`;
 
   const user = process.env.GMAIL_USER || 'youyouscookies@gmail.com';
   const fromName = process.env.RECEIPT_FROM_NAME || "Youyou's Cookies";
@@ -159,7 +161,7 @@ export default async function handler(req, res) {
     const firstName = (r.name.split(/\s+/)[0] || '').trim() || t.there;
     const c = pickContent(content, r.lang);
     const filled = { subject: fill(c.subject, firstName), title: fill(c.title, firstName), body: fill(c.body, firstName), cta: c.cta };
-    const unsubUrl = `https://${host}/unsubscribe?t=${r.token}`;
+    const unsubUrl = `${SITE_URL}/unsubscribe?t=${r.token}`;
     const { html, text } = buildEmail({
       lang: r.lang, c: filled, couponCode: coupon ? String(coupon.code).toUpperCase() : '',
       couponText: coupon ? couponText(r.lang) : '', name: firstName, unsubUrl, ctaUrl
@@ -177,7 +179,7 @@ export default async function handler(req, res) {
       results.push({ email: r.email, ok: true });
     } catch (err) {
       console.error('Campaign send error:', r.email, err && err.message);
-      results.push({ email: r.email, ok: false, error: String(err && err.message || err).slice(0, 120) });
+      results.push({ email: r.email, ok: false, error: 'send failed' });
     }
   }
   const sent = results.filter((x) => x.ok).length;

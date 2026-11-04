@@ -106,3 +106,9 @@ Everywhere in the admin, "revenue" is now what the cookies earned: the items min
 - User directory: "X DH delivered (no delivery fees)". The loyalty rank still uses what the customer paid (same as on their own profile).
 - CSV export: new columns "Revenue without delivery", "Delivery fee" and "Total paid by customer".
 The delivery fee is not stored on the order; it is worked out as total paid minus revenue, so it also works for old orders.
+
+## Security notes (v8.8.1)
+- The Firebase `apiKey` in the JS files is a public web key by design; real protection = `firestore.rules`. In Google Cloud Console > APIs & Services > Credentials, restrict that key to your site (HTTP referrers) and enable Firebase App Check if you can.
+- Secrets live ONLY in Vercel env vars: `GMAIL_APP_PASSWORD`, `TELEGRAM_BOT_TOKEN`. Optional: `SITE_URL` (default https://youyouscookies.vercel.app), `TELEGRAM_CHAT_IDS`.
+- `/api/telegram` and `/api/send-receipt` only work for a real order created in the last 10 / 30 minutes.
+- `Content-Security-Policy-Report-Only` in `vercel.json` shows what a full policy would block; once the console is clean, rename it to `Content-Security-Policy`.

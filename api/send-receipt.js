@@ -6,8 +6,11 @@
 //   GMAIL_USER          optional, default youyouscookies@gmail.com (use the account the App Password belongs to)
 //   RECEIPT_FROM_NAME   optional, default "Youyou's Cookies"
 //
-// Abuse protection (best effort, in memory): max 5 requests per IP per 10 min, max 3 emails per order number,
-// PDF must be a real PDF under 900 KB.
+// Abuse protection: the request must carry the tracking code of a REAL order created in the last 30 minutes (checked against
+// the public order_tracking/<code> document), max 5 requests per IP per 10 min and max 3 emails per order (both best effort,
+// in memory), the PDF must be a real PDF under 900 KB, and links in the email always use the configured SITE_URL (never the Host header).
+
+import { fetchTracking, clientIp, EMAIL_RE, SITE_URL } from './_guard.js';
 
 const hits = new Map();       // ip -> [timestamps]
 const perOrder = new Map();   // order ref -> count
@@ -134,8 +137,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     return res.status(200).json({
       ok: true,
-      gmailConfigured: Boolean(process.env.GMAIL_APP_PASSWORD),
-      sender: process.env.GMAIL_USER || 'youyouscookies@gmail.com'
+      gmailConfigured: Boolean(process.env.GMAIL_APP_PASSWORD)
     });
   }
   if (req.method !== 'POST') {
@@ -147,26 +149,34 @@ export default async function handler(req, res) {
   if (!gmailPass) {
     return res.status(500).json({ error: 'GMAIL_APP_PASSWORD is not set in Vercel.', code: 'no_key' });
   }
+  res.setHeader('Cache-Control', 'no-store');
 
   // --- rate limit (best effort) ---
-  const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+  const ip = clientIp(req);
   const now = Date.now();
   const recent = (hits.get(ip) || []).filter((ts) => now - ts < 10 * 60 * 1000);
   if (recent.length >= 5) return res.status(429).json({ error: 'Too many requests. Please try again later.' });
   recent.push(now); hits.set(ip, recent);
+  if (hits.size > 5000) hits.clear();
 
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
   body = body || {};
 
   const email = String(body.email || '').trim().slice(0, 200);
-  if (!/^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']{2,}$/.test(email)) {
+  if (!EMAIL_RE.test(email)) {
     return res.status(400).json({ error: 'Invalid email address.' });
   }
   const orderRef = String(body.orderRef || '').replace(/[^#A-Za-z0-9]/g, '').slice(0, 12);
   if (!orderRef) return res.status(400).json({ error: 'Missing order number.' });
 
-  const sent = perOrder.get(orderRef) || 0;
+  // The order must really exist and be recent: nobody can use this endpoint to mail arbitrary text to arbitrary people.
+  const trackCode = /^[A-Z0-9]{8}$/.test(String(body.trackCode || '')) ? String(body.trackCode) : '';
+  let tracking = null;
+  try { tracking = trackCode ? await fetchTracking(trackCode, 30 * 60 * 1000) : null; } catch (e) { tracking = null; }
+  if (!tracking) return res.status(403).json({ error: 'Unknown or expired order.', code: 'unknown_order' });
+
+  const sent = perOrder.get(trackCode) || 0;
   if (sent >= 3) return res.status(429).json({ error: 'Receipt already sent for this order.' });
 
   const rawItems = Array.isArray(body.items) ? body.items.slice(0, 40) : [];
@@ -189,9 +199,7 @@ export default async function handler(req, res) {
   });
   const name = String(body.name || '').slice(0, 60) || (lang === 'ar' ? 'عزيزي الزبون' : lang === 'fr' ? 'cher client' : 'there');
 
-  const trackCode = /^[A-Z0-9]{8}$/.test(String(body.trackCode || '')) ? String(body.trackCode) : '';
-  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').replace(/[^a-zA-Z0-9.\-:]/g, '');
-  const trackUrl = trackCode && host ? `https://${host}/track?code=${trackCode}` : '';
+  const trackUrl = `${SITE_URL}/track?code=${trackCode}`;
 
   const html = buildHtml(t, {
     lang, name, orderRef: '#' + orderRef.replace(/^#/, ''), date, items, subtotal, discount, deliveryFee, total, trackUrl,
@@ -228,10 +236,11 @@ export default async function handler(req, res) {
       text,
       attachments: pdfBase64 ? [{ filename: pdfName, content: pdfBase64, encoding: 'base64', contentType: 'application/pdf' }] : []
     });
-    perOrder.set(orderRef, sent + 1);
+    perOrder.set(trackCode, sent + 1);
+    if (perOrder.size > 5000) perOrder.clear();
     return res.status(200).json({ success: true, pdf: Boolean(pdfBase64) });
   } catch (error) {
     console.error('Receipt email error:', error && error.message);
-    return res.status(500).json({ error: error.message, code: 'send_failed' });
+    return res.status(500).json({ error: 'Could not send the email.', code: 'send_failed' });
   }
 }
