@@ -7,7 +7,7 @@
 // Set TELEGRAM_BOT_TOKEN (required) and optionally TELEGRAM_CHAT_IDS (comma separated) in Vercel > Environment Variables.
 import { fetchTracking, clientIp } from './_guard.js';
 
-const DEFAULT_CHAT_IDS = TELEGRAM_CHAT_IDS; // Mohamed, Aya (better: set TELEGRAM_CHAT_IDS in Vercel and delete this line)
+const DEFAULT_CHAT_IDS = [TELEGRAM_CHAT_IDS]; // Mohamed, Aya (better: set TELEGRAM_CHAT_IDS in Vercel and delete this line)
 const hits = new Map();   // ip -> [timestamps]
 const used = new Set();   // tracking codes that already triggered an alert
 
