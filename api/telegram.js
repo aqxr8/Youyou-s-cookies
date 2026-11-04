@@ -4,10 +4,9 @@
 //  - The request must carry the tracking code of a REAL order created in the last 10 minutes
 //    (checked against the public order_tracking/<code> document), and each code can trigger ONE alert.
 //  - Messages are length-limited and rate-limited per IP (best effort: in memory).
-// Set TELEGRAM_BOT_TOKEN (required) and optionally TELEGRAM_CHAT_IDS (comma separated) in Vercel > Environment Variables.
+// Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_IDS (comma separated, e.g. 111,222) in Vercel > Environment Variables. Both are required.
 import { fetchTracking, clientIp } from './_guard.js';
 
-const DEFAULT_CHAT_IDS = [TELEGRAM_CHAT_IDS]; // Mohamed, Aya (better: set TELEGRAM_CHAT_IDS in Vercel and delete this line)
 const hits = new Map();   // ip -> [timestamps]
 const used = new Set();   // tracking codes that already triggered an alert
 
@@ -19,8 +18,10 @@ export default async function handler(req, res) {
   }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) {
-    console.error('TELEGRAM_BOT_TOKEN is not set');
+  const targets = (process.env.TELEGRAM_CHAT_IDS || '')
+    .split(',').map((x) => x.trim()).filter((x) => /^-?\d+$/.test(x));
+  if (!token || !targets.length) {
+    console.error('TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_IDS is not set in Vercel');
     return res.status(500).json({ error: 'Not configured.' });
   }
 
@@ -46,10 +47,6 @@ export default async function handler(req, res) {
   if (used.has(code)) return res.status(409).json({ error: 'Already sent.' });
   used.add(code);
   if (used.size > 5000) used.clear();
-
-  const chatIds = (process.env.TELEGRAM_CHAT_IDS || '')
-    .split(',').map((s) => s.trim()).filter(Boolean);
-  const targets = chatIds.length ? chatIds : DEFAULT_CHAT_IDS;
 
   try {
     // No parse_mode on purpose: customer names with _ or * would make Telegram reject a Markdown message.
