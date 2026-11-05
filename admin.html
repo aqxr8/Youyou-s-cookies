@@ -7,10 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | YouYou's Cookies</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261104a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261105a">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Pinyon+Script&family=Playfair+Display:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261104a">
-  <link rel="stylesheet" href="assets/css/pro.css?v=20261104a">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261105a">
+  <link rel="stylesheet" href="assets/css/pro.css?v=20261105a">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style>
@@ -422,11 +422,11 @@
     }
   </style>
 <script>try{if(localStorage.getItem('youyou_theme_v2')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
-<link rel="stylesheet" href="assets/css/mobile.css?v=20261104a">
-<link rel="stylesheet" href="assets/css/i18n.css?v=20261104a">
-<script src="assets/js/i18n-dict-1.js?v=20261104a"></script>
-<script src="assets/js/i18n-dict-2.js?v=20261104a"></script>
-<script src="assets/js/i18n.js?v=20261104a"></script>
+<link rel="stylesheet" href="assets/css/mobile.css?v=20261105a">
+<link rel="stylesheet" href="assets/css/i18n.css?v=20261105a">
+<script src="assets/js/i18n-dict-1.js?v=20261105a"></script>
+<script src="assets/js/i18n-dict-2.js?v=20261105a"></script>
+<script src="assets/js/i18n.js?v=20261105a"></script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#c0716a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -434,10 +434,10 @@
 <meta name="apple-mobile-web-app-title" content="Youyou's">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/images/logo.webp">
-<link rel="stylesheet" href="assets/css/pwa.css?v=20261104a">
-<script src="assets/js/pwa.js?v=20261104a" defer></script>
-<link rel="stylesheet" href="assets/css/cursors.css?v=20261104a">
-<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261104a">
+<link rel="stylesheet" href="assets/css/pwa.css?v=20261105a">
+<script src="assets/js/pwa.js?v=20261105a" defer></script>
+<link rel="stylesheet" href="assets/css/cursors.css?v=20261105a">
+<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261105a">
 </head>
 <body class="page-pro">
 
@@ -605,6 +605,10 @@
       <button class="tab-btn" data-tab="news-pane">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
         Newsletter
+      </button>
+      <button class="tab-btn" data-tab="policy-pane">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        Privacy Policy
       </button>
     </div>
 
@@ -896,11 +900,46 @@
         <div id="menu-admin-list" style="display:flex; flex-direction:column; gap:10px;">Loading…</div>
       </div>
     </div>
+
+    <!-- Privacy Policy Pane (text lives in the database: site_content/privacy) -->
+    <div id="policy-pane" class="admin-section-pane">
+      <div class="admin-card-container">
+        <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--brown); margin: 0 0 6px;">Privacy Policy &amp; Terms</h3>
+        <p class="news-hint" style="margin-bottom:14px;">Edit the three languages, press <b>Save &amp; publish</b> and the <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy page</a> changes for everyone at once. The "Last updated" date is added automatically.</p>
+        <div id="policy-meta" class="news-hint" style="margin-bottom:12px; font-weight:600;">Loading…</div>
+
+        <div role="tablist" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+          <button type="button" class="filter-btn active" data-policy-lang="en">English</button>
+          <button type="button" class="filter-btn" data-policy-lang="fr">Français</button>
+          <button type="button" class="filter-btn" data-policy-lang="ar">العربية</button>
+          <button type="button" class="filter-btn" id="policy-preview-btn" style="margin-inline-start:auto;">👁 Preview</button>
+        </div>
+
+        <textarea id="policy-text-en" class="auth-input pro-input policy-edit" rows="22" spellcheck="true" style="font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.9rem; line-height:1.55;"></textarea>
+        <textarea id="policy-text-fr" class="auth-input pro-input policy-edit" rows="22" spellcheck="true" style="display:none; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.9rem; line-height:1.55;"></textarea>
+        <textarea id="policy-text-ar" class="auth-input pro-input policy-edit" rows="22" dir="rtl" spellcheck="true" style="display:none; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.95rem; line-height:1.7;"></textarea>
+
+        <div id="policy-preview" class="policy-lang" style="display:none; margin-top:14px; padding:18px 20px; border:1px solid var(--line, #ecd3cd); border-radius:14px;"></div>
+
+        <p class="news-hint" style="margin:10px 0 14px;"><b>How to write it:</b> <code># Title</code> big title · <code>## 1. Section</code> section heading · <code>- point</code> bullet · <code>&gt; note</code> highlighted note · <code>**bold**</code> · a blank line starts a new paragraph. Only English is required; if French or Arabic is empty, visitors see the English text.</p>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; margin-bottom:14px; font-weight:600;">
+          <input type="checkbox" id="policy-ask-again" style="margin-top:4px;">
+          <span>This is an important change: ask every customer to accept the policy again the next time they log in.</span>
+        </label>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <button type="button" class="btn btn-dark" id="policy-save" style="padding: 12px 24px;">Save &amp; publish</button>
+          <button type="button" class="filter-btn" id="policy-reset">↺ Reload the saved text</button>
+        </div>
+        <div id="policy-feedback" role="status" style="margin-top:10px; font-weight:600;"></div>
+      </div>
+    </div>
   </main>
 
-  <script src="assets/js/main.js?v=20261104a"></script>
-  <script type="module" src="assets/js/auth.js?v=20261104a"></script>
-  <script src="assets/js/features.js?v=20261104a"></script>
+  <script src="assets/js/policy-render.js?v=20261105a"></script>
+  <script src="assets/js/main.js?v=20261105a"></script>
+  <script type="module" src="assets/js/auth.js?v=20261105a"></script>
+  <script src="assets/js/features.js?v=20261105a"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {

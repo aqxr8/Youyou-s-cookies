@@ -1,0 +1,72 @@
+/* policy-render.js - the Privacy Policy is stored in the database (site_content/privacy, only the admin can edit it).
+   Simple text format (safe: everything is escaped, no HTML is ever stored):
+     # Title                 -> big title
+     ## Section title       -> section heading
+     - item                  -> bullet point
+     > note                  -> highlighted note (the "by creating an account..." line)
+     **bold**                -> bold
+     blank line              -> new paragraph
+   privacy.html shows the built-in text until the database version loads (and if it cannot be loaded). */
+(function () {
+  var PROJECT = 'youyous-cookies';
+  var KEY = 'AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk'; // public Firebase web key (not a secret)
+  var LABEL = { en: 'Last updated:', fr: 'Dernière mise à jour :', ar: 'آخر تحديث:' };
+  var LOCALE = { en: 'en-GB', fr: 'fr-FR', ar: 'ar-MA-u-nu-latn' };
+
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function inline(t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+
+  function fmtDate(iso, lang) {
+    var d = iso ? new Date(iso) : null;
+    if (!d || isNaN(d)) return '';
+    try { return d.toLocaleDateString(LOCALE[lang] || 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return d.toDateString(); }
+  }
+
+  function render(text, lang, updatedIso) {
+    var lines = String(text || '').replace(/\r/g, '').split('\n');
+    var out = [], list = [], para = [];
+    function flushList() { if (list.length) { out.push('<ul>' + list.map(function (x) { return '<li>' + inline(x) + '</li>'; }).join('') + '</ul>'); list = []; } }
+    function flushPara() { if (para.length) { out.push('<p>' + inline(para.join(' ')) + '</p>'); para = []; } }
+    lines.forEach(function (raw) {
+      var l = raw.trim();
+      if (!l) { flushList(); flushPara(); return; }
+      if (l.indexOf('## ') === 0) { flushList(); flushPara(); out.push('<h3>' + inline(l.slice(3)) + '</h3>'); return; }
+      if (l.indexOf('# ') === 0) {
+        flushList(); flushPara(); out.push('<h2>' + inline(l.slice(2)) + '</h2>');
+        var ds = fmtDate(updatedIso, lang);
+        if (ds) out.push('<p class="policy-updated">' + esc(LABEL[lang] || LABEL.en) + ' ' + esc(ds) + '</p>');
+        return;
+      }
+      if (l.indexOf('- ') === 0) { flushPara(); list.push(l.slice(2)); return; }
+      if (l.indexOf('> ') === 0) { flushList(); flushPara(); out.push('<p class="policy-accept">' + inline(l.slice(2)) + '</p>'); return; }
+      flushList(); para.push(l);
+    });
+    flushList(); flushPara();
+    return out.join('\n');
+  }
+
+  // Firestore REST value -> string
+  function sv(f, k) { return f && f[k] && typeof f[k].stringValue === 'string' ? f[k].stringValue : ''; }
+
+  function fetchPolicy() {
+    var url = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents/site_content/privacy?key=' + KEY;
+    return fetch(url).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      var f = j && j.fields; if (!f) return null;
+      return { en: sv(f, 'en'), fr: sv(f, 'fr'), ar: sv(f, 'ar'), version: sv(f, 'version'), updatedAt: f.updatedAt && f.updatedAt.timestampValue || '' };
+    }).catch(function () { return null; });
+  }
+
+  window.YYPolicy = { render: render, fetch: fetchPolicy, defaults: {"en": "# Privacy Policy & Terms\n\n## 1. Who we are\n\nYouyou's Cookies is a small home bakery in Settat, Morocco, run by Aya. This website lets you order cookies online and pay in cash on delivery. Contact: youyouscookies@gmail.com or Instagram @youyou_s_cookies.\n\n## 2. What we collect\n\n- Account: your name, email address and password (the password is handled by Google Firebase Authentication and we never see it), and your profile photo if you add one.\n- Orders: your name, phone number, delivery address, the items you ordered, the total, any promo code used, and the date.\n- Preferences: your language, and whether and when you accepted this policy.\n- On your device: the website keeps your cart, language and light/dark choice in your browser, and keeps you logged in. We do not use advertising or tracking cookies.\n\n## 3. Why we use it\n\n- To take, prepare, deliver and track your orders, and to send you the receipt.\n- To manage your account and your promo codes (each code can be used once per account).\n- To send you news by email about new flavors, new items and coupons (see section 5).\n- To protect the bakery: customers who refuse or return orders can be blocked from ordering (see section 7).\n\n## 4. Who can see your data\n\n- The bakery team (Aya) sees your orders to prepare and deliver them. New orders are also sent to the bakery in a private Telegram message.\n- Our technology providers process data for us: Google Firebase (login and database), Vercel (hosting), Gmail (emails) and Telegram (order notification).\n- We never sell your data and we do not share it for advertising.\n\n## 5. Emails\n\n- Order emails: receipts and order updates are sent when you order.\n- News emails: if you have an account, we may email you about new flavors, new items and coupons. Every email has an Unsubscribe link, and you can also switch it off in My Profile, Emails & News. We stop right away.\n\n## 6. How long we keep it\n\nWe keep your account until you ask us to delete it. We keep order records as long as needed to run the bakery, handle problems and meet legal obligations.\n\n## 7. Ordering rules\n\n- Payment is cash on delivery. Please be available at the delivery address and answer the phone.\n- If orders are repeatedly refused, returned or fake, we may add the phone number, email or account to a private block list and refuse future orders. The list is used only for this purpose.\n\n## 8. Your rights\n\nYou can ask to see, correct or delete your data, or object to news emails, by writing to youyouscookies@gmail.com. You can also change your name, phone and address in My Profile. In Morocco, personal data is protected by Law 09-08, and you can contact the CNDP (the national data protection authority) if you are not satisfied.\n\n## 9. Security\n\nYour data is stored with Google Firebase and access is limited by security rules. No system is perfect, so please keep your password private.\n\n## 10. Children\n\nThis website is for adults, and for teenagers with a parent's permission.\n\n## 11. Changes\n\nIf we change this policy in an important way, we will ask you to accept it again the next time you log in.\n\n> By creating an account, or by clicking Accept after logging in, you confirm that you have read and accept this Privacy Policy & Terms.", "fr": "# Politique de confidentialité et conditions\n\n## 1. Qui sommes-nous\n\nYouyou's Cookies est une petite pâtisserie artisanale de Settat, au Maroc, dirigée par Aya. Ce site vous permet de commander des cookies en ligne et de payer en espèces à la livraison. Contact : youyouscookies@gmail.com ou Instagram @youyou_s_cookies.\n\n## 2. Ce que nous collectons\n\n- Compte : votre nom, votre adresse e-mail et votre mot de passe (le mot de passe est géré par Google Firebase Authentication et nous ne le voyons jamais), ainsi que votre photo de profil si vous en ajoutez une.\n- Commandes : votre nom, votre numéro de téléphone, votre adresse de livraison, les articles commandés, le total, le code promo utilisé et la date.\n- Préférences : votre langue, et si et quand vous avez accepté cette politique.\n- Sur votre appareil : le site conserve votre panier, votre langue et votre choix clair/sombre dans votre navigateur, et vous garde connecté. Nous n'utilisons ni cookies publicitaires ni cookies de suivi.\n\n## 3. Pourquoi nous les utilisons\n\n- Pour prendre, préparer, livrer et suivre vos commandes, et vous envoyer le reçu.\n- Pour gérer votre compte et vos codes promo (chaque code ne peut être utilisé qu'une fois par compte).\n- Pour vous envoyer par e-mail des nouvelles sur les nouvelles saveurs, les nouveaux produits et les codes promo (voir section 5).\n- Pour protéger la pâtisserie : les clients qui refusent ou retournent des commandes peuvent être bloqués (voir section 7).\n\n## 4. Qui peut voir vos données\n\n- L'équipe de la pâtisserie (Aya) voit vos commandes pour les préparer et les livrer. Les nouvelles commandes sont aussi envoyées à la pâtisserie dans un message Telegram privé.\n- Nos prestataires techniques traitent des données pour nous : Google Firebase (connexion et base de données), Vercel (hébergement), Gmail (e-mails) et Telegram (notification des commandes).\n- Nous ne vendons jamais vos données et ne les partageons pas à des fins publicitaires.\n\n## 5. E-mails\n\n- E-mails de commande : les reçus et les mises à jour de commande sont envoyés quand vous commandez.\n- E-mails d'actualités : si vous avez un compte, nous pouvons vous écrire pour vous parler des nouvelles saveurs, des nouveaux produits et des codes promo. Chaque e-mail contient un lien de désabonnement, et vous pouvez aussi le désactiver dans Mon profil, E-mails et actualités. Nous arrêtons immédiatement.\n\n## 6. Durée de conservation\n\nNous gardons votre compte jusqu'à ce que vous demandiez sa suppression. Nous conservons les commandes aussi longtemps que nécessaire pour gérer la pâtisserie, traiter les problèmes et respecter nos obligations légales.\n\n## 7. Règles de commande\n\n- Le paiement se fait en espèces à la livraison. Merci d'être présent à l'adresse de livraison et de répondre au téléphone.\n- Si des commandes sont régulièrement refusées, retournées ou fausses, nous pouvons ajouter le numéro de téléphone, l'e-mail ou le compte à une liste de blocage privée et refuser les commandes suivantes. Cette liste n'est utilisée que dans ce but.\n\n## 8. Vos droits\n\nVous pouvez demander à consulter, corriger ou supprimer vos données, ou vous opposer aux e-mails d'actualités, en écrivant à youyouscookies@gmail.com. Vous pouvez aussi modifier votre nom, téléphone et adresse dans Mon profil. Au Maroc, les données personnelles sont protégées par la loi 09-08 et vous pouvez contacter la CNDP (l'autorité nationale de protection des données) en cas d'insatisfaction.\n\n## 9. Sécurité\n\nVos données sont stockées chez Google Firebase et l'accès est limité par des règles de sécurité. Aucun système n'est parfait, merci de garder votre mot de passe secret.\n\n## 10. Enfants\n\nCe site s'adresse aux adultes, et aux adolescents avec l'autorisation d'un parent.\n\n## 11. Modifications\n\nSi nous modifions cette politique de façon importante, nous vous demanderons de l'accepter à nouveau lors de votre prochaine connexion.\n\n> En créant un compte, ou en cliquant sur Accepter après la connexion, vous confirmez avoir lu et accepté cette politique de confidentialité et ces conditions.", "ar": "# سياسة الخصوصية والشروط\n\n## 1. من نحن\n\nYouyou's Cookies مخبزة منزلية صغيرة في سطات بالمغرب، تديرها آية. يتيح لك هذا الموقع طلب الكوكيز عبر الإنترنت والدفع نقداً عند الاستلام. للتواصل: youyouscookies@gmail.com أو إنستغرام @youyou_s_cookies.\n\n## 2. ما الذي نجمعه\n\n- الحساب: اسمك وبريدك الإلكتروني وكلمة المرور (تتم معالجة كلمة المرور بواسطة Google Firebase Authentication ولا نراها أبداً)، وصورة ملفك الشخصي إن أضفتها.\n- الطلبات: اسمك ورقم هاتفك وعنوان التوصيل والمنتجات المطلوبة والمجموع ورمز الخصم المستعمل والتاريخ.\n- التفضيلات: لغتك، وهل وافقت على هذه السياسة ومتى.\n- على جهازك: يحتفظ الموقع بسلتك ولغتك واختيارك للوضع الفاتح/الداكن في متصفحك، ويُبقيك مسجّل الدخول. لا نستعمل ملفات تعريف ارتباط إعلانية أو تتبّعية.\n\n## 3. لماذا نستعملها\n\n- لاستقبال طلباتك وتحضيرها وتوصيلها وتتبّعها، وإرسال الإيصال إليك.\n- لإدارة حسابك ورموز الخصم الخاصة بك (يمكن استعمال كل رمز مرة واحدة لكل حساب).\n- لإرسال أخبار عبر البريد الإلكتروني عن النكهات الجديدة والمنتجات الجديدة وأكواد الخصم (انظر القسم 5).\n- لحماية المخبزة: يمكن منع الزبناء الذين يرفضون الطلبات أو يرجعونها من الطلب (انظر القسم 7).\n\n## 4. من يمكنه رؤية بياناتك\n\n- فريق المخبزة (آية) يرى طلباتك لتحضيرها وتوصيلها. وتُرسل الطلبات الجديدة أيضاً إلى المخبزة في رسالة خاصة على تيليغرام.\n- يعالج مزوّدو التقنية لدينا البيانات نيابةً عنا: Google Firebase (تسجيل الدخول وقاعدة البيانات)، وVercel (الاستضافة)، وGmail (البريد الإلكتروني)، وتيليغرام (إشعار الطلبات).\n- لا نبيع بياناتك أبداً ولا نشاركها لأغراض إعلانية.\n\n## 5. البريد الإلكتروني\n\n- رسائل الطلبات: تُرسل الإيصالات وتحديثات الطلب عند قيامك بالطلب.\n- رسائل الأخبار: إن كان لديك حساب، قد نراسلك بشأن النكهات الجديدة والمنتجات الجديدة وأكواد الخصم. كل رسالة تحتوي على رابط لإلغاء الاشتراك، ويمكنك أيضاً إيقافها من ملفي الشخصي ثم البريد والأخبار. نتوقف فوراً.\n\n## 6. مدة الاحتفاظ\n\nنحتفظ بحسابك إلى أن تطلب حذفه. ونحتفظ بسجلات الطلبات للمدة اللازمة لتسيير المخبزة ومعالجة المشاكل والوفاء بالتزاماتنا القانونية.\n\n## 7. قواعد الطلب\n\n- الدفع نقداً عند الاستلام. يرجى التواجد في عنوان التوصيل والرد على الهاتف.\n- إذا تكرر رفض الطلبات أو إرجاعها أو كانت وهمية، يجوز لنا إضافة رقم الهاتف أو البريد أو الحساب إلى قائمة منع خاصة ورفض الطلبات اللاحقة. تُستعمل هذه القائمة لهذا الغرض فقط.\n\n## 8. حقوقك\n\nيمكنك طلب الاطلاع على بياناتك أو تصحيحها أو حذفها، أو الاعتراض على رسائل الأخبار، بمراسلتنا على youyouscookies@gmail.com. ويمكنك أيضاً تعديل اسمك وهاتفك وعنوانك من ملفي الشخصي. في المغرب تحمي القانون 09-08 المعطيات الشخصية، ويمكنك التواصل مع اللجنة الوطنية لمراقبة حماية المعطيات ذات الطابع الشخصي (CNDP) إذا لم تكن راضياً.\n\n## 9. الأمان\n\nتُخزَّن بياناتك لدى Google Firebase ويُقيَّد الوصول إليها بقواعد أمان. لا يوجد نظام مثالي، لذا يرجى إبقاء كلمة مرورك سرية.\n\n## 10. الأطفال\n\nهذا الموقع موجّه للبالغين، وللمراهقين بإذن من أحد الوالدين.\n\n## 11. التغييرات\n\nإذا غيّرنا هذه السياسة بشكل مهم، فسنطلب منك الموافقة عليها من جديد عند تسجيل دخولك في المرة القادمة.\n\n> بإنشاء حساب، أو بالنقر على «أوافق» بعد تسجيل الدخول، تؤكد أنك قرأت سياسة الخصوصية والشروط هذه وتوافق عليها."} };
+
+  // privacy.html: swap in the database version
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!document.querySelector('.policy-lang[data-pl]')) return;
+    fetchPolicy().then(function (p) {
+      if (!p) return;
+      ['en', 'fr', 'ar'].forEach(function (lang) {
+        var box = document.querySelector('.policy-lang[data-pl="' + lang + '"]');
+        if (box && p[lang] && p[lang].trim().length > 50) box.innerHTML = render(p[lang], lang, p.updatedAt);
+      });
+    });
+  });
+})();

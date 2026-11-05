@@ -116,7 +116,14 @@ function makeUnsubToken() {
 const phoneKeyOf = (p) => { const d = String(p || "").replace(/\D/g, ""); return d.length >= 9 ? d.slice(-9) : ""; };
 // Bump this date when the Privacy Policy changes in an important way: everyone is asked to accept it again at next login.
 const POLICY_VERSION = "2026-11-02";
-const policyFields = () => ({ policyAccepted: true, policyVersion: POLICY_VERSION, policyAcceptedAt: new Date() });
+// The current version can be raised from the admin dashboard (Privacy Policy tab > "ask everyone to accept again").
+let CURRENT_POLICY_VERSION = POLICY_VERSION;
+const policyVersionReady = fetch(
+  "https://firestore.googleapis.com/v1/projects/" + firebaseConfig.projectId + "/databases/(default)/documents/site_content/privacy?key=" + encodeURIComponent(firebaseConfig.apiKey)
+).then((r) => (r.ok ? r.json() : null))
+  .then((j) => { const v = j && j.fields && j.fields.version && j.fields.version.stringValue; if (v) CURRENT_POLICY_VERSION = v; })
+  .catch(() => {});
+const policyFields = () => ({ policyAccepted: true, policyVersion: CURRENT_POLICY_VERSION, policyAcceptedAt: new Date() });
 const showAuthError = (text) => {
   const errEl = document.getElementById("error-msg");
   if (errEl) { errEl.style.display = "block"; errEl.textContent = text; }
@@ -933,9 +940,12 @@ function flashMsg(el, text, isError) {
 // Shown after login to anyone who has not accepted the CURRENT policy version (all old accounts the first time).
 // It blocks the page until they accept; "Decline" logs them out. Not shown to the admin or on the policy page itself.
 function ensurePolicyAccepted(user, userData) {
+  policyVersionReady.then(() => ensurePolicyAcceptedNow(user, userData));
+}
+function ensurePolicyAcceptedNow(user, userData) {
   if (!user || (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase())) return;
   if (/privacy/i.test(location.pathname)) return;
-  if (userData && userData.policyAccepted === true && userData.policyVersion === POLICY_VERSION) return;
+  if (userData && userData.policyAccepted === true && userData.policyVersion === CURRENT_POLICY_VERSION) return;
   if (document.getElementById("policy-gate")) return;
 
   const overlay = document.createElement("div");
@@ -2258,6 +2268,95 @@ function initAdminDashboard(db) {
     menuLoad();
   };
 
+  // ---------- PRIVACY POLICY EDITOR (site_content/privacy, only the admin can write) ----------
+  let policyDoc = null;          // what is saved in the database (null = nothing saved yet)
+  let policyLang = "en";
+  const pEl = (id) => document.getElementById(id);
+  const policySay = (msg, bad) => { const f = pEl("policy-feedback"); if (f) { f.textContent = msg || ""; f.style.color = bad ? "#b3261e" : "#2e7d32"; } };
+
+  const policyFill = () => {
+    const defs = (window.YYPolicy && window.YYPolicy.defaults) || {};
+    ["en", "fr", "ar"].forEach((l) => {
+      const el = pEl("policy-text-" + l);
+      if (el) el.value = (policyDoc && typeof policyDoc[l] === "string" && policyDoc[l]) || (policyDoc ? "" : (defs[l] || ""));
+    });
+    const meta = pEl("policy-meta");
+    if (meta) {
+      meta.textContent = policyDoc
+        ? "Published version: " + (policyDoc.version || POLICY_VERSION) + (policyDoc.updatedAt && policyDoc.updatedAt.toDate ? " · last saved " + policyDoc.updatedAt.toDate().toLocaleString() : "")
+        : "Nothing saved yet: this is the text your site shows today. Edit it and press Save & publish.";
+    }
+  };
+
+  let policyPreviewing = false;
+  const policyApplyView = () => {
+    ["en", "fr", "ar"].forEach((x) => { const el = pEl("policy-text-" + x); if (el) el.style.display = (!policyPreviewing && x === policyLang) ? "" : "none"; });
+    document.querySelectorAll("[data-policy-lang]").forEach((b) => b.classList.toggle("active", b.getAttribute("data-policy-lang") === policyLang));
+    const pv = pEl("policy-preview");
+    if (pv) pv.style.display = policyPreviewing ? "block" : "none";
+    const pb = pEl("policy-preview-btn");
+    if (pb) pb.textContent = policyPreviewing ? "✎ Back to editing" : "👁 Preview";
+    if (policyPreviewing) policyPreview();
+  };
+  const policyShowLang = (l) => { policyLang = l; policyApplyView(); };
+
+  const policyPreview = () => {
+    const pv = pEl("policy-preview");
+    if (!pv || !window.YYPolicy) return;
+    pv.setAttribute("dir", policyLang === "ar" ? "rtl" : "ltr");
+    pv.innerHTML = window.YYPolicy.render(pEl("policy-text-" + policyLang).value, policyLang, new Date().toISOString());
+  };
+
+  const policyLoad = async () => {
+    try {
+      const snap = await getDoc(doc(db, "site_content", "privacy"));
+      policyDoc = snap.exists() ? snap.data() : null;
+    } catch (e) {
+      console.warn("Policy load failed (publish the new firestore.rules):", e);
+      policyDoc = null;
+      policySay("Could not read the saved policy. Publish the new firestore.rules.", true);
+    }
+    policyFill();
+  };
+
+  const initPolicyEditor = () => {
+    const pane = pEl("policy-pane");
+    if (!pane) return;
+    if (pane.dataset.bound !== "1") {
+      pane.dataset.bound = "1";
+      document.querySelectorAll("[data-policy-lang]").forEach((b) => b.addEventListener("click", () => policyShowLang(b.getAttribute("data-policy-lang"))));
+      pEl("policy-preview-btn").addEventListener("click", () => { policyPreviewing = !policyPreviewing; policyApplyView(); });
+      pEl("policy-reset").addEventListener("click", async () => { await policyLoad(); policySay("Reloaded the saved text."); });
+      pEl("policy-save").addEventListener("click", async () => {
+        const en = pEl("policy-text-en").value.trim();
+        const fr = pEl("policy-text-fr").value.trim();
+        const ar = pEl("policy-text-ar").value.trim();
+        if (en.length < 50) { policySay("The English text is required (at least a few lines).", true); return; }
+        if ([en, fr, ar].some((t) => t.length > 30000)) { policySay("One of the texts is too long (maximum 30,000 characters).", true); return; }
+        const again = pEl("policy-ask-again").checked;
+        const ok = await askConfirm({
+          title: again ? "Publish and ask everyone to accept again?" : "Publish this policy?",
+          message: again ? "Every customer will see the acceptance pop-up the next time they log in." : "The Privacy Policy page changes immediately. Customers are not asked to accept it again.",
+          confirmText: "Publish", cancelText: "Cancel"
+        });
+        if (!ok) return;
+        const btn = pEl("policy-save"); btn.disabled = true;
+        const prevVersion = (policyDoc && policyDoc.version) || POLICY_VERSION;
+        const version = again ? new Date().toISOString().slice(0, 16) : prevVersion;
+        try {
+          await setDoc(doc(db, "site_content", "privacy"), { en, fr, ar, version, updatedAt: serverTimestamp() });
+          pEl("policy-ask-again").checked = false;
+          await policyLoad();
+          policySay(again ? "Published. Everyone will be asked to accept it again." : "Published.");
+        } catch (err) {
+          console.error("Policy save failed:", err);
+          policySay("Could not save. Publish the new firestore.rules and make sure you are logged in as the admin.", true);
+        } finally { btn.disabled = false; }
+      });
+    }
+    policyLoad();
+  };
+
   // ---------- LOAD ----------
   (async () => {
     try {
@@ -2279,6 +2378,7 @@ function initAdminDashboard(db) {
     }
     initNewsletter();
     initMenuManager();
+    initPolicyEditor();
     loadBlacklist();
     recomputeStats();
     renderOrders();

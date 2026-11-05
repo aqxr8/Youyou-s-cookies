@@ -168,6 +168,19 @@ service cloud.firestore {
                   || d.image.matches('data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+'))));
     }
 
+    // Privacy Policy text (public read, admin-only write; edited in the dashboard > Privacy Policy tab)
+    match /site_content/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin() && id == 'privacy'
+        && request.resource.data.keys().hasOnly(['en', 'fr', 'ar', 'version', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['en', 'version', 'updatedAt'])
+        && request.resource.data.en is string && request.resource.data.en.size() > 0 && request.resource.data.en.size() <= 30000
+        && (!('fr' in request.resource.data) || (request.resource.data.fr is string && request.resource.data.fr.size() <= 30000))
+        && (!('ar' in request.resource.data) || (request.resource.data.ar is string && request.resource.data.ar.size() <= 30000))
+        && request.resource.data.version is string && request.resource.data.version.size() <= 40;
+      allow delete: if false;
+    }
+
     // Admin settings (menu lock switch)
     match /settings/{id} {
       allow read, write: if isAdmin();
