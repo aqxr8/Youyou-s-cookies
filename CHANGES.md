@@ -1,3 +1,7 @@
+# v8.9.4 - ADMIN: simpler, cooler loading screen (no logo): soft drifting colour glow, one thin sliding line and the word LOADING; reduced-motion friendly.
+
+# v8.9.2 - ADMIN: Refresh button (reloads orders, users, reviews, menu, blacklist without reloading the page; shows the time of the last update); loading screen that hides the whole dashboard until it is ready (non-admins are redirected before they ever see it); login page remembers your "Remember me" choice (ticked = stay signed in on this device until you log out).
+
 # v8.9.1 - ADMIN: new "Privacy Policy" tab (edit EN/FR/AR, preview, Save & publish; optional "ask everyone to accept again"); the policy text is stored in the database (site_content/privacy, public read, admin-only write) and privacy.html shows it. Redesigned dashboard tab bar (rounded pills that wrap, no scrollbar). Publish firestore.rules again.
 
 # v8.9.0 - MENU IN THE DATABASE: new collection `menu_items` (public read, admin-only write). The menu page, the cart and the prices customers pay now come from it; admin dashboard > Menu tab adds / edits / removes items, marks them sold out, reorders them and uploads photos. Price lock (`settings/menu_lock`, on/off in the Menu tab): when ON, firestore.rules refuse any order whose lines are not real, available menu items at the exact database price, or whose subtotal is wrong (max 5 different items per order). FIRST TIME: publish firestore.rules, open admin > Menu > "Import current menu".

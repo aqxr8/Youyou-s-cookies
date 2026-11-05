@@ -777,12 +777,19 @@ function routeUser(user) {
 async function applyRememberMe() {
   const box = document.getElementById("remember-me");
   const remember = box ? box.checked : true;
+  try { if (box) localStorage.setItem("yy_remember", remember ? "1" : "0"); } catch (e) { /* ignore */ }
   try {
     await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
   } catch (e) {
     console.warn("Could not set login persistence:", e);
   }
 }
+
+// the login page remembers what you chose last time (default = stay signed in)
+(() => {
+  const box = document.getElementById("remember-me");
+  try { if (box && localStorage.getItem("yy_remember") === "0") box.checked = false; } catch (e) { /* ignore */ }
+})();
 
 const loginForm = document.getElementById("auth-form");
 if (loginForm) {
@@ -2391,5 +2398,50 @@ function initAdminDashboard(db) {
       console.error("Reviews load failed:", err);
       errorLine(reviewsBox, "Could not load reviews.");
     }
-  })();
+    window.dispatchEvent(new Event("admin-ready")); // removes the loading screen
+  })().catch((err) => { console.error("Dashboard start failed:", err); window.dispatchEvent(new Event("admin-ready")); });
+
+  // ---------- REFRESH BUTTON ----------
+  const refreshBtn = document.getElementById("admin-refresh-btn");
+  if (refreshBtn) {
+    let refreshing = false;
+    refreshBtn.addEventListener("click", async () => {
+      if (refreshing) return;
+      refreshing = true;
+      const label = document.getElementById("admin-refresh-label");
+      const note = document.getElementById("admin-refresh-note");
+      refreshBtn.disabled = true;
+      refreshBtn.classList.add("spinning");
+      if (label) label.textContent = "Refreshing…";
+      let failed = false;
+      try {
+        try {
+          const snap = await getDocs(collection(db, "orders"));
+          orderDocs = sortNewestFirst(snap.docs).map((d) => ({ id: d.id, data: d.data() }));
+        } catch (err) { failed = true; console.error("Refresh orders failed:", err); }
+        try {
+          const snap = await getDocs(collection(db, "users"));
+          userDocs = snap.docs.map((d) => ({ id: d.id, data: d.data() }))
+            .filter((u) => u.data.role !== "admin" && u.data.email !== ADMIN_EMAIL);
+        } catch (err) { failed = true; console.error("Refresh users failed:", err); }
+        try {
+          const snap = await getDocs(collection(db, "reviews"));
+          reviewDocs = sortNewestFirst(snap.docs).map((d) => ({ id: d.id, data: d.data() }));
+        } catch (err) { failed = true; console.error("Refresh reviews failed:", err); }
+        recomputeStats();
+        renderOrders();
+        renderUsers();
+        renderReviews();
+        try { await loadBlacklist(); } catch (err) { failed = true; console.error("Refresh blacklist failed:", err); }
+        try { await menuLoad(); } catch (err) { failed = true; console.error("Refresh menu failed:", err); }
+        // promo codes update live by themselves; the policy editor is left alone so unsaved edits are never lost
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.classList.remove("spinning");
+        if (label) label.textContent = "Refresh";
+        if (note) note.textContent = failed ? "Some parts could not refresh" : "Updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        refreshing = false;
+      }
+    });
+  }
 }

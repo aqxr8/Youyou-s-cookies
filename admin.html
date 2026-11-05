@@ -7,12 +7,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | YouYou's Cookies</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261105a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261106a">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Pinyon+Script&family=Playfair+Display:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261105a">
-  <link rel="stylesheet" href="assets/css/pro.css?v=20261105a">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261106a">
+  <link rel="stylesheet" href="assets/css/pro.css?v=20261106a">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
+  <style id="boot-style">
+    /* Loading screen: covers the whole page from the very first paint until the dashboard is ready */
+    #boot-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;overflow:hidden;
+      background:var(--cream,#fff7f2);opacity:1;transition:opacity .5s ease,visibility .5s ease}
+    #boot-overlay.done{opacity:0;visibility:hidden;pointer-events:none}
+    .boot-blob{position:absolute;width:46vmax;height:46vmax;border-radius:50%;filter:blur(70px);opacity:.45;will-change:transform}
+    .boot-blob.b1{background:var(--accent,#b85f58);top:-14vmax;left:-12vmax;animation:bootDrift1 11s ease-in-out infinite alternate}
+    .boot-blob.b2{background:var(--caramel,#d9a26b);bottom:-16vmax;right:-12vmax;animation:bootDrift2 13s ease-in-out infinite alternate}
+    .boot-core{position:relative;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:24px}
+    #boot-bar{width:170px;height:3px;border-radius:3px;background:rgba(74,55,40,.14);overflow:hidden}
+    #boot-bar span{display:block;width:42%;height:100%;border-radius:3px;background:var(--brown,#4a3728);animation:bootSlide 1.15s cubic-bezier(.65,0,.35,1) infinite}
+    #boot-text{font-family:'DM Sans',system-ui,sans-serif;font-size:.74rem;font-weight:700;letter-spacing:.34em;text-transform:uppercase;color:var(--brown,#4a3728);opacity:.8}
+    #boot-text.dots::after{content:"";display:inline-block;width:1.2em;text-align:left;letter-spacing:0;animation:bootDots 1.2s steps(4,end) infinite}
+    #boot-retry{display:none;margin-top:2px;padding:9px 22px;border-radius:999px;border:1px solid var(--brown,#4a3728);background:transparent;color:var(--brown,#4a3728);font-weight:700;font-size:.82rem;cursor:pointer}
+    @keyframes bootSlide{0%{transform:translateX(-110%)}100%{transform:translateX(260%)}}
+    @keyframes bootDots{0%{content:""}25%{content:"."}50%{content:".."}75%,100%{content:"..."}}
+    @keyframes bootDrift1{to{transform:translate(18vmax,12vmax) scale(1.15)}}
+    @keyframes bootDrift2{to{transform:translate(-16vmax,-10vmax) scale(1.1)}}
+    @keyframes bootSpin{to{transform:rotate(360deg)}}
+    @media (prefers-reduced-motion:reduce){.boot-blob,#boot-bar span,#boot-text.dots::after{animation:none}#boot-bar span{width:100%;opacity:.5}}
+    /* refresh button */
+    #admin-refresh-btn .rf-ico{display:inline-block;transition:transform .4s ease}
+    #admin-refresh-btn.spinning .rf-ico{animation:bootSpin .8s linear infinite}
+    #admin-refresh-btn[disabled]{opacity:.7;cursor:progress}
+    .admin-title-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    #admin-refresh-note{font-size:.78rem;opacity:.7}
+  </style>
   <style>
     /* Fixed Site Header */
     .site-header {
@@ -422,11 +449,11 @@
     }
   </style>
 <script>try{if(localStorage.getItem('youyou_theme_v2')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
-<link rel="stylesheet" href="assets/css/mobile.css?v=20261105a">
-<link rel="stylesheet" href="assets/css/i18n.css?v=20261105a">
-<script src="assets/js/i18n-dict-1.js?v=20261105a"></script>
-<script src="assets/js/i18n-dict-2.js?v=20261105a"></script>
-<script src="assets/js/i18n.js?v=20261105a"></script>
+<link rel="stylesheet" href="assets/css/mobile.css?v=20261106a">
+<link rel="stylesheet" href="assets/css/i18n.css?v=20261106a">
+<script src="assets/js/i18n-dict-1.js?v=20261106a"></script>
+<script src="assets/js/i18n-dict-2.js?v=20261106a"></script>
+<script src="assets/js/i18n.js?v=20261106a"></script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#c0716a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -434,12 +461,37 @@
 <meta name="apple-mobile-web-app-title" content="Youyou's">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/images/logo.webp">
-<link rel="stylesheet" href="assets/css/pwa.css?v=20261105a">
-<script src="assets/js/pwa.js?v=20261105a" defer></script>
-<link rel="stylesheet" href="assets/css/cursors.css?v=20261105a">
-<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261105a">
+<link rel="stylesheet" href="assets/css/pwa.css?v=20261106a">
+<script src="assets/js/pwa.js?v=20261106a" defer></script>
+<link rel="stylesheet" href="assets/css/cursors.css?v=20261106a">
+<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261106a">
 </head>
 <body class="page-pro">
+  <div id="boot-overlay" role="status" aria-live="polite">
+    <div class="boot-blob b1"></div><div class="boot-blob b2"></div>
+    <div class="boot-core">
+      <div id="boot-bar" aria-hidden="true"><span></span></div>
+      <div id="boot-text" class="dots">Loading</div>
+      <button type="button" id="boot-retry" onclick="location.reload()">Reload</button>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var ov = document.getElementById('boot-overlay');
+      window.addEventListener('admin-ready', function () {
+        ov.classList.add('done');
+        setTimeout(function () { if (ov && ov.parentNode) ov.parentNode.removeChild(ov); }, 700);
+      });
+      // if something is slow (bad connection), say so instead of animating forever
+      setTimeout(function () {
+        if (!ov.parentNode || ov.classList.contains('done')) return;
+        var t = document.getElementById('boot-text');
+        t.classList.remove('dots');
+        t.textContent = 'Taking longer than usual';
+        document.getElementById('boot-retry').style.display = 'inline-block';
+      }, 12000);
+    })();
+  </script>
 
   <!-- Fixed Site Header -->
   <header class="site-header">
@@ -528,9 +580,15 @@
           <svg width="24" height="24" fill="var(--caramel)" viewBox="0 0 16 16"><path d="M5.52.359A.5.5 0 0 1 6 0h4a.5.5 0 0 1 .474.658L8.694 6H12.5a.5.5 0 0 1 .395.807l-7 9a.5.5 0 0 1-.873-.454L6.806 10H3a.5.5 0 0 1-.395-.807l7-9z"/></svg>
           <span>Bakery Control Panel</span>
         </h1>
-        <button id="logout-btn" class="btn btn-outline" style="padding: 8px 18px; font-size: 0.85rem; border-color: rgba(74,55,40,0.3); color: var(--brown);">
-          Log Out Admin
-        </button>
+        <div class="admin-title-actions">
+          <span id="admin-refresh-note" aria-live="polite"></span>
+          <button id="admin-refresh-btn" type="button" class="btn btn-outline" style="padding: 8px 18px; font-size: 0.85rem; border-color: rgba(74,55,40,0.3); color: var(--brown);" title="Reload orders, users, reviews, menu and blacklist">
+            <span class="rf-ico" aria-hidden="true">↻</span> <span id="admin-refresh-label">Refresh</span>
+          </button>
+          <button id="logout-btn" class="btn btn-outline" style="padding: 8px 18px; font-size: 0.85rem; border-color: rgba(74,55,40,0.3); color: var(--brown);">
+            Log Out Admin
+          </button>
+        </div>
       </div>
 
       <div class="admin-metrics-grid">
@@ -936,10 +994,10 @@
     </div>
   </main>
 
-  <script src="assets/js/policy-render.js?v=20261105a"></script>
-  <script src="assets/js/main.js?v=20261105a"></script>
-  <script type="module" src="assets/js/auth.js?v=20261105a"></script>
-  <script src="assets/js/features.js?v=20261105a"></script>
+  <script src="assets/js/policy-render.js?v=20261106a"></script>
+  <script src="assets/js/main.js?v=20261106a"></script>
+  <script type="module" src="assets/js/auth.js?v=20261106a"></script>
+  <script src="assets/js/features.js?v=20261106a"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {
