@@ -30,16 +30,16 @@ After an order the customer gets a receipt email with a PDF attached and a "Trac
 (logged-in customers automatically, guests when they type their email). Sent by `api/send-receipt.js` through Gmail.
 Vercel > Settings > Environment Variables, then redeploy:
 - `GMAIL_APP_PASSWORD` = the 16-letter App Password (Google Account > Security > 2-Step Verification ON > App passwords)
-- `GMAIL_USER` = the Gmail address that App Password belongs to (default youyouscookies@gmail.com)
+- `GMAIL_USER` = the Gmail address that App Password belongs to
 - optional `RECEIPT_FROM_NAME`
-Check: open `https://YOUR-SITE/api/send-receipt` - it shows `gmailConfigured: true`. (Brevo was removed.)
+Check: open `https://YOUR-SITE/api/send-receipt` - it shows `gmailConfigured: true`. 
 Receipts from a Gmail address can land in spam - that is why customers also get the Track My Order page and number.
 
 ## Order tracking (track.html)
 Each order gets an 8-letter tracking code (shown in the confirmation, receipt, profile, admin and Telegram).
 `track.html?code=XXXXXXXX` shows live status (In progress / Delivered / Cancelled) from one public document
 `order_tracking/<code>` (status only - no name, phone or address; nobody can list/search them). The admin's status buttons and the
-customer's Cancel button keep it in sync. **Publish the new `firestore.rules`** - until then orders still work (old way) but have no tracking code.
+customer's Cancel button keep it in sync.
 
 ## Admin extras (Orders tab)
 Daily summary for any day (orders, in progress, delivered, cancelled, expected and collected money), "To bake" totals,
