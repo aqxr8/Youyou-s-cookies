@@ -121,11 +121,25 @@ function initQuiz() {
   ];
 
   const RESULTS = {
-    Lotus: { name: "Cookies Lotus", price: "15 dh", desc: "Caramelized and crunchy sweetness...", href: "menu.html#cookie-lotus" },
-    OreoKinder: { name: "Oreo or Kinder Cookies", price: "12-13 dh", desc: "You love indulgent treats!...", href: "menu.html#cookie-kinder" },
-    RedVelvet: { name: "Red Velvet Cookies", price: "12 dh", desc: "Soft, melt-in-your-mouth...", href: "menu.html#cookie-redvelvet" },
-    Classic: { name: "Classic Cookies", price: "7 dh", desc: "The authentic taste that everyone loves...", href: "menu.html#cookie-classic" },
-    ExtraChoc: { name: "Extra Chocolate Cookies", price: "10 dh", desc: "For true chocolate lovers...", href: "menu.html#cookie-extra" }
+    Lotus: { name: "Cookies Lotus", price: "15 dh", desc: "Caramelized and crunchy sweetness...", ids: ["lotus-cookie"] },
+    OreoKinder: { name: "Oreo or Kinder Cookies", price: "12-13 dh", desc: "You love indulgent treats!...", ids: ["kinder-cookie", "oreo-cookie"] },
+    RedVelvet: { name: "Red Velvet Cookies", price: "12 dh", desc: "Soft, melt-in-your-mouth...", ids: ["red-velvet"] },
+    Classic: { name: "Classic Cookies", price: "7 dh", desc: "The authentic taste that everyone loves...", ids: ["classic-cookie"] },
+    ExtraChoc: { name: "Extra Chocolate Cookies", price: "10 dh", desc: "For true chocolate lovers...", ids: ["extra-chocolate"] }
+  };
+
+  // Name, price and address come from the live menu (database), so they never go out of date.
+  const resolveResult = (r) => {
+    const M = window.YYMenu, anchor = window.YYMenuAnchor || ((x) => x);
+    const live = (M && M.byId) ? r.ids.map((id) => M.byId[id]).filter((m) => m && m.available !== false) : [];
+    if (!live.length) return { name: r.name, price: r.price, href: "menu.html#" + anchor(r.ids[0]) };
+    const prices = live.map((m) => m.price);
+    const lo = Math.min(...prices), hi = Math.max(...prices);
+    return {
+      name: live.length === 1 ? live[0].name : live.map((m) => m.name).join(" or "),
+      price: (lo === hi ? lo : lo + "-" + hi) + " dh",
+      href: "menu.html#" + anchor(live[0].id)
+    };
   };
 
   let step = 0;
@@ -161,7 +175,8 @@ function initQuiz() {
     const topFlavors = Object.keys(score).filter(flavor => score[flavor] === maxScore);
     const pick = topFlavors[Math.floor(Math.random() * topFlavors.length)];
     
-    const r = RESULTS[pick];
+    const base = RESULTS[pick];
+    const r = Object.assign({}, base, resolveResult(base));
     resultName.textContent = r.name;
     resultDesc.textContent = r.desc;
     resultLink.textContent = "Check out '" + r.name + "' on the menu for " + r.price + " →";
@@ -199,6 +214,16 @@ const MENU_PROJECT = 'youyous-cookies';
 const MENU_KEY = 'AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk'; // public Firebase web key (not a secret)
 const MENU_CACHE_KEY = 'youyou_menu_v2';
 const MAX_CART_LINES = 5; // the database allows at most 5 different items per order (see firestore.rules)
+
+// Every menu item has an address: menu.html#<anchor>. Items that existed before keep their old anchor
+// (so old links and the quiz keep working); new items use their own id.
+const LEGACY_ANCHORS = {
+  'classic-cookie': 'cookie-classic', 'monster-cookie': 'cookie-monster', 'kitkat-cookie': 'cookie-kitkat',
+  'extra-chocolate': 'cookie-extra', 'oreo-cookie': 'cookie-oreo', 'red-velvet': 'cookie-redvelvet',
+  'kinder-cookie': 'cookie-kinder', 'lotus-cookie': 'cookie-lotus'
+};
+const menuAnchor = (id) => LEGACY_ANCHORS[id] || id;
+window.YYMenuAnchor = menuAnchor;
 
 const YYMenu = window.YYMenu = { items: [], byId: {}, byName: {}, source: 'default' };
 
@@ -285,14 +310,37 @@ function renderMenuPage() {
       ? '<button class="add-to-box-btn" type="button" disabled style="opacity:.55;cursor:not-allowed">Sold out</button>'
       : '<button class="add-to-box-btn add-to-cart" data-id="' + menuEsc(it.id) + '" data-name="' + menuEsc(it.name) + '" data-price="' + menuEsc(it.price) + '">' +
         '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"/><path d="M8 7.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V12a.5.5 0 0 1-1 0v-1.5H6a.5.5 0 0 1 0-1h1.5V8a.5.5 0 0 1 .5-.5z"/></svg> Add to Box</button>';
-    return '<div class="new-menu-card reveal visible" data-menu-id="' + menuEsc(it.id) + '"><div class="card-img"><img src="' + menuEsc(img) + '" alt="' + menuEsc(it.name) + '" loading="lazy" decoding="async">' + badge + '</div>' +
+    return '<div class="new-menu-card reveal visible" id="' + menuEsc(menuAnchor(it.id)) + '" data-menu-id="' + menuEsc(it.id) + '"><div class="card-img"><img src="' + menuEsc(img) + '" alt="' + menuEsc(it.name) + '" loading="lazy" decoding="async">' + badge + '</div>' +
       '<div class="card-info"><div class="card-header"><h3>' + menuEsc(it.name) + '</h3><span class="price">' + menuEsc(it.price) + ' DH</span></div>' +
       '<p class="desc">' + menuEsc(it.desc) + '</p>' + btn + '</div></div>';
   };
   cookiesGrid.innerHTML = YYMenu.items.filter((i) => i.category === 'cookies').map(card).join('');
   boxesGrid.innerHTML = YYMenu.items.filter((i) => i.category === 'boxes').map(card).join('');
   if (typeof init3DHoverEffect === 'function') init3DHoverEffect();
+  menuScrollToHash(false);
 }
+
+let menuHashDone = false;
+function menuScrollToHash(force) {
+  if (menuHashDone && !force) return;
+  const raw = (location.hash || '').replace(/^#/, '');
+  if (!raw) return;
+  let key = raw;
+  try { key = decodeURIComponent(raw); } catch (e) { /* keep raw */ }
+  let el = document.getElementById(key);
+  if (!el) { // also accept the database id (menu.html#lotus-cookie)
+    const hit = YYMenu.byId[key];
+    if (hit) el = document.getElementById(menuAnchor(hit.id));
+  }
+  if (!el || !el.classList.contains('new-menu-card')) return;
+  menuHashDone = true;
+  setTimeout(() => {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('menu-flash');
+    setTimeout(() => el.classList.remove('menu-flash'), 2600);
+  }, 150);
+}
+window.addEventListener('hashchange', () => menuScrollToHash(true));
 
 function menuChanged() {
   window.dispatchEvent(new CustomEvent('menu-updated'));

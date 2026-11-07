@@ -1,3 +1,5 @@
+# v8.9.5 - FIX: every menu item has an address again (menu.html#cookie-lotus, or menu.html#<item id> for new items): the page scrolls to the card and flashes it. The flavour quiz now links to the right item and shows its live name and price from the database.
+
 # v8.9.4 - ADMIN: simpler, cooler loading screen (no logo): soft drifting colour glow, one thin sliding line and the word LOADING; reduced-motion friendly.
 
 # v8.9.2 - ADMIN: Refresh button (reloads orders, users, reviews, menu, blacklist without reloading the page; shows the time of the last update); loading screen that hides the whole dashboard until it is ready (non-admins are redirected before they ever see it); login page remembers your "Remember me" choice (ticked = stay signed in on this device until you log out).
