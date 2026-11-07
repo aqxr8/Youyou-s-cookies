@@ -132,13 +132,14 @@ function initQuiz() {
   const resolveResult = (r) => {
     const M = window.YYMenu, anchor = window.YYMenuAnchor || ((x) => x);
     const live = (M && M.byId) ? r.ids.map((id) => M.byId[id]).filter((m) => m && m.available !== false) : [];
-    if (!live.length) return { name: r.name, price: r.price, href: "menu.html#" + anchor(r.ids[0]) };
+    if (!live.length) return { name: r.name, price: r.price, href: "#" + anchor(r.ids[0]), liveIds: [] };
     const prices = live.map((m) => m.price);
     const lo = Math.min(...prices), hi = Math.max(...prices);
     return {
       name: live.length === 1 ? live[0].name : live.map((m) => m.name).join(" or "),
       price: (lo === hi ? lo : lo + "-" + hi) + " dh",
-      href: "menu.html#" + anchor(live[0].id)
+      href: "#" + anchor(live[0].id),
+      liveIds: live.map((m) => m.id)
     };
   };
 
@@ -181,6 +182,7 @@ function initQuiz() {
     resultDesc.textContent = r.desc;
     resultLink.textContent = "Check out '" + r.name + "' on the menu for " + r.price + " →";
     resultLink.href = r.href;
+    if (window.YYPickMenu) window.YYPickMenu(r.liveIds || []);
     showView(resultView);
   };
 
@@ -194,7 +196,16 @@ function initQuiz() {
   restartBtn.addEventListener("click", () => {
     step = 0;
     Object.keys(score).forEach((k) => (score[k] = 0));
+    if (window.YYPickMenu) window.YYPickMenu([]);
     showView(startView);
+  });
+
+  // The quiz lives on the menu page itself: jump to the card WITHOUT reloading the page.
+  resultLink.addEventListener("click", (e) => {
+    const target = (resultLink.getAttribute("href") || "").replace(/^#/, "");
+    if (!target) return;
+    e.preventDefault();
+    if (window.YYGoToMenuItem) window.YYGoToMenuItem(target);
   });
 
   showView(startView);
@@ -317,8 +328,29 @@ function renderMenuPage() {
   cookiesGrid.innerHTML = YYMenu.items.filter((i) => i.category === 'cookies').map(card).join('');
   boxesGrid.innerHTML = YYMenu.items.filter((i) => i.category === 'boxes').map(card).join('');
   if (typeof init3DHoverEffect === 'function') init3DHoverEffect();
+  menuApplyPicked();
   menuScrollToHash(false);
 }
+
+// ---- "your match" glow (quiz) ----
+let menuPicked = [];
+function menuApplyPicked() {
+  document.querySelectorAll('.new-menu-card[data-menu-id]').forEach((card) => {
+    card.classList.toggle('menu-picked', menuPicked.indexOf(card.getAttribute('data-menu-id')) !== -1);
+  });
+}
+window.YYPickMenu = function (ids) { menuPicked = Array.isArray(ids) ? ids.slice() : []; menuApplyPicked(); };
+
+// scroll to a card on THIS page (smooth, no reload) and flash it
+window.YYGoToMenuItem = function (key) {
+  const hit = YYMenu.byId[key];
+  const el = document.getElementById(key) || (hit && document.getElementById(menuAnchor(hit.id)));
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('menu-flash');
+  setTimeout(() => el.classList.remove('menu-flash'), 2600);
+  try { history.replaceState(null, '', '#' + el.id); } catch (e) { /* ignore */ }
+};
 
 let menuHashDone = false;
 function menuScrollToHash(force) {
