@@ -1,3 +1,5 @@
+# v8.9.7 - Menu: optional French/Arabic name + description per item (Menu tab > Translations); 'Sold out' label in 3 languages; homepage product prices now follow the database; smaller photo uploads. Publish firestore.rules again.
+
 # v8.9.6 - Quiz: the result link no longer reloads the page (the quiz is on the menu page, the old link went to menu.html and reloaded it): it scrolls smoothly to the card. The flavour you got glows (pulsing rose glow) until you retake the quiz; OreoKinder lights up both cookies.
 
 # v8.9.5 - FIX: every menu item has an address again (menu.html#cookie-lotus, or menu.html#<item id> for new items): the page scrolls to the card and flashes it. The flavour quiz now links to the right item and shows its live name and price from the database.

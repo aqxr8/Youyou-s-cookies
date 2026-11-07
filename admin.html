@@ -7,10 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | YouYou's Cookies</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261106c">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261106d">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Pinyon+Script&family=Playfair+Display:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261106c">
-  <link rel="stylesheet" href="assets/css/pro.css?v=20261106c">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261106d">
+  <link rel="stylesheet" href="assets/css/pro.css?v=20261106d">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style id="boot-style">
@@ -449,11 +449,11 @@
     }
   </style>
 <script>try{if(localStorage.getItem('youyou_theme_v2')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
-<link rel="stylesheet" href="assets/css/mobile.css?v=20261106c">
-<link rel="stylesheet" href="assets/css/i18n.css?v=20261106c">
-<script src="assets/js/i18n-dict-1.js?v=20261106c"></script>
-<script src="assets/js/i18n-dict-2.js?v=20261106c"></script>
-<script src="assets/js/i18n.js?v=20261106c"></script>
+<link rel="stylesheet" href="assets/css/mobile.css?v=20261106d">
+<link rel="stylesheet" href="assets/css/i18n.css?v=20261106d">
+<script src="assets/js/i18n-dict-1.js?v=20261106d"></script>
+<script src="assets/js/i18n-dict-2.js?v=20261106d"></script>
+<script src="assets/js/i18n.js?v=20261106d"></script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#c0716a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -461,10 +461,10 @@
 <meta name="apple-mobile-web-app-title" content="Youyou's">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/images/logo.webp">
-<link rel="stylesheet" href="assets/css/pwa.css?v=20261106c">
-<script src="assets/js/pwa.js?v=20261106c" defer></script>
-<link rel="stylesheet" href="assets/css/cursors.css?v=20261106c">
-<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261106c">
+<link rel="stylesheet" href="assets/css/pwa.css?v=20261106d">
+<script src="assets/js/pwa.js?v=20261106d" defer></script>
+<link rel="stylesheet" href="assets/css/cursors.css?v=20261106d">
+<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261106d">
 </head>
 <body class="page-pro">
   <div id="boot-overlay" role="status" aria-live="polite">
@@ -934,6 +934,16 @@
             <div class="form-group" style="margin-bottom:0;"><label>Section</label><select id="menu-category" class="auth-input pro-input"><option value="cookies">Signature cookies</option><option value="boxes">Mini cookies boxes</option></select></div>
           </div>
           <div class="form-group" style="margin-bottom:15px;"><label>Description</label><textarea id="menu-desc" class="auth-input pro-input" rows="2" maxlength="300" placeholder="Short, tasty description"></textarea></div>
+          <details style="margin-bottom:15px;">
+            <summary style="cursor:pointer; font-weight:600;">Translations (optional): French &amp; Arabic</summary>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:12px;">
+              <div class="form-group" style="margin-bottom:0;"><label>Nom (Français)</label><input type="text" id="menu-name-fr" class="auth-input pro-input" maxlength="60"></div>
+              <div class="form-group" style="margin-bottom:0;"><label>الاسم (العربية)</label><input type="text" id="menu-name-ar" class="auth-input pro-input" maxlength="60" dir="rtl"></div>
+              <div class="form-group" style="margin-bottom:0;"><label>Description (Français)</label><textarea id="menu-desc-fr" class="auth-input pro-input" rows="2" maxlength="300"></textarea></div>
+              <div class="form-group" style="margin-bottom:0;"><label>الوصف (العربية)</label><textarea id="menu-desc-ar" class="auth-input pro-input" rows="2" maxlength="300" dir="rtl"></textarea></div>
+            </div>
+            <p class="news-hint" style="margin-top:8px;">Leave empty to show the English text in every language (existing items are already translated automatically).</p>
+          </details>
           <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; margin-bottom:15px; align-items:end;">
             <div class="form-group" style="margin-bottom:0;"><label>Badge (optional)</label><input type="text" id="menu-badge" class="auth-input pro-input" maxlength="30" placeholder="e.g. New Flavor"></div>
             <div class="form-group" style="margin-bottom:0;"><label>Badge style</label><select id="menu-badge-style" class="auth-input pro-input"><option value="">Cookie badge</option><option value="box-badge">Box badge</option></select></div>
@@ -994,10 +1004,10 @@
     </div>
   </main>
 
-  <script src="assets/js/policy-render.js?v=20261106c"></script>
-  <script src="assets/js/main.js?v=20261106c"></script>
-  <script type="module" src="assets/js/auth.js?v=20261106c"></script>
-  <script src="assets/js/features.js?v=20261106c"></script>
+  <script src="assets/js/policy-render.js?v=20261106d"></script>
+  <script src="assets/js/main.js?v=20261106d"></script>
+  <script type="module" src="assets/js/auth.js?v=20261106d"></script>
+  <script src="assets/js/features.js?v=20261106d"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {

@@ -2064,7 +2064,7 @@ function initAdminDashboard(db) {
     const url = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(url);
-      let max = 640, q = 0.82, out = "";
+      let max = 560, q = 0.78, out = "";
       for (let i = 0; i < 8; i++) {
         const k = Math.min(1, max / Math.max(img.width, img.height));
         const c = document.createElement("canvas");
@@ -2072,7 +2072,7 @@ function initAdminDashboard(db) {
         c.height = Math.max(1, Math.round(img.height * k));
         c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
         out = c.toDataURL("image/jpeg", q);
-        if (out.length <= 150000) return resolve(out);
+        if (out.length <= 100000) return resolve(out);
         max = Math.round(max * 0.8); q = Math.max(0.5, q - 0.08);
       }
       reject(new Error("Photo too large"));
@@ -2159,6 +2159,10 @@ function initAdminDashboard(db) {
           category: menuEl("menu-category").value === "boxes" ? "boxes" : "cookies",
           desc: menuEl("menu-desc").value.trim().slice(0, 300),
           badge: menuEl("menu-badge").value.trim().slice(0, 30),
+          nameFr: menuEl("menu-name-fr").value.trim().slice(0, 60),
+          nameAr: menuEl("menu-name-ar").value.trim().slice(0, 60),
+          descFr: menuEl("menu-desc-fr").value.trim().slice(0, 300),
+          descAr: menuEl("menu-desc-ar").value.trim().slice(0, 300),
           badgeStyle: menuEl("menu-badge-style").value === "box-badge" ? "box-badge" : "",
           available: menuEl("menu-available").checked,
           image: newImg || (existing && existing.image) || "",
@@ -2200,6 +2204,10 @@ function initAdminDashboard(db) {
             menuEl("menu-category").value = m.category === "boxes" ? "boxes" : "cookies";
             menuEl("menu-desc").value = m.desc || "";
             menuEl("menu-badge").value = m.badge || "";
+            menuEl("menu-name-fr").value = m.nameFr || "";
+            menuEl("menu-name-ar").value = m.nameAr || "";
+            menuEl("menu-desc-fr").value = m.descFr || "";
+            menuEl("menu-desc-ar").value = m.descAr || "";
             menuEl("menu-badge-style").value = m.badgeStyle === "box-badge" ? "box-badge" : "";
             menuEl("menu-available").checked = m.available !== false;
             const pv = menuEl("menu-img-preview");

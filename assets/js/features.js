@@ -269,6 +269,7 @@ function menuFromRest(doc) {
     id, name, price,
     category: val(f.category) === 'boxes' ? 'boxes' : 'cookies',
     desc: val(f.desc) || '', image: val(f.image) || '',
+    nameFr: val(f.nameFr) || '', nameAr: val(f.nameAr) || '', descFr: val(f.descFr) || '', descAr: val(f.descAr) || '',
     badge: val(f.badge) || '', badgeStyle: val(f.badgeStyle) === 'box-badge' ? 'box-badge' : '',
     available: val(f.available) !== false,
     sortOrder: Number(val(f.sortOrder)) || 0
@@ -314,16 +315,23 @@ function renderMenuPage() {
   const cookiesGrid = document.getElementById('cookies');
   const boxesGrid = document.getElementById('boxes-grid');
   if (!cookiesGrid || !boxesGrid) return;
+  const L = (window.YYLang && window.YYLang()) || 'en';
+  const SOLD = { en: 'Sold out', fr: 'Épuisé', ar: 'نفد' };
   const card = (it) => {
+    // custom French / Arabic text (set in the dashboard) wins; otherwise English, which the site translates itself when it knows it
+    const nameX = L === 'fr' ? it.nameFr : L === 'ar' ? it.nameAr : '';
+    const descX = L === 'fr' ? it.descFr : L === 'ar' ? it.descAr : '';
+    const title = nameX ? '<h3 data-i18n-skip>' + menuEsc(nameX) + '</h3>' : '<h3>' + menuEsc(it.name) + '</h3>';
+    const descHtml = descX ? '<p class="desc" data-i18n-skip>' + menuEsc(descX) + '</p>' : '<p class="desc">' + menuEsc(it.desc) + '</p>';
     const img = SAFE_IMG.test(it.image || '') ? it.image : 'assets/images/classic-cookie.webp';
     const badge = it.badge ? '<span class="badge' + (it.badgeStyle ? ' ' + menuEsc(it.badgeStyle) : '') + '">' + menuEsc(it.badge) + '</span>' : '';
     const btn = it.available === false
-      ? '<button class="add-to-box-btn" type="button" disabled style="opacity:.55;cursor:not-allowed">Sold out</button>'
+      ? '<button class="add-to-box-btn" type="button" disabled data-i18n-skip style="opacity:.55;cursor:not-allowed">' + SOLD[L] + '</button>'
       : '<button class="add-to-box-btn add-to-cart" data-id="' + menuEsc(it.id) + '" data-name="' + menuEsc(it.name) + '" data-price="' + menuEsc(it.price) + '">' +
         '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"/><path d="M8 7.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V12a.5.5 0 0 1-1 0v-1.5H6a.5.5 0 0 1 0-1h1.5V8a.5.5 0 0 1 .5-.5z"/></svg> Add to Box</button>';
     return '<div class="new-menu-card reveal visible" id="' + menuEsc(menuAnchor(it.id)) + '" data-menu-id="' + menuEsc(it.id) + '"><div class="card-img"><img src="' + menuEsc(img) + '" alt="' + menuEsc(it.name) + '" loading="lazy" decoding="async">' + badge + '</div>' +
-      '<div class="card-info"><div class="card-header"><h3>' + menuEsc(it.name) + '</h3><span class="price">' + menuEsc(it.price) + ' DH</span></div>' +
-      '<p class="desc">' + menuEsc(it.desc) + '</p>' + btn + '</div></div>';
+      '<div class="card-info"><div class="card-header">' + title + '<span class="price">' + menuEsc(it.price) + ' DH</span></div>' +
+      descHtml + btn + '</div></div>';
   };
   cookiesGrid.innerHTML = YYMenu.items.filter((i) => i.category === 'cookies').map(card).join('');
   boxesGrid.innerHTML = YYMenu.items.filter((i) => i.category === 'boxes').map(card).join('');
@@ -374,10 +382,26 @@ function menuScrollToHash(force) {
 }
 window.addEventListener('hashchange', () => menuScrollToHash(true));
 
+// prices shown on other pages (homepage cards): <span data-menu-price="item-id"> and data-menu-price-from="boxes"
+function menuApplyPrices() {
+  document.querySelectorAll('[data-menu-price]').forEach((el) => {
+    const m = YYMenu.byId[el.getAttribute('data-menu-price')];
+    if (m && m.available !== false) el.textContent = m.price + 'dh';
+  });
+  document.querySelectorAll('[data-menu-price-from]').forEach((el) => {
+    const cat = el.getAttribute('data-menu-price-from');
+    const prices = YYMenu.items.filter((i) => i.category === cat && i.available !== false).map((i) => i.price);
+    if (prices.length) el.textContent = 'From ' + Math.min.apply(null, prices) + 'dh';
+  });
+}
+
 function menuChanged() {
   window.dispatchEvent(new CustomEvent('menu-updated'));
   renderMenuPage();
+  menuApplyPrices();
 }
+document.addEventListener('DOMContentLoaded', menuApplyPrices);
+document.addEventListener('yy:langchange', renderMenuPage); // custom French/Arabic item text
 
 // 1) paint at once from the saved copy (or the built-in list)  2) refresh from the database
 applyMenu(menuLoadCache() || DEFAULT_MENU, menuLoadCache() ? 'cache' : 'default');
