@@ -1,4 +1,6 @@
-# v8.9.8 - FIX: menu photos with a transparent background (cut-out cookies) no longer turn black when uploaded from the dashboard Menu tab: transparent pictures are saved as WebP/PNG instead of JPEG. Re-upload the photo of any item that already has a black background.
+# v8.9.9 - FIX: menu photos with a transparent background (cut-out cookies) no longer turn black when uploaded from the dashboard Menu tab: transparent pictures are saved as WebP/PNG instead of JPEG. Re-upload the photo of any item that already has a black background (Menu tab > Edit > choose photo > Save item).
+
+# v8.9.8 - Christmas theme: now starts exactly 12 Nov 2026 at 00:30 (Morocco time) and runs to 31 Dec (23:59); pages already open switch on live at 00:30. Header logo becomes the Christmas badge (assets/images/logo-christmas.webp) while the theme is on; the default logos return afterwards. sw.js VERSION yy-v22.
 
 # v8.9.7 - Menu: optional French/Arabic name + description per item (Menu tab > Translations); 'Sold out' label in 3 languages; homepage product prices now follow the database; smaller photo uploads. Publish firestore.rules again.
 
