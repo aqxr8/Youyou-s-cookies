@@ -38,6 +38,16 @@ html[data-christmas] .site-footer{border-top:4px solid #c8102e}
 html[data-christmas][data-theme="dark"] .site-footer{background:#08130d!important}
 .xm-strip{text-align:center;padding:14px 8px 4px;font-size:1.4rem;letter-spacing:.3em;overflow:hidden;white-space:nowrap}
 
+/* header logo: the Christmas badge replaces the default logo videos (light + dark). Default logos are untouched when the theme is off. */
+html[data-christmas] body .site-header .brand-logo-wrapper{
+  width:64px!important;height:64px!important;border-radius:0!important;overflow:visible!important;
+  background:url("../images/logo-christmas.webp?v=20261112a") center/contain no-repeat;
+  filter:drop-shadow(0 2px 5px rgba(179,18,42,.28))}
+html[data-christmas] body .site-header .brand-logo-wrapper > video.brand-logo.brand-logo{
+  display:none!important;visibility:hidden!important;opacity:0!important}
+@media (max-width:860px){html[data-christmas] body .site-header .brand-logo-wrapper{width:58px!important;height:58px!important}}
+@media (max-width:560px){html[data-christmas] body .site-header .brand-logo-wrapper{width:52px!important;height:52px!important}}
+
 /* hero: snowy shade */
 html[data-christmas] .hero-slide::after{
   content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
