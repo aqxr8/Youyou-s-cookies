@@ -62,7 +62,7 @@ falls back to the old, weaker method. Admin > Promo Codes shows how many users u
 
 ## Seasonal themes (automatic)
 - `halloween.js/css`: 25 Oct - 1 Nov 2026 (until 23:59 Morocco time). Test: `?halloween=1`, force off: `?halloween=0`.
-- `christmas.js/css`: goes live 12 Nov 2026 at 00:30 (Morocco time) until 31 Dec 2026 (23:59). Open pages switch on by themselves at 00:30. While ON, the header shows `assets/images/logo-christmas.webp` instead of the default logo videos (default logos come back when it ends). Test: `?christmas=1`, force off: `?christmas=0`. Keeps the light/dark switch (red & white by day, pine green at night).
+- `christmas.js/css`: 1 - 31 Dec 2026. Test: `?christmas=1`, force off: `?christmas=0`. Keeps the light/dark switch (red & white by day, pine green at night).
 - Change the dates in the `FROM` / `TO` lines at the top of each .js file. To remove a theme for good, delete its 2 lines (`<link>` + `<script>`) in each page's `<head>`.
 - After the event, bump `VERSION` in `sw.js` if you change dates, so phones refresh their saved files.
 

@@ -1,29 +1,20 @@
 /* =========================================================
    christmas.js - seasonal Christmas theme (temporary)
-   - Switches itself ON at an exact moment (START: 12 Nov 2026, 00:30 Morocco time) and OFF after the last day (TO, until 23:59).
-   - Open pages switch on by themselves when START arrives (no reload needed).
-   - Change START / TO below.  Test any time with ?christmas=1 - force off with ?christmas=0
-   - Header logo: while the theme is ON the Christmas logo (assets/images/logo-christmas.webp) replaces the default logo videos (see christmas.css).
+   - Switches itself ON for the whole of December (1-31 Dec, Morocco time) and OFF automatically after.
+   - Change the dates in FROM / TO below.  Test any day with ?christmas=1 - force off with ?christmas=0
    - The light / dark switch keeps working (a red & white look, and a pine-green night look).
    ========================================================= */
 (function () {
   "use strict";
 
-  // START is an exact moment. Morocco is UTC+1 all year except Ramadan, so +01:00 is right for Nov-Dec 2026.
-  var START = "2026-11-12T00:30:00+01:00", TO = "2026-12-31";   // TO = last day it is shown (until 23:59 Morocco time)
-  var startMs = Date.parse(START);
+  var FROM = "2026-12-01", TO = "2026-12-31";
   var qs = new URLSearchParams(location.search).get("christmas");
   var today;
   try { today = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Casablanca" }).format(new Date()); }
   catch (e) { today = new Date().toISOString().slice(0, 10); }
-  var on = qs === "1" || (qs !== "0" && Date.now() >= startMs && today <= TO);
-  var wait = startMs - Date.now();
+  var on = qs === "1" || (qs !== "0" && today >= FROM && today <= TO);
+  if (!on) return;
 
-  if (on) activate();
-  else if (qs !== "0" && wait > 0 && wait < 2147483000 && today <= TO) setTimeout(activate, wait + 250);   // page already open at 00:30 -> switch on live
-
-  function activate() {
-  if (document.documentElement.hasAttribute("data-christmas")) return;
   var root = document.documentElement;
   root.setAttribute("data-christmas", "");
 
@@ -93,5 +84,4 @@
       footer.insertBefore(strip, footer.firstChild);
     }
   });
-  }
 })();

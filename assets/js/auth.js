@@ -2059,21 +2059,37 @@ function initAdminDashboard(db) {
     if (tg) { tg.style.display = menuRows.length ? "" : "none"; tg.textContent = menuLocked ? "Turn lock OFF" : "Turn lock ON"; }
   };
 
+  // Resizes the uploaded photo. Pictures WITH transparency (cut-out cookies) stay transparent:
+  // they are saved as WebP (or PNG on browsers that cannot write WebP). JPEG has no transparency (it turns black).
   const menuResize = (file) => new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(url);
-      let max = 560, q = 0.78, out = "";
-      for (let i = 0; i < 8; i++) {
+      const LIMIT = 150000; // characters (the database rule allows up to 200000)
+      let max = 600, q = 0.8, out = "", hasAlpha = null;
+      for (let i = 0; i < 10; i++) {
         const k = Math.min(1, max / Math.max(img.width, img.height));
         const c = document.createElement("canvas");
         c.width = Math.max(1, Math.round(img.width * k));
         c.height = Math.max(1, Math.round(img.height * k));
-        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-        out = c.toDataURL("image/jpeg", q);
-        if (out.length <= 100000) return resolve(out);
-        max = Math.round(max * 0.8); q = Math.max(0.5, q - 0.08);
+        const ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        if (hasAlpha === null) {
+          hasAlpha = false;
+          try {
+            const d = ctx.getImageData(0, 0, c.width, c.height).data;
+            for (let p = 3; p < d.length; p += 4) { if (d[p] < 250) { hasAlpha = true; break; } }
+          } catch (e) { hasAlpha = /png|webp|gif|svg/i.test(file.type || ""); }
+        }
+        if (hasAlpha) {
+          out = c.toDataURL("image/webp", q);
+          if (out.indexOf("data:image/webp") !== 0) out = c.toDataURL("image/png"); // Safari: no WebP encoder
+        } else {
+          out = c.toDataURL("image/jpeg", q);
+        }
+        if (out.length <= LIMIT) return resolve(out);
+        max = Math.round(max * 0.82); q = Math.max(0.5, q - 0.07);
       }
       reject(new Error("Photo too large"));
     };
