@@ -69,6 +69,7 @@
 <link rel="stylesheet" href="assets/css/christmas.css?v=20261112a">
 <script src="assets/js/christmas.js?v=20261112a"></script>
 <link rel="stylesheet" href="assets/css/cursors.css?v=20261112a">
+<link rel="stylesheet" href="assets/css/home.css?v=20261123b">
 </head>
 <body>
 
@@ -173,19 +174,29 @@
   </div>
 
   <main>
-    <section class="hero hero-carousel" style="position: relative; overflow: hidden; min-height: 80vh; display: flex; align-items: center; justify-content: center;">
+    <section class="hero hero-carousel hero-v2">
       <div class="hero-slide active" style="background-image: url('assets/images/cover.webp');"></div>
       <div class="hero-slide" style="background-image: url('assets/images/cover3.webp');"></div>
       <div class="hero-slide" style="background-image: url('assets/images/cover2.webp');"></div>
+      <div class="hero-shade" aria-hidden="true"></div>
 
-      <div class="hero-inner" style="text-align: center; color: white;">
+      <div class="hero-floaters" aria-hidden="true">
+        <img class="fl fl-1" src="assets/images/lotus-cookie.webp" alt="" width="800" height="753">
+        <img class="fl fl-2" src="assets/images/kinder-cookie.webp" alt="" width="800" height="800">
+        <img class="fl fl-3" src="assets/images/oreo-cookie.webp" alt="" width="800" height="800">
+        <img class="fl fl-4" src="assets/images/red-velvet.webp" alt="" width="800" height="785">
+        <img class="fl fl-5" src="assets/images/extra-chocolate.webp" alt="" width="800" height="800">
+        <img class="fl fl-6" src="assets/images/kitkat-cookie.webp" alt="" width="800" height="705">
+      </div>
+
+      <div class="hero-inner">
         <span class="hero-tag">Aya & Only Aya's</span>
         <h1>Youyou's Cookies</h1>
-        <p>MADE WITH LOVE</p>
+        <p class="hero-sub">MADE WITH LOVE</p>
         <p class="hero-desc">From testing recipes in a small home kitchen to delivering the perfect crunch and chew in every bite.</p>
-        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+        <div class="hero-actions">
           <a href="menu.html" class="btn btn-primary">See Our Cookies</a>
-          <a href="reviews.html" class="btn btn-outline" style="color: white; border-color: white;">Community Reviews</a>
+          <a href="reviews.html" class="btn btn-outline">Community Reviews</a>
         </div>
       </div>
 
@@ -196,12 +207,16 @@
       </div>
     </section>
 
-    <section class="section">
-      <div class="container intro reveal">
-        <div class="intro-media">
-          <img src="assets/images/chiffon-souffle.webp" alt="Youyou Cookies fresh out of the oven">
-        </div>
-        <div class="intro-text">
+    <div class="sep-v2" aria-hidden="true">
+      <span class="sep-line"></span>
+      <span class="sep-heart">&hearts;</span>
+      <span class="sep-line"></span>
+    </div>
+
+    <section class="section intro-v2">
+      <div class="intro-photo" role="img" aria-label="Youyou Cookies fresh out of the oven"></div>
+      <div class="container">
+        <div class="intro-text reveal">
           <span class="en">About Us</span>
           <h2>Aya's dedicated <em>cookie</em> studio</h2>
           <p>What started as a personal quest to bake the ultimate chocolate chip cookie has grown into Youyou's Cookies. Every batch is mixed, scooped, and baked by Aya herself.</p>
@@ -215,14 +230,14 @@
       </div>
     </section>
 
-    <section class="section bg-cream">
+    <section class="section bg-cream products-v2">
       <div class="container">
         <div class="section-head reveal">
           <span class="en">Signature Sweets</span>
           <h2>Popular Cookies</h2>
           <div class="divider"></div>
         </div>
-        <div class="product-grid">
+        <div class="product-grid product-grid-v2">
           <article class="product-card reveal" data-href="menu.html#cookie-classic">
             <img src="assets/images/chiffon-souffle.webp" alt="Classic Chocolate Chunk Cookie" loading="lazy" decoding="async">
             <div class="body">
@@ -257,7 +272,7 @@
       </div>
     </section>
 
-    <section class="section bg-cream">
+    <section class="section cta-v2">
       <div class="container">
         <div class="cta reveal">
           <h2>Treat yourself today</h2>
