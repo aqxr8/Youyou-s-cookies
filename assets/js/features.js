@@ -219,7 +219,7 @@ function initQuiz() {
 // with "Import current menu". Prices that customers pay come from the database and are enforced by
 // firestore.rules (when the menu lock is on).
 // ============================================================================
-const DEFAULT_MENU = [{"id": "classic-cookie", "name": "Classic Cookie", "price": 7, "category": "cookies", "desc": "The authentic taste that everyone loves. Simple, good, and comforting.", "image": "assets/images/classic-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 10}, {"id": "classic-brownie", "name": "Classic Brownie", "price": 10, "category": "cookies", "desc": "A rich, ultra-fudgy brownie topped with crushed Oreo and Lotus for the ultimate indulgence.", "image": "assets/images/classic-brownie.webp", "badge": "New Treat", "badgeStyle": "", "available": true, "sortOrder": 20}, {"id": "monster-cookie", "name": "Monster Cookie", "price": 15, "category": "cookies", "desc": "A playful, bright blue treat packed with sweet surprises and topped with a whole Oreo.", "image": "assets/images/monster-cookie.webp", "badge": "New Flavor", "badgeStyle": "", "available": true, "sortOrder": 30}, {"id": "kitkat-cookie", "name": "KitKat Cookie", "price": 15, "category": "cookies", "desc": "Our classic thick dough crowned with crispy, melting KitKat bars.", "image": "assets/images/kitkat-cookie.webp", "badge": "New Flavor", "badgeStyle": "", "available": true, "sortOrder": 40}, {"id": "extra-chocolate", "name": "Extra Chocolate", "price": 10, "category": "cookies", "desc": "For true chocolate lovers. Rich, intense, and super indulgent.", "image": "assets/images/extra-chocolate.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 50}, {"id": "oreo-cookie", "name": "Oreo Cookie", "price": 12, "category": "cookies", "desc": "Crushed Oreo chunks for a 100% indulgent treat.", "image": "assets/images/oreo-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 60}, {"id": "red-velvet", "name": "Red Velvet", "price": 12, "category": "cookies", "desc": "Soft, melt-in-your-mouth, and irresistible. The sweetness of red velvet in every bite.", "image": "assets/images/red-velvet.webp", "badge": "Monthly Special", "badgeStyle": "", "available": true, "sortOrder": 70}, {"id": "kinder-cookie", "name": "Kinder Cookie", "price": 13, "category": "cookies", "desc": "The unique taste of Kinder chocolate in every bite.", "image": "assets/images/kinder-cookie.webp", "badge": "Monthly Special", "badgeStyle": "", "available": true, "sortOrder": 80}, {"id": "lotus-cookie", "name": "Lotus Cookie", "price": 15, "category": "cookies", "desc": "Caramelized and crunchy sweetness with an irresistible taste.", "image": "assets/images/lotus-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 90}, {"id": "10-mini-cookies-box", "name": "10 Mini Cookies Box", "price": 15, "category": "boxes", "desc": "A perfect little sample box of our bite-sized favorites.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 100}, {"id": "15-mini-cookies-box", "name": "15 Mini Cookies Box", "price": 20, "category": "boxes", "desc": "Our highly requested bite-sized mix. Perfect for gifts or personal cravings.", "image": "assets/images/mini-box.webp", "badge": "Best Choice", "badgeStyle": "box-badge", "available": true, "sortOrder": 110}, {"id": "20-mini-cookies-box", "name": "20 Mini Cookies Box", "price": 27, "category": "boxes", "desc": "Great for sharing with friends, family, or keeping all to yourself!", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 120}, {"id": "30-mini-cookies-box", "name": "30 Mini Cookies Box", "price": 40, "category": "boxes", "desc": "The ultimate party box. Enough sweet treats for everyone.", "image": "assets/images/mini-box.webp", "badge": "Party Size", "badgeStyle": "box-badge", "available": true, "sortOrder": 130}];
+const DEFAULT_MENU = [{"id": "classic-cookie", "name": "Classic Cookie", "price": 7, "category": "cookies", "desc": "The authentic taste that everyone loves. Simple, good, and comforting.", "image": "assets/images/classic-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 10, "tags": ["classic", "chocolate"]}, {"id": "classic-brownie", "name": "Classic Brownie", "price": 10, "category": "cookies", "desc": "A rich, ultra-fudgy brownie topped with crushed Oreo and Lotus for the ultimate indulgence.", "image": "assets/images/classic-brownie.webp", "badge": "New Treat", "badgeStyle": "", "available": true, "sortOrder": 20, "tags": ["chocolate", "new"]}, {"id": "monster-cookie", "name": "Monster Cookie", "price": 15, "category": "cookies", "desc": "A playful, bright blue treat packed with sweet surprises and topped with a whole Oreo.", "image": "assets/images/monster-cookie.webp", "badge": "New Flavor", "badgeStyle": "", "available": true, "sortOrder": 30, "tags": ["new"]}, {"id": "kitkat-cookie", "name": "KitKat Cookie", "price": 15, "category": "cookies", "desc": "Our classic thick dough crowned with crispy, melting KitKat bars.", "image": "assets/images/kitkat-cookie.webp", "badge": "New Flavor", "badgeStyle": "", "available": true, "sortOrder": 40, "tags": ["chocolate", "new"]}, {"id": "extra-chocolate", "name": "Extra Chocolate", "price": 10, "category": "cookies", "desc": "For true chocolate lovers. Rich, intense, and super indulgent.", "image": "assets/images/extra-chocolate.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 50, "tags": ["chocolate"]}, {"id": "oreo-cookie", "name": "Oreo Cookie", "price": 12, "category": "cookies", "desc": "Crushed Oreo chunks for a 100% indulgent treat.", "image": "assets/images/oreo-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 60, "tags": ["chocolate"]}, {"id": "red-velvet", "name": "Red Velvet", "price": 12, "category": "cookies", "desc": "Soft, melt-in-your-mouth, and irresistible. The sweetness of red velvet in every bite.", "image": "assets/images/red-velvet.webp", "badge": "Monthly Special", "badgeStyle": "", "available": true, "sortOrder": 70, "tags": ["monthly special"]}, {"id": "kinder-cookie", "name": "Kinder Cookie", "price": 13, "category": "cookies", "desc": "The unique taste of Kinder chocolate in every bite.", "image": "assets/images/kinder-cookie.webp", "badge": "Monthly Special", "badgeStyle": "", "available": true, "sortOrder": 80, "tags": ["chocolate", "monthly special"]}, {"id": "lotus-cookie", "name": "Lotus Cookie", "price": 15, "category": "cookies", "desc": "Caramelized and crunchy sweetness with an irresistible taste.", "image": "assets/images/lotus-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 90, "tags": ["caramel"]}, {"id": "10-mini-cookies-box", "name": "10 Mini Cookies Box", "price": 15, "category": "boxes", "desc": "A perfect little sample box of our bite-sized favorites.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 100, "tags": ["box"]}, {"id": "15-mini-cookies-box", "name": "15 Mini Cookies Box", "price": 20, "category": "boxes", "desc": "Our highly requested bite-sized mix. Perfect for gifts or personal cravings.", "image": "assets/images/mini-box.webp", "badge": "Best Choice", "badgeStyle": "box-badge", "available": true, "sortOrder": 110, "tags": ["box", "best seller"]}, {"id": "20-mini-cookies-box", "name": "20 Mini Cookies Box", "price": 27, "category": "boxes", "desc": "Great for sharing with friends, family, or keeping all to yourself!", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 120, "tags": ["box"]}, {"id": "30-mini-cookies-box", "name": "30 Mini Cookies Box", "price": 40, "category": "boxes", "desc": "The ultimate party box. Enough sweet treats for everyone.", "image": "assets/images/mini-box.webp", "badge": "Party Size", "badgeStyle": "box-badge", "available": true, "sortOrder": 130, "tags": ["box", "party"]}];
 
 const MENU_PROJECT = 'youyous-cookies';
 const MENU_KEY = 'AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk'; // public Firebase web key (not a secret)
@@ -261,6 +261,7 @@ function menuFromRest(doc) {
     if ('booleanValue' in v) return v.booleanValue;
     return undefined;
   };
+  const list = (v) => (v && v.arrayValue && Array.isArray(v.arrayValue.values)) ? v.arrayValue.values.map((x) => x && x.stringValue).filter((t) => typeof t === 'string' && t) : [];
   const id = String(doc.name || '').split('/').pop();
   const price = val(f.price);
   const name = val(f.name);
@@ -272,6 +273,7 @@ function menuFromRest(doc) {
     nameFr: val(f.nameFr) || '', nameAr: val(f.nameAr) || '', descFr: val(f.descFr) || '', descAr: val(f.descAr) || '',
     badge: val(f.badge) || '', badgeStyle: val(f.badgeStyle) === 'box-badge' ? 'box-badge' : '',
     available: val(f.available) !== false,
+    tags: list(f.tags).slice(0, 8),
     sortOrder: Number(val(f.sortOrder)) || 0
   };
 }
@@ -311,12 +313,63 @@ async function menuFetchFromDb() {
 const SAFE_IMG = /^(assets\/images\/[A-Za-z0-9._-]+|data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+)$/;
 const menuEsc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+
+// ---- TAGS: the admin gives each item tags (chocolate, classic, new ...); customers filter the menu with them ----
+const TAG_I18N = {
+  'chocolate': { fr: 'chocolat', ar: 'شوكولاتة' }, 'classic': { fr: 'classique', ar: 'كلاسيكي' }, 'new': { fr: 'nouveau', ar: 'جديد' },
+  'caramel': { fr: 'caramel', ar: 'كراميل' }, 'nutty': { fr: 'noix', ar: 'مكسرات' }, 'fruity': { fr: 'fruité', ar: 'فواكه' },
+  'monthly special': { fr: 'spécial du mois', ar: 'عرض الشهر' }, 'best seller': { fr: 'best-seller', ar: 'الأكثر مبيعاً' },
+  'limited': { fr: 'édition limitée', ar: 'كمية محدودة' }, 'box': { fr: 'coffret', ar: 'علبة' }, 'party': { fr: 'fête', ar: 'حفلات' }
+};
+const TAG_TXT = {
+  all: { en: 'All', fr: 'Tout', ar: 'الكل' },
+  label: { en: 'Filter the menu', fr: 'Filtrer le menu', ar: 'تصفية القائمة' },
+  empty: { en: 'Nothing with this tag yet.', fr: 'Rien avec ce tag pour le moment.', ar: 'لا يوجد شيء بهذا الوسم بعد.' }
+};
+let menuTag = '';
+try { menuTag = String(new URLSearchParams(location.search).get('tag') || '').toLowerCase().slice(0, 20); } catch (e) { /* ignore */ }
+const menuTagsOf = (it) => (it && Array.isArray(it.tags)) ? it.tags : [];
+const menuTagLabel = (t, L) => (TAG_I18N[t] && TAG_I18N[t][L]) || t;
+
+function renderMenuFilter(L) {
+  const bar = document.getElementById('menu-filter');
+  if (!bar) return;
+  const counts = {};
+  YYMenu.items.forEach((it) => menuTagsOf(it).forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
+  const tags = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+  if (menuTag && !counts[menuTag]) menuTag = '';
+  if (!tags.length) { bar.hidden = true; bar.innerHTML = ''; return; }
+  bar.hidden = false;
+  bar.setAttribute('aria-label', TAG_TXT.label[L] || TAG_TXT.label.en);
+  const chip = (tag, label, n) => '<button type="button" class="tag-chip' + ((menuTag === tag) ? ' active' : '') + '" data-tag="' + menuEsc(tag) + '" aria-pressed="' + (menuTag === tag) + '">' + menuEsc(label) + '<span class="n">' + n + '</span></button>';
+  bar.innerHTML = chip('', TAG_TXT.all[L] || TAG_TXT.all.en, YYMenu.items.length) + tags.map((t) => chip(t, menuTagLabel(t, L), counts[t])).join('');
+  const act = bar.querySelector('.tag-chip.active');   // phones: keep the selected chip visible in the swipe row
+  if (act && bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, act.offsetLeft - 16);
+}
+
+function menuSetTag(tag, scrollToBar) {
+  menuTag = String(tag || '').toLowerCase().slice(0, 20);
+  try {
+    const u = new URL(location.href);
+    if (menuTag) u.searchParams.set('tag', menuTag); else u.searchParams.delete('tag');
+    history.replaceState(null, '', u.pathname + u.search + (u.hash && !menuTag ? u.hash : ''));
+  } catch (e) { /* ignore */ }
+  renderMenuPage();
+  if (scrollToBar) { const bar = document.getElementById('menu-filter'); if (bar) bar.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest && e.target.closest('#menu-filter .tag-chip, .new-menu-card .card-tag');
+  if (!t) return;
+  menuSetTag(t.getAttribute('data-tag') || '', !!t.classList.contains('card-tag'));
+});
+
 function renderMenuPage() {
   const cookiesGrid = document.getElementById('cookies');
   const boxesGrid = document.getElementById('boxes-grid');
   if (!cookiesGrid || !boxesGrid) return;
   const L = (window.YYLang && window.YYLang()) || 'en';
   const SOLD = { en: 'Sold out', fr: 'Épuisé', ar: 'نفد' };
+  renderMenuFilter(L);
   const card = (it) => {
     // custom French / Arabic text (set in the dashboard) wins; otherwise English, which the site translates itself when it knows it
     const nameX = L === 'fr' ? it.nameFr : L === 'ar' ? it.nameAr : '';
@@ -329,12 +382,24 @@ function renderMenuPage() {
       ? '<button class="add-to-box-btn" type="button" disabled data-i18n-skip style="opacity:.55;cursor:not-allowed">' + SOLD[L] + '</button>'
       : '<button class="add-to-box-btn add-to-cart" data-id="' + menuEsc(it.id) + '" data-name="' + menuEsc(it.name) + '" data-price="' + menuEsc(it.price) + '">' +
         '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z"/><path d="M8 7.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V12a.5.5 0 0 1-1 0v-1.5H6a.5.5 0 0 1 0-1h1.5V8a.5.5 0 0 1 .5-.5z"/></svg> Add to Box</button>';
+    const tagsHtml = menuTagsOf(it).length ? '<div class="card-tags" data-i18n-skip>' + menuTagsOf(it).map((t) => '<button type="button" class="card-tag" data-tag="' + menuEsc(t) + '">' + menuEsc(menuTagLabel(t, L)) + '</button>').join('') + '</div>' : '';
     return '<div class="new-menu-card reveal visible" id="' + menuEsc(menuAnchor(it.id)) + '" data-menu-id="' + menuEsc(it.id) + '"><div class="card-img"><img src="' + menuEsc(img) + '" alt="' + menuEsc(it.name) + '" loading="lazy" decoding="async">' + badge + '</div>' +
       '<div class="card-info"><div class="card-header">' + title + '<span class="price">' + menuEsc(it.price) + ' DH</span></div>' +
-      descHtml + btn + '</div></div>';
+      descHtml + tagsHtml + btn + '</div></div>';
   };
-  cookiesGrid.innerHTML = YYMenu.items.filter((i) => i.category === 'cookies').map(card).join('');
-  boxesGrid.innerHTML = YYMenu.items.filter((i) => i.category === 'boxes').map(card).join('');
+  const shown = menuTag ? YYMenu.items.filter((i) => menuTagsOf(i).indexOf(menuTag) !== -1) : YYMenu.items;
+  const cookieList = shown.filter((i) => i.category === 'cookies');
+  const boxList = shown.filter((i) => i.category === 'boxes');
+  cookiesGrid.innerHTML = cookieList.map(card).join('');
+  boxesGrid.innerHTML = boxList.map(card).join('');
+  // while a tag is active: hide the empty sections (and the fixed "Flavours & Extras" block, which has no tags)
+  const hide = (el, on) => { if (el) el.classList.toggle('tag-hide', !!on); };
+  hide(cookiesGrid.previousElementSibling, menuTag && !cookieList.length); hide(cookiesGrid, menuTag && !cookieList.length);
+  hide(boxesGrid.previousElementSibling, menuTag && !boxList.length); hide(boxesGrid, menuTag && !boxList.length);
+  const extrasHead = boxesGrid.nextElementSibling, extrasGrid = extrasHead && extrasHead.nextElementSibling;
+  hide(extrasHead, menuTag); hide(extrasGrid, menuTag);
+  const empty = document.getElementById('menu-filter-empty');
+  if (empty) { empty.hidden = !(menuTag && !shown.length); empty.textContent = TAG_TXT.empty[L] || TAG_TXT.empty.en; }
   if (typeof init3DHoverEffect === 'function') init3DHoverEffect();
   menuApplyPicked();
   menuScrollToHash(false);
@@ -352,6 +417,7 @@ window.YYPickMenu = function (ids) { menuPicked = Array.isArray(ids) ? ids.slice
 // scroll to a card on THIS page (smooth, no reload) and flash it
 window.YYGoToMenuItem = function (key) {
   const hit = YYMenu.byId[key];
+  if (menuTag && hit && menuTagsOf(hit).indexOf(menuTag) === -1) menuSetTag('');
   const el = document.getElementById(key) || (hit && document.getElementById(menuAnchor(hit.id)));
   if (!el) return;
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -370,6 +436,7 @@ function menuScrollToHash(force) {
   let el = document.getElementById(key);
   if (!el) { // also accept the database id (menu.html#lotus-cookie)
     const hit = YYMenu.byId[key];
+    if (hit && menuTag && menuTagsOf(hit).indexOf(menuTag) === -1) { menuSetTag(''); return; }   // hidden by the tag filter: show everything again
     if (hit) el = document.getElementById(menuAnchor(hit.id));
   }
   if (!el || !el.classList.contains('new-menu-card')) return;

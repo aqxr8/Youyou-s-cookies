@@ -7,10 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | YouYou's Cookies</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261112a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261123c">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Pinyon+Script&family=Playfair+Display:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261112a">
-  <link rel="stylesheet" href="assets/css/pro.css?v=20261112a">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261123c">
+  <link rel="stylesheet" href="assets/css/pro.css?v=20261123c">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style id="boot-style">
@@ -449,11 +449,11 @@
     }
   </style>
 <script>try{if(localStorage.getItem('youyou_theme_v2')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
-<link rel="stylesheet" href="assets/css/mobile.css?v=20261112a">
-<link rel="stylesheet" href="assets/css/i18n.css?v=20261112a">
-<script src="assets/js/i18n-dict-1.js?v=20261112a"></script>
-<script src="assets/js/i18n-dict-2.js?v=20261112a"></script>
-<script src="assets/js/i18n.js?v=20261112a"></script>
+<link rel="stylesheet" href="assets/css/mobile.css?v=20261123c">
+<link rel="stylesheet" href="assets/css/i18n.css?v=20261123c">
+<script src="assets/js/i18n-dict-1.js?v=20261123c"></script>
+<script src="assets/js/i18n-dict-2.js?v=20261123c"></script>
+<script src="assets/js/i18n.js?v=20261123c"></script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#c0716a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -461,10 +461,10 @@
 <meta name="apple-mobile-web-app-title" content="Youyou's">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/images/logo.webp">
-<link rel="stylesheet" href="assets/css/pwa.css?v=20261112a">
-<script src="assets/js/pwa.js?v=20261112a" defer></script>
-<link rel="stylesheet" href="assets/css/cursors.css?v=20261112a">
-<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261112a">
+<link rel="stylesheet" href="assets/css/pwa.css?v=20261123c">
+<script src="assets/js/pwa.js?v=20261123c" defer></script>
+<link rel="stylesheet" href="assets/css/cursors.css?v=20261123c">
+<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261123c">
 </head>
 <body class="page-pro">
   <div id="boot-overlay" role="status" aria-live="polite">
@@ -923,6 +923,7 @@
           <span id="menu-lock-state" style="font-weight:600;">Checking…</span>
           <button type="button" class="filter-btn" id="menu-lock-toggle" style="display:none;"></button>
           <button type="button" class="filter-btn" id="menu-import" style="display:none;">⬇ Import current menu (first time)</button>
+           <button type="button" class="filter-btn" id="menu-tags-fill" style="display:none;"></button>
         </div>
 
         <form id="menu-form" class="pro-form" style="background: var(--cream); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid rgba(74, 55, 40, 0.1);" autocomplete="off">
@@ -948,6 +949,15 @@
             <div class="form-group" style="margin-bottom:0;"><label>Badge (optional)</label><input type="text" id="menu-badge" class="auth-input pro-input" maxlength="30" placeholder="e.g. New Flavor"></div>
             <div class="form-group" style="margin-bottom:0;"><label>Badge style</label><select id="menu-badge-style" class="auth-input pro-input"><option value="">Cookie badge</option><option value="box-badge">Box badge</option></select></div>
             <label style="display:flex; align-items:center; gap:8px; padding-bottom:10px;"><input type="checkbox" id="menu-available" checked> Available to order</label>
+          </div>
+          <div class="form-group" style="margin-bottom:15px;">
+            <label>Tags (customers can sort the menu with them)</label>
+            <div id="menu-tags-box" class="tagpick">
+              <span id="menu-tags-chips"></span>
+              <input type="text" id="menu-tags-input" maxlength="20" placeholder="Type a tag, press Enter (e.g. chocolate)">
+            </div>
+            <div id="menu-tags-suggest" class="tagpick-suggest"></div>
+            <p class="news-hint" style="margin-top:6px;">Up to 8 tags per item. The menu page shows one filter button per tag you use.</p>
           </div>
           <div class="form-group" style="margin-bottom:15px;">
             <label>Photo</label>
@@ -1004,10 +1014,10 @@
     </div>
   </main>
 
-  <script src="assets/js/policy-render.js?v=20261112a"></script>
-  <script src="assets/js/main.js?v=20261112a"></script>
-  <script type="module" src="assets/js/auth.js?v=20261112a"></script>
-  <script src="assets/js/features.js?v=20261112a"></script>
+  <script src="assets/js/policy-render.js?v=20261123c"></script>
+  <script src="assets/js/main.js?v=20261123c"></script>
+  <script type="module" src="assets/js/auth.js?v=20261123c"></script>
+  <script src="assets/js/features.js?v=20261123c"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {

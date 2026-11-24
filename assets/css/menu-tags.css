@@ -1,0 +1,39 @@
+/* menu-tags.css - tag filter on the menu page (tags are set per item in the admin dashboard > Menu tab) */
+.tag-filter{position:relative;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:0 auto 38px;max-width:920px}
+.tag-filter[hidden],.tag-empty[hidden]{display:none}
+.tag-chip{
+  display:inline-flex;align-items:center;gap:9px;cursor:pointer;
+  font-family:var(--f-body,inherit);font-weight:700;font-size:.95rem;letter-spacing:.03em;text-transform:capitalize;line-height:1.2;
+  padding:9px 12px 9px 18px;border-radius:999px;
+  border:2px solid var(--pink-deep);background:var(--white);color:var(--brown);
+  transition:background .2s,color .2s,border-color .2s,transform .2s;
+}
+.tag-chip .n{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;font-size:.75rem;background:var(--pink);color:var(--brown)}
+.tag-chip:hover{transform:translateY(-2px);border-color:var(--caramel)}
+.tag-chip.active{background:var(--caramel);border-color:var(--caramel);color:#fff8f4;box-shadow:0 8px 18px rgba(0,0,0,.14)}
+.tag-chip.active .n{background:rgba(255,255,255,.26);color:#fff}
+.tag-chip:focus-visible,.card-tag:focus-visible{outline:3px solid var(--caramel);outline-offset:3px}
+html[dir="rtl"] .tag-chip{padding:9px 18px 9px 12px}
+
+/* little tag pills on every card (click one = filter by it) */
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 14px}
+.card-tag{
+  cursor:pointer;font-family:var(--f-body,inherit);font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:capitalize;
+  padding:3px 11px;border-radius:999px;border:1px solid var(--pink-deep);background:transparent;color:var(--brown-soft);
+  transition:background .2s,color .2s;
+}
+.card-tag:hover{background:var(--pink);color:var(--brown)}
+
+.tag-hide{display:none!important}
+.tag-empty{text-align:center;color:var(--brown-soft);padding:26px 0 40px;font-weight:600}
+
+@media (max-width:700px){
+  /* one swipeable row instead of a tall wrapped block */
+  .tag-filter{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;margin:0 -4px 28px;padding:4px 4px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tag-filter::-webkit-scrollbar{display:none}
+  .tag-chip{flex:0 0 auto;font-size:.9rem}
+}
+
+/* keep the Add to Box buttons aligned when cards have different amounts of text */
+.new-menu-card .card-info{flex:1}
+.new-menu-card .card-info .add-to-box-btn{margin-top:auto}

@@ -2108,7 +2108,8 @@ function initAdminDashboard(db) {
       return `<div class="admin-promo-item${m.available === false ? " disabled" : ""}" data-menu-row="${esc(id)}" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         ${img ? `<img src="${esc(img)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:10px;">` : ""}
         <div style="flex:1; min-width:160px;"><strong>${esc(m.name)}</strong> <span style="opacity:.75;">· ${esc(m.price)} DH · ${m.category === "boxes" ? "box" : "cookie"}${m.badge ? " · " + esc(m.badge) : ""}</span>
-          <div style="font-size:.85rem; opacity:.7;">${esc(m.desc || "")}</div></div>
+          <div style="font-size:.85rem; opacity:.7;">${esc(m.desc || "")}</div>
+          ${menuHasTags(m) ? `<div class="admin-tags">${m.tags.map((t) => `<span>${esc(t)}</span>`).join("")}</div>` : ""}</div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <button type="button" class="filter-btn" data-menu-act="up" data-id="${esc(id)}" ${i === 0 ? "disabled" : ""} aria-label="Move up">▲</button>
           <button type="button" class="filter-btn" data-menu-act="down" data-id="${esc(id)}" ${i === menuRows.length - 1 ? "disabled" : ""} aria-label="Move down">▼</button>
@@ -2132,6 +2133,43 @@ function initAdminDashboard(db) {
     }
     await menuReadLock();
     menuRender();
+    menuTagsRender();
+    menuTagsFillBtn();
+  };
+
+  // ---- tags: customers sort the menu with them ----
+  const TAG_SUGGEST = ["chocolate", "classic", "new", "caramel", "nutty", "fruity", "monthly special", "best seller", "limited", "box", "party"];
+  let menuTagList = [];
+  const menuNormTag = (v) => String(v || "").replace(/[,<>"&]/g, " ").replace(/\s+/g, " ").trim().toLowerCase().slice(0, 20);
+  const menuSuggestedFor = (id) => { const d = (window.YYMenuDefaults || []).find((x) => x.id === id); return d && Array.isArray(d.tags) ? d.tags : []; };
+  const menuHasTags = (m) => Array.isArray(m.tags) && m.tags.length > 0;
+
+  const menuTagsRender = () => {
+    const chips = menuEl("menu-tags-chips"), sug = menuEl("menu-tags-suggest");
+    if (!chips || !sug) return;
+    chips.innerHTML = menuTagList.map((t) => `<span class="tagpick-chip">${esc(t)}<button type="button" data-tag-del="${esc(t)}" aria-label="Remove ${esc(t)}">×</button></span>`).join("");
+    const used = [];
+    menuRows.forEach((r) => (Array.isArray(r.data.tags) ? r.data.tags : []).forEach((t) => { if (used.indexOf(t) < 0) used.push(t); }));
+    const all = TAG_SUGGEST.concat(used.filter((t) => TAG_SUGGEST.indexOf(t) < 0)).filter((t) => menuTagList.indexOf(t) < 0);
+    sug.innerHTML = all.length ? "Quick add: " + all.map((t) => `<button type="button" class="tagpick-sug" data-tag-add="${esc(t)}">+ ${esc(t)}</button>`).join("") : "";
+  };
+
+  const menuTagAdd = (raw) => {
+    const t = menuNormTag(raw);
+    if (!t) return false;
+    if (menuTagList.indexOf(t) >= 0) return true;
+    if (menuTagList.length >= 8) { menuSay("Up to 8 tags per item.", true); return false; }
+    menuTagList.push(t);
+    menuTagsRender();
+    return true;
+  };
+
+  const menuTagsFillBtn = () => {
+    const b = menuEl("menu-tags-fill");
+    if (!b) return;
+    const n = menuRows.filter((r) => !menuHasTags(r.data) && menuSuggestedFor(r.id).length).length;
+    b.style.display = n ? "" : "none";
+    b.textContent = "🏷 Add suggested tags to " + n + " item" + (n > 1 ? "s" : "") + " without tags";
   };
 
   const menuResetForm = () => {
@@ -2142,6 +2180,9 @@ function initAdminDashboard(db) {
     menuEl("menu-cancel").style.display = "none";
     const pv = menuEl("menu-img-preview"); pv.style.display = "none"; pv.removeAttribute("src");
     menuEl("menu-available").checked = true;
+    menuTagList = [];
+    const ti = menuEl("menu-tags-input"); if (ti) ti.value = "";
+    menuTagsRender();
   };
 
   const initMenuManager = () => {
@@ -2159,6 +2200,39 @@ function initAdminDashboard(db) {
         } catch (err) { menuSay("That photo could not be used: " + err.message, true); e.target.value = ""; }
       });
 
+      const tin = menuEl("menu-tags-input");
+      tin.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === ",") { e.preventDefault(); if (menuTagAdd(tin.value)) tin.value = ""; }
+        else if (e.key === "Backspace" && !tin.value && menuTagList.length) { menuTagList.pop(); menuTagsRender(); }
+      });
+      tin.addEventListener("blur", () => { if (tin.value.trim() && menuTagAdd(tin.value)) tin.value = ""; });
+      menuEl("menu-tags-box").addEventListener("click", (e) => {
+        const d = e.target.closest("[data-tag-del]");
+        if (d) { const t = d.getAttribute("data-tag-del"); menuTagList = menuTagList.filter((x) => x !== t); menuTagsRender(); }
+        else tin.focus();
+      });
+      menuEl("menu-tags-suggest").addEventListener("click", (e) => {
+        const a = e.target.closest("[data-tag-add]");
+        if (a) menuTagAdd(a.getAttribute("data-tag-add"));
+      });
+      menuEl("menu-tags-fill").addEventListener("click", async () => {
+        const todo = menuRows.filter((r) => !menuHasTags(r.data) && menuSuggestedFor(r.id).length);
+        if (!todo.length) return;
+        const ok = await askConfirm({ title: "Add suggested tags?", message: `${todo.length} item${todo.length > 1 ? "s" : ""} will get tags like chocolate, classic or new. You can change them any time with Edit.`, confirmText: "Add tags", cancelText: "Cancel" });
+        if (!ok) return;
+        const btn = menuEl("menu-tags-fill"); btn.disabled = true;
+        try {
+          const batch = writeBatch(db);
+          todo.forEach((r) => batch.update(doc(db, "menu_items", r.id), { tags: menuSuggestedFor(r.id), updatedAt: serverTimestamp() }));
+          await batch.commit();
+          menuSay("Tags added.");
+          await menuLoad();
+        } catch (err) {
+          console.error("Adding tags failed:", err);
+          menuSay("Could not add the tags. Publish the new firestore.rules (they now allow tags) and try again.", true);
+        } finally { btn.disabled = false; }
+      });
+
       menuEl("menu-cancel").addEventListener("click", menuResetForm);
 
       menuEl("menu-form").addEventListener("submit", async (e) => {
@@ -2166,6 +2240,8 @@ function initAdminDashboard(db) {
         const name = menuEl("menu-name").value.trim();
         const price = Number(menuEl("menu-price").value);
         if (!name || !(price > 0) || price > 1000) { menuSay("Enter a name and a price between 1 and 1000 DH.", true); return; }
+        const pendingTag = menuEl("menu-tags-input");
+        if (pendingTag.value.trim()) { menuTagAdd(pendingTag.value); pendingTag.value = ""; }
         const editId = menuEl("menu-edit-id").value;
         const existing = editId ? (menuRows.find((r) => r.id === editId) || {}).data : null;
         const pv = menuEl("menu-img-preview");
@@ -2181,6 +2257,7 @@ function initAdminDashboard(db) {
           descAr: menuEl("menu-desc-ar").value.trim().slice(0, 300),
           badgeStyle: menuEl("menu-badge-style").value === "box-badge" ? "box-badge" : "",
           available: menuEl("menu-available").checked,
+          tags: menuTagList.slice(0, 8),
           image: newImg || (existing && existing.image) || "",
           sortOrder: existing ? (Number(existing.sortOrder) || 0) : (menuRows.reduce((m, r) => Math.max(m, Number(r.data.sortOrder) || 0), 0) + 10),
           updatedAt: serverTimestamp()
@@ -2226,6 +2303,8 @@ function initAdminDashboard(db) {
             menuEl("menu-desc-ar").value = m.descAr || "";
             menuEl("menu-badge-style").value = m.badgeStyle === "box-badge" ? "box-badge" : "";
             menuEl("menu-available").checked = m.available !== false;
+            menuTagList = Array.isArray(m.tags) ? m.tags.slice(0, 8) : [];
+            menuTagsRender();
             const pv = menuEl("menu-img-preview");
             if (menuImgOk(m.image)) { pv.src = m.image; pv.style.display = ""; } else { pv.style.display = "none"; pv.removeAttribute("src"); }
             menuEl("menu-image-file").value = "";
@@ -2269,7 +2348,7 @@ function initAdminDashboard(db) {
           defaults.forEach((m) => {
             batch.set(doc(db, "menu_items", m.id), {
               name: m.name, price: m.price, category: m.category, desc: m.desc || "", image: m.image || "",
-              badge: m.badge || "", badgeStyle: m.badgeStyle || "", available: true, sortOrder: m.sortOrder || 0, updatedAt: serverTimestamp()
+              badge: m.badge || "", badgeStyle: m.badgeStyle || "", available: true, tags: Array.isArray(m.tags) ? m.tags : [], sortOrder: m.sortOrder || 0, updatedAt: serverTimestamp()
             });
           });
           await batch.commit();

@@ -153,7 +153,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     function validMenuItem(d) {
-      return d.keys().hasOnly(['name','price','category','desc','image','badge','badgeStyle','available','sortOrder','updatedAt','nameFr','nameAr','descFr','descAr'])
+      return d.keys().hasOnly(['name','price','category','desc','image','badge','badgeStyle','available','sortOrder','updatedAt','nameFr','nameAr','descFr','descAr','tags'])
         && d.keys().hasAll(['name','price','category','available'])
         && d.name is string && d.name.size() >= 1 && d.name.size() <= 60
         && d.price is number && d.price > 0 && d.price <= 1000
@@ -165,6 +165,7 @@ service cloud.firestore {
         && (!('nameAr' in d) || (d.nameAr is string && d.nameAr.size() <= 60))
         && (!('descFr' in d) || (d.descFr is string && d.descFr.size() <= 300))
         && (!('descAr' in d) || (d.descAr is string && d.descAr.size() <= 300))
+        && (!('tags' in d) || (d.tags is list && d.tags.size() <= 8 && d.tags.join(',').size() <= 170))
         && (!('badgeStyle' in d) || d.badgeStyle in ['', 'box-badge'])
         && (!('sortOrder' in d) || d.sortOrder is number)
         && (!('image' in d) || (d.image is string && d.image.size() <= 200000

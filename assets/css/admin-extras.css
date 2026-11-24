@@ -57,3 +57,17 @@
 .admin-warn-chip{display:inline-block;background:#fff3cd;color:#8a5a00;border:1px solid #f0d58a;font-weight:700;font-size:.78rem;border-radius:8px;padding:4px 10px;margin-inline-start:6px}
 .status-pill-badge.returned{background:#fdebd8;color:#b45309}
 .admin-order-card.is-returned{border-left:5px solid #f0883e}
+
+/* ---- menu tags (admin > Menu tab) ---- */
+.tagpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:46px;padding:7px 10px;border:1px solid var(--line,rgba(74,55,40,.22));border-radius:10px;background:var(--panel,#fff);cursor:text}
+.tagpick:focus-within{border-color:var(--accent,#c0716a);box-shadow:0 0 0 3px rgba(192,113,106,.18)}
+.tagpick #menu-tags-chips{display:contents}
+.tagpick input{flex:1;min-width:170px;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;padding:4px!important;margin:0!important;font:inherit;color:inherit}
+.tagpick-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 5px 4px 12px;border-radius:999px;background:var(--accent,#c0716a);color:#fff;font-weight:600;font-size:.85rem;text-transform:capitalize}
+.tagpick-chip button{border:0;background:rgba(255,255,255,.28);color:#fff;border-radius:50%;width:18px;height:18px;padding:0;line-height:18px;font-size:.9rem;cursor:pointer}
+.tagpick-chip button:hover{background:rgba(255,255,255,.5)}
+.tagpick-suggest{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;font-size:.82rem;opacity:.9}
+.tagpick-sug{border:1px dashed var(--line,rgba(74,55,40,.4));background:transparent;color:inherit;border-radius:999px;padding:3px 11px;font-size:.8rem;cursor:pointer;text-transform:capitalize}
+.tagpick-sug:hover{background:var(--accent,#c0716a);border-color:transparent;color:#fff}
+.admin-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.admin-tags span{font-size:.72rem;padding:2px 9px;border-radius:999px;background:rgba(192,113,106,.18);text-transform:capitalize}
