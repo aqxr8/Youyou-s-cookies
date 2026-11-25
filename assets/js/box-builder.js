@@ -12,7 +12,7 @@
       s5: 'Little Box', s9: 'Cozy Box', s12: 'Big Box', label: "Aya's box",
       chosen: '{n} / {N} chosen', more: 'Pick {n} more', full: 'Your box is full!', hint: 'Tap a cookie to put it in your box',
       surprise: 'Surprise me', again: 'Shuffle again', clear: 'Clear', add: 'Add box', close: 'Close', worth: 'Worth {w} DH - you pay {p} DH',
-      trimmed: 'Your box got smaller, so we took out the extra cookies.', boom: 'Surprise! Your box is ready', added: 'Your box is in the cart', remove: 'Remove', plus: 'Add', minus: 'Remove one', none: 'No cookies are available right now.'
+      trimmed: 'Your box got smaller, so we took out the extra cookies.', boom: 'Surprise! Your box is ready', added: 'Your box is in the cart', mixing: 'Picking for you...', remove: 'Remove', plus: 'Add', minus: 'Remove one', none: 'No cookies are available right now.'
     },
     fr: {
       bannerTitle: 'Compose ta box', bannerSub: 'Choisis 5, 9 ou 12 cookies pour ta box, ou laisse-nous te surprendre !', bannerBtn: 'Composer ma box', from: 'dès {p} DH',
@@ -20,7 +20,7 @@
       s5: 'Petite box', s9: 'Box cosy', s12: 'Grande box', label: 'La box d\'Aya',
       chosen: '{n} / {N} choisis', more: 'Encore {n} à choisir', full: 'Ta box est pleine !', hint: 'Touche un cookie pour le mettre dans ta box',
       surprise: 'Surprends-moi', again: 'Mélanger encore', clear: 'Vider', add: 'Ajouter la box', close: 'Fermer', worth: 'Valeur {w} DH - tu paies {p} DH',
-      trimmed: 'Ta box est plus petite, on a retiré les cookies en trop.', boom: 'Surprise ! Ta box est prête', added: 'Ta box est dans le panier', remove: 'Retirer', plus: 'Ajouter', minus: 'Retirer un', none: 'Aucun cookie disponible pour le moment.'
+      trimmed: 'Ta box est plus petite, on a retiré les cookies en trop.', boom: 'Surprise ! Ta box est prête', added: 'Ta box est dans le panier', mixing: 'On choisit pour toi...', remove: 'Retirer', plus: 'Ajouter', minus: 'Retirer un', none: 'Aucun cookie disponible pour le moment.'
     },
     ar: {
       bannerTitle: 'جهّزي علبتك بنفسك', bannerSub: 'اختاري 5 أو 9 أو 12 بسكويت لعلبتك، أو دعينا نفاجئك!', bannerBtn: 'جهّز علبتي', from: 'ابتداءً من {p} درهم',
@@ -28,7 +28,7 @@
       s5: 'علبة صغيرة', s9: 'علبة دافئة', s12: 'علبة كبيرة', label: 'علبة آية',
       chosen: 'تم اختيار {n} / {N}', more: 'اختر {n} أخرى', full: 'علبتك ممتلئة!', hint: 'اضغط على بسكويتة لوضعها في علبتك',
       surprise: 'فاجئني', again: 'اخلط من جديد', clear: 'تفريغ', add: 'أضف العلبة', close: 'إغلاق', worth: 'قيمتها {w} درهم - تدفع {p} درهم',
-      trimmed: 'أصبحت علبتك أصغر، لذلك أزلنا البسكويت الزائد.', boom: 'مفاجأة! علبتك جاهزة', added: 'علبتك في السلة', remove: 'إزالة', plus: 'أضف', minus: 'أزل واحدة', none: 'لا يوجد بسكويت متاح حالياً.'
+      trimmed: 'أصبحت علبتك أصغر، لذلك أزلنا البسكويت الزائد.', boom: 'مفاجأة! علبتك جاهزة', added: 'علبتك في السلة', mixing: 'جارٍ الاختيار...', remove: 'إزالة', plus: 'أضف', minus: 'أزل واحدة', none: 'لا يوجد بسكويت متاح حالياً.'
     }
   };
   var SAFE_IMG = /^(assets\/images\/[A-Za-z0-9._-]+|data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+)$/;
@@ -115,7 +115,7 @@
           '<div class="bb-worth" id="bb-worth"></div>' +
           '<div class="bb-actions">' +
             '<button type="button" class="bb-btn ghost" data-bb="clear" id="bb-clear"></button>' +
-            '<button type="button" class="bb-btn surprise" data-bb="surprise" id="bb-surprise"><span class="dice" aria-hidden="true">&#127922;</span><span id="bb-surprise-t"></span></button>' +
+            '<button type="button" class="bb-btn surprise" data-bb="surprise" id="bb-surprise"><span id="bb-surprise-t"></span></button>' +
             '<button type="button" class="bb-btn add" data-bb="add" id="bb-add"></button>' +
           '</div>' +
         '</footer>' +
@@ -213,7 +213,7 @@
         root.classList.remove('rolling');
         render();
         confetti();
-        toast(t('boom') + ' \u{1F389}');
+        toast(t('boom'));
         return;
       }
       var id = drawRandom();
@@ -228,13 +228,17 @@
   function confetti() {
     var host = document.getElementById('bb-confetti');
     if (!host) return;
-    var bits = ['\u{1F36A}', '\u2728', '\u{1F496}', '\u{1F380}', '\u{1F36B}'];
-    for (var i = 0; i < 18; i++) {
+    var colors = ['var(--caramel)', '#f3c6c6', '#e8c79b', '#ffffff', '#d9a96d'];
+    for (var i = 0; i < 22; i++) {
       var s = document.createElement('span');
-      s.textContent = bits[i % bits.length];
-      s.style.setProperty('--dx', (Math.random() * 280 - 140).toFixed(0) + 'px');
-      s.style.setProperty('--dy', (-60 - Math.random() * 170).toFixed(0) + 'px');
-      s.style.setProperty('--r', (Math.random() * 360 - 180).toFixed(0) + 'deg');
+      var w = 6 + Math.random() * 7;
+      s.style.setProperty('--w', w.toFixed(0) + 'px');
+      s.style.setProperty('--h', (i % 3 === 0 ? w : w * 1.9).toFixed(0) + 'px');
+      s.style.setProperty('--c', colors[i % colors.length]);
+      s.style.setProperty('--br', i % 3 === 0 ? '50%' : '2px');
+      s.style.setProperty('--dx', (Math.random() * 300 - 150).toFixed(0) + 'px');
+      s.style.setProperty('--dy', (-50 - Math.random() * 180).toFixed(0) + 'px');
+      s.style.setProperty('--r', (Math.random() * 540 - 270).toFixed(0) + 'deg');
       s.style.animationDelay = (Math.random() * 0.15).toFixed(2) + 's';
       host.appendChild(s);
     }
@@ -250,7 +254,7 @@
     state.seq = [];
     state.lastAdded = -1;
     close();
-    toast(t('added') + ' \u{1F381}');
+    toast(t('added'));
     setTimeout(function () { if (window.openBoxModal) window.openBoxModal(); }, 350);   // opens the cart panel
   }
 
@@ -318,7 +322,7 @@
     document.getElementById('bb-worth').textContent = (full && worth > b.price) ? t('worth', { w: worth, p: b.price }) : '';
 
     var sp = document.getElementById('bb-surprise-t');
-    sp.textContent = full ? t('again') : t('surprise');
+    sp.textContent = state.busy ? t('mixing') : (full ? t('again') : t('surprise'));
     document.getElementById('bb-clear').textContent = t('clear');
     document.getElementById('bb-clear').disabled = state.seq.length === 0 || state.busy;
     document.getElementById('bb-surprise').disabled = state.busy || !cookies().length;

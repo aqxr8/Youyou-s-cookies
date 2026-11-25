@@ -96,7 +96,7 @@ html.bb-lock{overflow:hidden}
 @keyframes bbPop{0%{transform:scale(.2) rotate(-25deg);opacity:0}60%{transform:scale(1.18) rotate(6deg);opacity:1}100%{transform:scale(1) rotate(0)}}
 .bb-count{margin:14px 4px 0;text-align:center;font-weight:700;color:var(--brown)}
 .bb-confetti{position:absolute;left:50%;top:50%;pointer-events:none}
-.bb-confetti span{position:absolute;font-size:1.5rem;opacity:0;animation:bbConf 1.1s ease-out forwards}
+.bb-confetti span{position:absolute;width:var(--w);height:var(--h);background:var(--c);border-radius:var(--br);opacity:0;animation:bbConf 1.1s ease-out forwards}
 @keyframes bbConf{0%{opacity:1;transform:translate(0,0) scale(.4) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.2) rotate(var(--r))}}
 
 /* cookie picker */
@@ -129,11 +129,11 @@ html.bb-lock{overflow:hidden}
 .bb-btn:hover:not(:disabled){transform:translateY(-2px)}
 .bb-btn:disabled{opacity:.42;cursor:not-allowed}
 .bb-btn.ghost{background:transparent;border-color:var(--pink-deep);color:var(--brown)}
-.bb-btn.surprise{background:linear-gradient(120deg,#ffd27a,#ff9fb8);color:#4a1f2a;box-shadow:0 8px 18px rgba(255,140,170,.4)}
+.bb-btn.surprise{background:var(--white);color:var(--caramel);border:2px dashed var(--caramel);letter-spacing:.02em;box-shadow:none;transition:background .2s,color .2s,transform .15s}
+.bb-btn.surprise:hover:not(:disabled){background:var(--caramel);color:#fff8f4;border-style:solid}
 .bb-btn.add{background:var(--caramel);color:#fff8f4;box-shadow:0 8px 18px rgba(0,0,0,.18)}
-.bb-btn .dice{display:inline-block;font-size:1.25rem}
-.bb-root.rolling .dice{animation:bbDice .5s linear infinite}
-@keyframes bbDice{to{transform:rotate(360deg)}}
+.bb-root.rolling .bb-btn.surprise{animation:bbPulse .9s ease-in-out infinite}
+@keyframes bbPulse{50%{background:var(--pink)}}
 .bb-btn:focus-visible,.bb-size:focus-visible,.bb-mini:focus-visible,.bb-x:focus-visible,.bb-slot:focus-visible{outline:3px solid var(--caramel);outline-offset:2px}
 
 .bb-toast{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));transform:translate(-50%,-20px);z-index:5300;max-width:calc(100vw - 32px);text-align:center;
@@ -162,6 +162,6 @@ html.bb-lock{overflow:hidden}
   .bb-tiles{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
 }
 @media (prefers-reduced-motion:reduce){
-  .bb-banner-art img,.bb-slot.pop,.bb-root.rolling .dice,.bb-confetti span{animation:none}
+  .bb-banner-art img,.bb-slot.pop,.bb-root.rolling .bb-btn.surprise,.bb-confetti span{animation:none}
   .bb-sheet,.bb-overlay{transition:none}
 }
