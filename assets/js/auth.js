@@ -1207,6 +1207,12 @@ function initAdminDashboard(db) {
     if (statOrders) statOrders.textContent = String(orderDocs.length);
     if (statPending) statPending.textContent = String(pending);
     if (statUsers) statUsers.textContent = String(userDocs.length);
+    // the Analytics tab draws its charts from these (admin-analytics.js)
+    try {
+      const snapshot = orderDocs.map((o) => ({ id: o.id, data: o.data, revenue: orderRevenue(o.data) }));
+      window.__yyOrders = snapshot;
+      window.dispatchEvent(new CustomEvent("yy:orders", { detail: snapshot }));
+    } catch (e) { /* charts are optional */ }
   };
 
   const activeOrderFilter = () => {
