@@ -315,7 +315,9 @@ window.saveOrderToFirestore = async function (orderData) {
       .slice(0, 50)
       .map((i) => ({
         id: String((i && i.id) || "").slice(0, 80),
-        name: String((i && i.name) || "Item").slice(0, 60),
+        name: (i && i.box && window.YYBoxLabel)
+          ? String(window.YYBoxLabel(i)).slice(0, 260)   // custom box: "Cozy Box: 3x Classic, 2x Oreo, ..." so the bakery knows what to pack
+          : String((i && i.name) || "Item").slice(0, 60),
         price: Math.max(0, Number(i && i.price) || 0),
         quantity: Math.min(99, Math.max(1, parseInt(i && i.quantity, 10) || 1))
       }));
@@ -2141,6 +2143,7 @@ function initAdminDashboard(db) {
     menuRender();
     menuTagsRender();
     menuTagsFillBtn();
+    menuBoxesBtn();
   };
 
   // ---- tags: customers sort the menu with them ----
@@ -2168,6 +2171,16 @@ function initAdminDashboard(db) {
     menuTagList.push(t);
     menuTagsRender();
     return true;
+  };
+
+  // ---- Build-a-Box sizes (build-box-5 / 9 / 12) are ordinary menu items, so the price lock covers them ----
+  const menuBoxesMissing = () => (window.YYMenuDefaults || []).filter((d) => /^build-box-\d+$/.test(d.id) && !menuRows.some((r) => r.id === d.id));
+  const menuBoxesBtn = () => {
+    const b = menuEl("menu-boxes-add");
+    if (!b) return;
+    const n = menuRows.length ? menuBoxesMissing().length : 0;   // an empty menu gets them with "Import current menu"
+    b.style.display = n ? "" : "none";
+    b.textContent = "🎁 Add the Build-a-Box sizes (5 / 9 / 12)";
   };
 
   const menuTagsFillBtn = () => {
@@ -2220,6 +2233,26 @@ function initAdminDashboard(db) {
       menuEl("menu-tags-suggest").addEventListener("click", (e) => {
         const a = e.target.closest("[data-tag-add]");
         if (a) menuTagAdd(a.getAttribute("data-tag-add"));
+      });
+      menuEl("menu-boxes-add").addEventListener("click", async () => {
+        const todo = menuBoxesMissing();
+        if (!todo.length) return;
+        const ok = await askConfirm({ title: "Add the Build-a-Box sizes?", message: `Adds ${todo.length} box sizes (${todo.map((d) => d.name + " " + d.price + " DH").join(", ")}). Customers fill them with the cookies they like on the menu page. You can change the prices any time in this tab.`, confirmText: "Add boxes", cancelText: "Cancel" });
+        if (!ok) return;
+        const btn = menuEl("menu-boxes-add"); btn.disabled = true;
+        try {
+          const batch = writeBatch(db);
+          todo.forEach((m) => batch.set(doc(db, "menu_items", m.id), {
+            name: m.name, price: m.price, category: m.category, desc: m.desc || "", image: m.image || "",
+            badge: "", badgeStyle: "", available: true, tags: [], sortOrder: m.sortOrder || 0, updatedAt: serverTimestamp()
+          }));
+          await batch.commit();
+          menuSay("Build-a-Box sizes added.");
+          await menuLoad();
+        } catch (err) {
+          console.error("Adding the boxes failed:", err);
+          menuSay("Could not add the boxes. Check your connection and try again.", true);
+        } finally { btn.disabled = false; }
       });
       menuEl("menu-tags-fill").addEventListener("click", async () => {
         const todo = menuRows.filter((r) => !menuHasTags(r.data) && menuSuggestedFor(r.id).length);
