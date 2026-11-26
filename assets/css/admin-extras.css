@@ -208,3 +208,29 @@
 .mf-switch input:disabled{cursor:wait}
 .mf-msg{min-height:1.2em;margin:12px 0 0;font-size:.86rem;font-weight:600}
 @media (max-width:760px){.mf-list{grid-template-columns:1fr}}
+
+/* ---- Box options manager (admin > Menu) ---- */
+.bo-list{display:flex;flex-direction:column;gap:12px}
+.bo-row{display:grid;grid-template-columns:minmax(150px,1.3fr) 110px minmax(170px,1.2fr) minmax(130px,1fr) auto auto;align-items:end;gap:12px 14px;padding:14px;border:1px solid var(--line,#ecd3cd);border-radius:12px;transition:border-color .15s,background .15s}
+.bo-row.changed{border-color:var(--accent,#b85f58);background:rgba(184,95,88,.06)}
+.bo-row.deleted{opacity:.6;background:rgba(179,38,30,.06);border-color:#b3261e}
+.bo-row.deleted input,.bo-row.deleted select{pointer-events:none}
+.bo-f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.bo-f>span:first-child{font-size:.72rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#8a6a63)}
+.bo-row input[type=text],.bo-row input[type=number],.bo-row select{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--line,#ecd3cd);border-radius:10px;font:inherit;background:var(--bg,#fff);color:inherit}
+.bo-row input:focus,.bo-row select:focus{outline:2px solid var(--accent,#b85f58);outline-offset:1px}
+.bo-unit{display:flex;align-items:center;gap:8px}
+.bo-unit input{flex:1;min-width:0}
+.bo-unit b{color:var(--muted,#8a6a63)}
+.bo-avail{display:flex;align-items:center;gap:7px;font-size:.88rem;cursor:pointer;white-space:nowrap;padding-bottom:9px}
+.bo-del{border:1px solid #b3261e;background:transparent;color:#b3261e;border-radius:10px;padding:8px 14px;font:inherit;font-weight:700;font-size:.84rem;cursor:pointer;margin-bottom:1px}
+.bo-del:hover{background:#b3261e;color:#fff}
+.bo-hint{grid-column:1/-1;margin:0;font-size:.82rem;color:var(--muted,#8a6a63);min-height:1.1em}
+.bo-empty{margin:6px 0 0}
+.bo-empty[hidden]{display:none}
+.bo-add:disabled{opacity:.45;cursor:not-allowed}
+@media (max-width:900px){
+  .bo-row{grid-template-columns:1fr 1fr}
+  .bo-name,.bo-mode{grid-column:1/-1}
+  .bo-avail{padding-bottom:0}
+}

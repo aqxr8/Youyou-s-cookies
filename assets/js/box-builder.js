@@ -12,6 +12,7 @@
       s5: 'Little Box', s9: 'Cozy Box', s12: 'Big Box', label: "Aya's box",
       chosen: '{n} / {N} chosen', more: 'Pick {n} more', full: 'Your box is full!', hint: 'Tap a cookie to put it in your box',
       surprise: 'Surprise me', again: 'Shuffle again', clear: 'Clear', add: 'Add box', close: 'Close', worth: 'Worth {w} DH - you pay {p} DH',
+      save: 'Save {p}%', same: 'Item prices', over: 'Items +{p}%', youSave: 'You save {s} DH', sofar: 'So far: {p} DH',
       trimmed: 'Your box got smaller, so we took out the extra cookies.', boom: 'Surprise! Your box is ready', added: 'Your box is in the cart', mixing: 'Picking for you...', remove: 'Remove', plus: 'Add', minus: 'Remove one', none: 'No cookies are available right now.'
     },
     fr: {
@@ -20,6 +21,7 @@
       s5: 'Petite box', s9: 'Box cosy', s12: 'Grande box', label: 'La box d\'Aya',
       chosen: '{n} / {N} choisis', more: 'Encore {n} à choisir', full: 'Ta box est pleine !', hint: 'Touche un cookie pour le mettre dans ta box',
       surprise: 'Surprends-moi', again: 'Mélanger encore', clear: 'Vider', add: 'Ajouter la box', close: 'Fermer', worth: 'Valeur {w} DH - tu paies {p} DH',
+      save: 'Économise {p}%', same: 'Prix des cookies', over: 'Cookies +{p}%', youSave: 'Tu économises {s} DH', sofar: 'Jusqu\'ici : {p} DH',
       trimmed: 'Ta box est plus petite, on a retiré les cookies en trop.', boom: 'Surprise ! Ta box est prête', added: 'Ta box est dans le panier', mixing: 'On choisit pour toi...', remove: 'Retirer', plus: 'Ajouter', minus: 'Retirer un', none: 'Aucun cookie disponible pour le moment.'
     },
     ar: {
@@ -28,6 +30,7 @@
       s5: 'علبة صغيرة', s9: 'علبة دافئة', s12: 'علبة كبيرة', label: 'علبة آية',
       chosen: 'تم اختيار {n} / {N}', more: 'اختر {n} أخرى', full: 'علبتك ممتلئة!', hint: 'اضغط على بسكويتة لوضعها في علبتك',
       surprise: 'فاجئني', again: 'اخلط من جديد', clear: 'تفريغ', add: 'أضف العلبة', close: 'إغلاق', worth: 'قيمتها {w} درهم - تدفع {p} درهم',
+      save: 'وفّر {p}%', same: 'سعر البسكويت', over: 'البسكويت +{p}%', youSave: 'توفّر {s} درهم', sofar: 'حتى الآن: {p} درهم',
       trimmed: 'أصبحت علبتك أصغر، لذلك أزلنا البسكويت الزائد.', boom: 'مفاجأة! علبتك جاهزة', added: 'علبتك في السلة', mixing: 'جارٍ الاختيار...', remove: 'إزالة', plus: 'أضف', minus: 'أزل واحدة', none: 'لا يوجد بسكويت متاح حالياً.'
     }
   };
@@ -48,9 +51,28 @@
   function menu() { return window.YYMenu || { items: [], byId: {} }; }
   function sizes() {
     var size = window.YYBuildBoxSize || function () { return 0; };
-    return menu().items.filter(function (i) { return size(i.id) && i.available !== false; })
-      .map(function (i) { return { id: i.id, n: size(i.id), price: i.price, item: i }; })
+    var usable = window.YYBoxUsable || function () { return true; };
+    return menu().items.filter(function (i) { return size(i.id) && i.available !== false && usable(i); })
+      .map(function (i) {
+        var pct = i.pricing === 'percent' ? i.percent : 0;
+        return { id: i.id, n: size(i.id), pct: pct, price: pct ? i.minPrice : i.price, item: i };
+      })
       .sort(function (a, b) { return a.n - b.n; });
+  }
+  // "Cozy Box - 9 cookies" -> "Cozy Box" (the count is shown separately)
+  function shortName(it) {
+    var nm = locName(it);
+    return nm.replace(/\s*[-\u2013]\s*\d+\s*\S*$/, '') || nm;
+  }
+  function gridCols(n) { return n <= 9 ? 3 : (n <= 16 ? 4 : 5); }
+  function picksArr() {
+    var map = {};
+    state.seq.forEach(function (id) { map[id] = (map[id] || 0) + 1; });
+    return Object.keys(map).map(function (id) { return { id: id, qty: map[id] }; });
+  }
+  function offerLabel(x) {
+    if (!x.pct) return x.price + ' DH';
+    return x.pct < 100 ? t('save', { p: Math.round((100 - x.pct) * 10) / 10 }) : (x.pct === 100 ? t('same') : t('over', { p: Math.round((x.pct - 100) * 10) / 10 }));
   }
   function cookies() { return menu().items.filter(function (i) { return i.category === 'cookies' && i.available !== false; }); }
   function locName(it) {
@@ -288,9 +310,9 @@
       var dots = '';
       for (var d = 0; d < x.n; d++) dots += '<i></i>';
       return '<button type="button" class="bb-size' + (i === state.idx ? ' on' : '') + '" data-bb="size" data-i="' + i + '" aria-pressed="' + (i === state.idx) + '">' +
-        '<span class="bb-dots c' + x.n + '" aria-hidden="true">' + dots + '</span>' +
-        '<b>' + esc(t('s' + x.n) !== 's' + x.n ? t('s' + x.n) : x.item.name) + '</b>' +
-        '<small>' + esc(t('cookies', { n: x.n })) + '</small><em>' + x.price + ' DH</em></button>';
+        '<span class="bb-dots" style="grid-template-columns:repeat(' + gridCols(x.n) + ',8px)" aria-hidden="true">' + dots + '</span>' +
+        '<b>' + esc(shortName(x.item)) + '</b>' +
+        '<small>' + esc(t('cookies', { n: x.n })) + '</small><em>' + esc(offerLabel(x)) + '</em></button>';
     }).join('');
 
     var slots = '';
@@ -302,7 +324,7 @@
     }
     var tray = document.getElementById('bb-tray');
     tray.className = 'bb-tray n' + b.n;
-    tray.innerHTML = '<div class="bb-ribbon">' + esc(t('label')) + '</div><div class="bb-slots">' + slots + '</div>';
+    tray.innerHTML = '<div class="bb-ribbon">' + esc(t('label')) + '</div><div class="bb-slots" style="--cols:' + gridCols(b.n) + '">' + slots + '</div>';
 
     var left = b.n - state.seq.length;
     document.getElementById('bb-count').textContent = state.seq.length === 0 ? t('hint') : (t('chosen', { n: state.seq.length, N: b.n }) + ' - ' + (full ? t('full') : t('more', { n: left })));
@@ -319,7 +341,14 @@
 
     var worth = 0;
     state.seq.forEach(function (id) { var it = menu().byId[id]; if (it) worth += it.price; });
-    document.getElementById('bb-worth').textContent = (full && worth > b.price) ? t('worth', { w: worth, p: b.price }) : '';
+    var cur = window.YYBoxPrice ? window.YYBoxPrice(b.item, picksArr()) : b.price;
+    var note = '';
+    if (b.pct) {
+      if (state.seq.length) note = t('sofar', { p: cur }) + (worth > cur ? ' - ' + t('youSave', { s: worth - cur }) : '');
+    } else if (full && worth > b.price) {
+      note = t('worth', { w: worth, p: b.price });
+    }
+    document.getElementById('bb-worth').textContent = note;
 
     var sp = document.getElementById('bb-surprise-t');
     sp.textContent = state.busy ? t('mixing') : (full ? t('again') : t('surprise'));
@@ -328,7 +357,7 @@
     document.getElementById('bb-surprise').disabled = state.busy || !cookies().length;
     var add = document.getElementById('bb-add');
     add.disabled = !full || state.busy;
-    add.textContent = full ? t('add') + ' - ' + b.price + ' DH' : t('more', { n: left });
+    add.textContent = full ? t('add') + ' - ' + cur + ' DH' : t('more', { n: left });
     root.setAttribute('dir', lang() === 'ar' ? 'rtl' : 'ltr');
   }
 

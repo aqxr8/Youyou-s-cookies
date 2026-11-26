@@ -2111,7 +2111,8 @@ function initAdminDashboard(db) {
     const imp = menuEl("menu-import");
     if (imp) imp.style.display = menuRows.length ? "none" : "";
     if (!menuRows.length) { box.innerHTML = '<p class="news-hint">The menu in the database is empty. Press <b>Import current menu</b> to copy the 13 items your website has today (then edit them freely).</p>'; return; }
-    box.innerHTML = menuRows.map(({ id, data: m }, i) => {
+    const visible = menuRows.filter((r) => !isBoxId(r.id));
+    box.innerHTML = visible.map(({ id, data: m }, i) => {
       const img = menuImgOk(m.image) ? m.image : "";
       return `<div class="admin-promo-item${m.available === false ? " disabled" : ""}" data-menu-row="${esc(id)}" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         ${img ? `<img src="${esc(img)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:10px;">` : ""}
@@ -2120,7 +2121,7 @@ function initAdminDashboard(db) {
           ${menuHasTags(m) ? `<div class="admin-tags">${m.tags.map((t) => `<span>${esc(t)}</span>`).join("")}</div>` : ""}</div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <button type="button" class="filter-btn" data-menu-act="up" data-id="${esc(id)}" ${i === 0 ? "disabled" : ""} aria-label="Move up">▲</button>
-          <button type="button" class="filter-btn" data-menu-act="down" data-id="${esc(id)}" ${i === menuRows.length - 1 ? "disabled" : ""} aria-label="Move down">▼</button>
+          <button type="button" class="filter-btn" data-menu-act="down" data-id="${esc(id)}" ${i === visible.length - 1 ? "disabled" : ""} aria-label="Move down">▼</button>
           <button type="button" class="filter-btn" data-menu-act="toggle" data-id="${esc(id)}">${m.available === false ? "Mark available" : "Mark sold out"}</button>
           <button type="button" class="filter-btn" data-menu-act="edit" data-id="${esc(id)}">Edit</button>
           <button type="button" class="filter-btn" data-menu-act="delete" data-id="${esc(id)}" style="color:#b3261e;">Remove</button>
@@ -2144,6 +2145,7 @@ function initAdminDashboard(db) {
     menuTagsRender();
     menuTagsFillBtn();
     menuBoxesBtn();
+    await boxSyncBounds();
     boxPanel();
     featPanel();
   };
@@ -2245,80 +2247,213 @@ function initAdminDashboard(db) {
     } finally { inp.disabled = false; }
   };
 
-  // ---- Build-a-Box prices: one small panel to change the three box prices. Saved in /menu_items (only the admin can write there) ----
-  const BOX_NAMES = { 5: "Little Box", 9: "Cozy Box", 12: "Big Box" };
-  const boxNum = (id) => parseInt(String(id).slice(10), 10) || 0;
-  const boxRows = () => menuRows.filter((r) => /^build-box-\d+$/.test(r.id)).sort((a, b) => boxNum(a.id) - boxNum(b.id));
+  // ---- Box options: how many boxes, how many cookies in each, and how each one is priced ----
+  // Each option is a menu item "build-box-..." (category boxes) with: boxSize, pricing ("fixed" | "percent"),
+  // and for percent boxes: percent + minPrice/maxPrice (the price range the database accepts at checkout).
+  const isBoxId = (id) => /^build-box-/.test(String(id));
+  const boxSizeOf = (r) => Number(r.data.boxSize) || parseInt(String(r.id).slice(10), 10) || 0;
+  const boxShort = (name) => String(name || "").replace(/\s*[-–]\s*\d+\s*\S*$/, "") || String(name || "");
+  const boxDbRows = () => menuRows.filter((r) => isBoxId(r.id)).sort((x, y) => boxSizeOf(x) - boxSizeOf(y));
+  const cookiePrices = () => menuRows.filter((r) => r.data.category === "cookies" && r.data.available !== false).map((r) => Number(r.data.price)).filter((v) => v > 0);
+  // the lowest / highest / typical price a percent box can have, from the cheapest / dearest / average cookie
+  const boxBounds = (n, pct) => {
+    const cp = cookiePrices();
+    if (!cp.length || !(n > 0) || !(pct > 0)) return null;
+    const lo = Math.min(...cp), hi = Math.max(...cp), avg = cp.reduce((x, y) => x + y, 0) / cp.length;
+    return { min: Math.max(1, Math.floor(n * lo * pct / 100)), max: Math.max(1, Math.ceil(n * hi * pct / 100)), typical: Math.min(1000, Math.max(1, Math.round(n * avg * pct / 100))) };
+  };
+  const boxState = (r) => ({
+    name: boxShort(r.data.name), n: boxSizeOf(r), mode: r.data.pricing === "percent" ? "percent" : "fixed",
+    val: r.data.pricing === "percent" ? Number(r.data.percent) : Number(r.data.price), avail: r.data.available !== false
+  });
+
+  const boxRowHtml = (id, st, isNew) => `
+    <div class="bo-row${isNew ? " changed" : ""}" data-id="${esc(id)}" data-new="${isNew ? 1 : 0}" data-orig="${esc(JSON.stringify(st))}">
+      <label class="bo-f bo-name"><span>Box name</span><input type="text" class="bo-in-name" maxlength="30" value="${esc(st.name)}" placeholder="e.g. Cozy Box"></label>
+      <label class="bo-f bo-n"><span>Cookies in it</span><input type="number" class="bo-in-n" min="2" max="30" step="1" value="${esc(st.n)}"></label>
+      <label class="bo-f bo-mode"><span>Price type</span>
+        <select class="bo-in-mode"><option value="fixed"${st.mode === "fixed" ? " selected" : ""}>Fixed price (DH)</option><option value="percent"${st.mode === "percent" ? " selected" : ""}>% of the cookies' price</option></select></label>
+      <label class="bo-f bo-val"><span class="bo-val-l">${st.mode === "percent" ? "Percent" : "Price"}</span>
+        <span class="bo-unit"><input type="number" class="bo-in-val" min="${st.mode === "percent" ? 10 : 1}" max="${st.mode === "percent" ? 200 : 1000}" step="0.5" value="${esc(st.val)}"><b class="bo-u">${st.mode === "percent" ? "%" : "DH"}</b></span></label>
+      <label class="bo-avail"><input type="checkbox" class="bo-in-avail" ${st.avail ? "checked" : ""}> On sale</label>
+      <button type="button" class="bo-del">Remove</button>
+      <p class="bo-hint"></p>
+    </div>`;
 
   const boxPanel = () => {
     const host = menuEl("box-prices");
     if (!host) return;
-    const rows = boxRows();
-    if (!rows.length) { host.hidden = true; host.innerHTML = ""; return; }
+    if (!menuRows.length) { host.hidden = true; host.innerHTML = ""; return; }
     host.hidden = false;
+    const rows = boxDbRows();
     host.innerHTML = `
-      <div class="bp-head"><h4>Build-a-Box prices</h4>
-        <span class="bp-lock ${menuLocked ? "on" : "off"}">${menuLocked ? "🔒 Locked: checkout refuses any other price" : "🔓 Price lock is OFF: turn it on in the bar above"}</span></div>
-      <p class="news-hint" style="margin:0 0 12px;">One fixed price per box, whatever cookies the customer picks. The prices live in the database and only your admin account can change them.</p>
-      <div class="bp-rows">${rows.map((r) => {
-        const n = boxNum(r.id), on = r.data.available !== false;
-        return `<div class="bp-row" data-id="${esc(r.id)}">
-          <div class="bp-name"><b>${esc(BOX_NAMES[n] || r.data.name)}</b><small>${n} cookies</small></div>
-          <label class="bp-price"><input type="number" min="1" max="1000" step="0.5" value="${esc(r.data.price)}" data-orig="${esc(r.data.price)}" aria-label="Price of the ${n}-cookie box in DH"><span>DH</span></label>
-          <span class="bp-per"></span>
-          <label class="bp-avail"><input type="checkbox" ${on ? "checked" : ""} data-orig="${on}"> On sale</label>
-        </div>`;
-      }).join("")}</div>
-      <div class="bp-foot"><button type="button" class="filter-btn bp-save" disabled>Save box prices</button><span class="bp-msg" role="status"></span></div>`;
+      <div class="bp-head"><h4>Box options</h4>
+        <span class="bp-lock ${menuLocked ? "on" : "off"}">${menuLocked ? "🔒 Locked: checkout refuses a price outside what you set" : "🔓 Price lock is OFF: turn it on in the bar above"}</span></div>
+      <p class="news-hint" style="margin:0 0 12px;">The "Build your own box" options customers can choose. Set how many cookies each box holds and how it is priced: a <b>fixed price</b>, or a <b>percentage of the picked cookies' prices</b> (90% = 10% off, 100% = same as buying them one by one).</p>
+      <div class="bo-list">${rows.map((r) => boxRowHtml(r.id, boxState(r), false)).join("")}</div>
+      <p class="bo-empty news-hint"${rows.length ? " hidden" : ""}>No box options yet. Add the first one below.</p>
+      <div class="bp-foot">
+        <button type="button" class="filter-btn bo-add">+ Add a box option</button>
+        <button type="button" class="filter-btn bp-save bo-save" disabled>Save box options</button>
+        <span class="bp-msg" role="status"></span>
+      </div>
+      <p class="news-hint bo-note" style="margin:12px 0 0;"><b>Good to know:</b> a fixed price is checked exactly at checkout. A percentage price depends on the cookies picked, so the database can only check it stays inside the lowest-to-highest range for that box. Use a fixed price when you need the strictest protection.</p>`;
     boxDirty();
   };
+
+  const boxRowRead = (row) => ({
+    name: row.querySelector(".bo-in-name").value.trim(),
+    n: Math.round(Number(row.querySelector(".bo-in-n").value)),
+    mode: row.querySelector(".bo-in-mode").value,
+    val: Number(row.querySelector(".bo-in-val").value),
+    avail: row.querySelector(".bo-in-avail").checked
+  });
 
   const boxDirty = () => {
     const host = menuEl("box-prices");
     if (!host) return;
     let dirty = false;
-    host.querySelectorAll(".bp-row").forEach((row) => {
-      const p = row.querySelector("input[type=number]"), a = row.querySelector("input[type=checkbox]");
-      const v = Number(p.value);
-      row.querySelector(".bp-per").textContent = v > 0 ? "≈ " + (Math.round(v / boxNum(row.dataset.id) * 10) / 10) + " DH per cookie" : "";
-      const changed = v !== Number(p.dataset.orig) || String(a.checked) !== a.dataset.orig;
+    host.querySelectorAll(".bo-row").forEach((row) => {
+      const st = boxRowRead(row), orig = JSON.parse(row.dataset.orig || "{}");
+      const deleted = row.dataset.deleted === "1";
+      const changed = deleted || row.dataset.new === "1" || JSON.stringify(st) !== JSON.stringify(orig);
       row.classList.toggle("changed", changed);
+      row.classList.toggle("deleted", deleted);
+      row.querySelector(".bo-del").textContent = deleted ? "Undo" : "Remove";
       if (changed) dirty = true;
+      const hint = row.querySelector(".bo-hint");
+      if (deleted) { hint.textContent = "This box option will be removed when you save."; return; }
+      if (st.mode === "fixed") {
+        hint.textContent = st.val > 0 && st.n > 0 ? "≈ " + (Math.round(st.val / st.n * 10) / 10) + " DH per cookie" : "";
+      } else {
+        const b = boxBounds(st.n, st.val);
+        if (!b) { hint.textContent = cookiePrices().length ? "" : "Add some cookies to the menu first."; return; }
+        const rel = st.val < 100 ? "customers save " + (Math.round((100 - st.val) * 10) / 10) + "%" : (st.val === 100 ? "same as buying the cookies one by one" : "+" + (Math.round((st.val - 100) * 10) / 10) + "% on top of the cookies");
+        hint.textContent = "Average box ≈ " + b.typical + " DH (from " + b.min + " to " + b.max + " DH depending on the cookies) - " + rel + ".";
+      }
     });
-    const save = host.querySelector(".bp-save");
+    const save = host.querySelector(".bo-save");
     if (save) save.disabled = !dirty;
+    const add = host.querySelector(".bo-add");
+    if (add) add.disabled = host.querySelectorAll(".bo-row:not(.deleted)").length >= 8;
+    const empty = host.querySelector(".bo-empty");
+    if (empty) empty.hidden = host.querySelectorAll(".bo-row").length > 0;
     const m = host.querySelector(".bp-msg");
     if (m && dirty) m.textContent = "";
   };
 
+  const boxModeChanged = (row) => {
+    const st = boxRowRead(row);
+    const percent = st.mode === "percent";
+    row.querySelector(".bo-val-l").textContent = percent ? "Percent" : "Price";
+    row.querySelector(".bo-u").textContent = percent ? "%" : "DH";
+    const inp = row.querySelector(".bo-in-val");
+    inp.min = percent ? 10 : 1; inp.max = percent ? 200 : 1000;
+    // start from a sensible value instead of reusing the number of the other mode
+    if (percent) inp.value = 90;
+    else { const b = boxBounds(st.n, 90); inp.value = b ? b.typical : 50; }
+  };
+
+  const boxAddRow = () => {
+    const host = menuEl("box-prices");
+    const used = new Set([...host.querySelectorAll(".bo-row:not(.deleted) .bo-in-n")].map((i) => Math.round(Number(i.value))));
+    let n = 6; while (used.has(n) && n < 30) n++;
+    const b = boxBounds(n, 90);
+    const id = "build-box-" + Math.random().toString(36).slice(2, 8);
+    host.querySelector(".bo-list").insertAdjacentHTML("beforeend", boxRowHtml(id, { name: "New Box", n, mode: "fixed", val: b ? b.typical : 50, avail: true }, true));
+    boxDirty();
+    const last = host.querySelector(".bo-row:last-child .bo-in-name");
+    if (last) { last.focus(); last.select(); }
+  };
+
+  const boxToggleDelete = (row) => {
+    if (row.dataset.new === "1") { row.remove(); boxDirty(); return; }
+    row.dataset.deleted = row.dataset.deleted === "1" ? "0" : "1";
+    boxDirty();
+  };
+
   const boxSave = async () => {
     const host = menuEl("box-prices");
-    const msg = host.querySelector(".bp-msg"), save = host.querySelector(".bp-save");
+    const msg = host.querySelector(".bp-msg"), save = host.querySelector(".bo-save");
     const say = (t, bad) => { msg.textContent = t; msg.style.color = bad ? "#b3261e" : "#2e7d32"; };
-    const changes = [];
-    for (const row of host.querySelectorAll(".bp-row.changed")) {
-      const p = row.querySelector("input[type=number]"), a = row.querySelector("input[type=checkbox]");
-      const price = Number(p.value);
-      if (!Number.isFinite(price) || price < 1 || price > 1000 || Math.round(price * 2) !== price * 2) { say("Prices must be between 1 and 1000 DH, in steps of 0.5.", true); p.focus(); return; }
-      changes.push({ id: row.dataset.id, n: boxNum(row.dataset.id), price, oldPrice: Number(p.dataset.orig), avail: a.checked, oldAvail: a.dataset.orig === "true" });
+    const all = [...host.querySelectorAll(".bo-row")];
+    const active = all.filter((r) => r.dataset.deleted !== "1");
+    const sizes = new Set();
+    const writes = [];
+    for (const row of active) {
+      const st = boxRowRead(row);
+      if (!st.name || st.name.length > 30) { say("Every box needs a name (30 characters max).", true); row.querySelector(".bo-in-name").focus(); return; }
+      if (!(st.n >= 2 && st.n <= 30)) { say("A box holds between 2 and 30 cookies.", true); row.querySelector(".bo-in-n").focus(); return; }
+      if (sizes.has(st.n)) { say("Two boxes cannot hold the same number of cookies (" + st.n + ").", true); row.querySelector(".bo-in-n").focus(); return; }
+      sizes.add(st.n);
+      if (st.mode === "fixed") {
+        if (!(st.val >= 1 && st.val <= 1000) || Math.round(st.val * 2) !== st.val * 2) { say("A fixed price is between 1 and 1000 DH, in steps of 0.5.", true); row.querySelector(".bo-in-val").focus(); return; }
+      } else {
+        if (!(st.val >= 10 && st.val <= 200) || Math.round(st.val * 2) !== st.val * 2) { say("A percentage is between 10 and 200, in steps of 0.5.", true); row.querySelector(".bo-in-val").focus(); return; }
+        if (!boxBounds(st.n, st.val)) { say("Add some cookies to the menu first: a percentage price is calculated from them.", true); return; }
+      }
+      const changed = row.dataset.new === "1" || row.classList.contains("changed");
+      if (changed) writes.push({ id: row.dataset.id, st, isNew: row.dataset.new === "1" });
     }
-    if (!changes.length) return;
-    const lines = changes.map((c) => `${BOX_NAMES[c.n] || c.id}: ${c.oldPrice !== c.price ? c.oldPrice + " → " + c.price + " DH" : ""}${c.avail !== c.oldAvail ? (c.oldPrice !== c.price ? ", " : "") + (c.avail ? "back on sale" : "hidden from customers") : ""}`).join(" · ");
-    const ok = await askConfirm({ title: "Save the box prices?", message: lines + ". Customers see the new prices right away.", confirmText: "Save", cancelText: "Cancel" });
+    const removals = all.filter((r) => r.dataset.deleted === "1" && r.dataset.new !== "1").map((r) => r.dataset.id);
+    if (!writes.length && !removals.length) return;
+    const lines = [];
+    writes.forEach((w) => lines.push(`${w.st.name} (${w.st.n}): ${w.st.mode === "percent" ? w.st.val + "% of the cookies" : w.st.val + " DH"}${w.isNew ? " - new" : ""}${w.st.avail ? "" : " - hidden"}`));
+    if (removals.length) lines.push(removals.length + " box option" + (removals.length > 1 ? "s" : "") + " removed");
+    const ok = await askConfirm({ title: "Save the box options?", message: lines.join(" · ") + ". Customers see this right away.", confirmText: "Save", cancelText: "Cancel" });
     if (!ok) return;
     save.disabled = true;
     try {
       const batch = writeBatch(db);
-      changes.forEach((c) => batch.update(doc(db, "menu_items", c.id), { price: c.price, available: c.avail, updatedAt: serverTimestamp() }));
+      writes.forEach((w, idx) => {
+        const existing = w.isNew ? {} : ((menuRows.find((r) => r.id === w.id) || {}).data || {});
+        const name = `${w.st.name} - ${w.st.n} cookies`;
+        const same = name === existing.name && w.st.n === Number(existing.boxSize || 0);
+        const d = { ...existing };
+        ["minPrice", "maxPrice", "percent"].forEach((k) => delete d[k]);
+        if (!same) ["nameFr", "nameAr", "descFr", "descAr"].forEach((k) => delete d[k]);   // old translations would show the wrong name/count
+        Object.assign(d, {
+          name, category: "boxes", available: w.st.avail, badge: "", badgeStyle: "", tags: [],
+          desc: (same && existing.desc) ? existing.desc : `Pick any ${w.st.n} cookies and we pack them in a cute gift box.`,
+          image: existing.image || "assets/images/mini-box.webp", sortOrder: 100 + idx,
+          boxSize: w.st.n, pricing: w.st.mode, updatedAt: serverTimestamp()
+        });
+        if (w.st.mode === "percent") {
+          const b = boxBounds(w.st.n, w.st.val);
+          Object.assign(d, { percent: w.st.val, minPrice: b.min, maxPrice: b.max, price: b.typical });
+        } else {
+          d.price = w.st.val;
+        }
+        batch.set(doc(db, "menu_items", w.id), d);
+      });
+      removals.forEach((id) => batch.delete(doc(db, "menu_items", id)));
       await batch.commit();
       await menuLoad();
       const m2 = menuEl("box-prices").querySelector(".bp-msg");
-      if (m2) { m2.textContent = "Saved. The new prices are live."; m2.style.color = "#2e7d32"; }
+      if (m2) { m2.textContent = "Saved. The new box options are live."; m2.style.color = "#2e7d32"; }
     } catch (err) {
-      console.error("Saving box prices failed:", err);
-      say("Could not save. Only the admin account can change prices (check you are signed in and the firestore.rules are published).", true);
+      console.error("Saving the box options failed:", err);
+      say("Could not save. Only the admin account can change the menu (check you are signed in and the firestore.rules are published).", true);
       save.disabled = false;
     }
+  };
+
+  // percent boxes depend on the cookie prices: refresh their stored price range whenever the menu is loaded
+  const boxSyncBounds = async () => {
+    try {
+      const batch = writeBatch(db);
+      let n = 0;
+      menuRows.forEach((r) => {
+        if (!isBoxId(r.id) || r.data.pricing !== "percent") return;
+        const b = boxBounds(boxSizeOf(r), Number(r.data.percent));
+        if (!b) return;
+        if (Number(r.data.minPrice) === b.min && Number(r.data.maxPrice) === b.max && Number(r.data.price) === b.typical) return;
+        batch.update(doc(db, "menu_items", r.id), { minPrice: b.min, maxPrice: b.max, price: b.typical, updatedAt: serverTimestamp() });
+        Object.assign(r.data, { minPrice: b.min, maxPrice: b.max, price: b.typical });
+        n++;
+      });
+      if (n) await batch.commit();
+    } catch (e) { console.warn("Could not refresh the box price ranges:", e); }
   };
 
   const menuTagsFillBtn = () => {
@@ -2377,7 +2512,12 @@ function initAdminDashboard(db) {
       const bpHost = menuEl("box-prices");
       if (bpHost) {
         bpHost.addEventListener("input", boxDirty);
-        bpHost.addEventListener("click", (e) => { if (e.target.closest(".bp-save")) boxSave(); });
+        bpHost.addEventListener("change", (e) => { if (e.target.classList.contains("bo-in-mode")) boxModeChanged(e.target.closest(".bo-row")); boxDirty(); });
+        bpHost.addEventListener("click", (e) => {
+          if (e.target.closest(".bo-save")) boxSave();
+          else if (e.target.closest(".bo-add")) boxAddRow();
+          else if (e.target.closest(".bo-del")) boxToggleDelete(e.target.closest(".bo-row"));
+        });
       }
       menuEl("menu-boxes-add").addEventListener("click", async () => {
         const todo = menuBoxesMissing();
@@ -2389,7 +2529,8 @@ function initAdminDashboard(db) {
           const batch = writeBatch(db);
           todo.forEach((m) => batch.set(doc(db, "menu_items", m.id), {
             name: m.name, price: m.price, category: m.category, desc: m.desc || "", image: m.image || "",
-            badge: "", badgeStyle: "", available: true, tags: [], sortOrder: m.sortOrder || 0, updatedAt: serverTimestamp()
+            badge: "", badgeStyle: "", available: true, tags: [], sortOrder: m.sortOrder || 0, updatedAt: serverTimestamp(),
+            boxSize: m.boxSize || parseInt(String(m.id).slice(10), 10) || 5, pricing: "fixed"
           }));
           await batch.commit();
           menuSay("Build-a-Box sizes added.");
@@ -2504,12 +2645,14 @@ function initAdminDashboard(db) {
             await deleteDoc(doc(db, "menu_items", id));
             await menuLoad();
           } else if (act === "up" || act === "down") {
-            const other = menuRows[act === "up" ? idx - 1 : idx + 1];
+            const visible = menuRows.filter((r) => !isBoxId(r.id));
+            const vi = visible.findIndex((r) => r.id === id);
+            const other = visible[act === "up" ? vi - 1 : vi + 1];
             if (!other) return;
             // renumber everything so positions are always 10, 20, 30 ... and swap the two neighbours
             const order = menuRows.map((r) => r.id);
-            const j = act === "up" ? idx - 1 : idx + 1;
-            [order[idx], order[j]] = [order[j], order[idx]];
+            const ia = order.indexOf(id), j = order.indexOf(other.id);
+            [order[ia], order[j]] = [order[j], order[ia]];
             const batch = writeBatch(db);
             order.forEach((rid, n) => batch.update(doc(db, "menu_items", rid), { sortOrder: (n + 1) * 10 }));
             await batch.commit();
@@ -2532,7 +2675,7 @@ function initAdminDashboard(db) {
           defaults.forEach((m) => {
             batch.set(doc(db, "menu_items", m.id), {
               name: m.name, price: m.price, category: m.category, desc: m.desc || "", image: m.image || "",
-              badge: m.badge || "", badgeStyle: m.badgeStyle || "", available: true, tags: Array.isArray(m.tags) ? m.tags : [], sortOrder: m.sortOrder || 0, updatedAt: serverTimestamp()
+              badge: m.badge || "", badgeStyle: m.badgeStyle || "", available: true, tags: Array.isArray(m.tags) ? m.tags : [], sortOrder: m.sortOrder || 0, updatedAt: serverTimestamp(), ...(m.boxSize ? { boxSize: m.boxSize, pricing: "fixed" } : {})
             });
           });
           await batch.commit();

@@ -219,7 +219,7 @@ function initQuiz() {
 // with "Import current menu". Prices that customers pay come from the database and are enforced by
 // firestore.rules (when the menu lock is on).
 // ============================================================================
-const DEFAULT_MENU = [{"id": "classic-cookie", "name": "Classic Cookie", "price": 7, "category": "cookies", "desc": "The authentic taste that everyone loves. Simple, good, and comforting.", "image": "assets/images/classic-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 10, "tags": ["classic", "chocolate"]}, {"id": "classic-brownie", "name": "Classic Brownie", "price": 10, "category": "cookies", "desc": "A rich, ultra-fudgy brownie topped with crushed Oreo and Lotus for the ultimate indulgence.", "image": "assets/images/classic-brownie.webp", "badge": "New Treat", "badgeStyle": "", "available": true, "sortOrder": 20, "tags": ["chocolate", "new"]}, {"id": "monster-cookie", "name": "Monster Cookie", "price": 15, "category": "cookies", "desc": "A playful, bright blue treat packed with sweet surprises and topped with a whole Oreo.", "image": "assets/images/monster-cookie.webp", "badge": "New Flavor", "badgeStyle": "", "available": true, "sortOrder": 30, "tags": ["new"]}, {"id": "kitkat-cookie", "name": "KitKat Cookie", "price": 15, "category": "cookies", "desc": "Our classic thick dough crowned with crispy, melting KitKat bars.", "image": "assets/images/kitkat-cookie.webp", "badge": "New Flavor", "badgeStyle": "", "available": true, "sortOrder": 40, "tags": ["chocolate", "new"]}, {"id": "extra-chocolate", "name": "Extra Chocolate", "price": 10, "category": "cookies", "desc": "For true chocolate lovers. Rich, intense, and super indulgent.", "image": "assets/images/extra-chocolate.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 50, "tags": ["chocolate"]}, {"id": "oreo-cookie", "name": "Oreo Cookie", "price": 12, "category": "cookies", "desc": "Crushed Oreo chunks for a 100% indulgent treat.", "image": "assets/images/oreo-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 60, "tags": ["chocolate"]}, {"id": "red-velvet", "name": "Red Velvet", "price": 12, "category": "cookies", "desc": "Soft, melt-in-your-mouth, and irresistible. The sweetness of red velvet in every bite.", "image": "assets/images/red-velvet.webp", "badge": "Monthly Special", "badgeStyle": "", "available": true, "sortOrder": 70, "tags": ["monthly special"]}, {"id": "kinder-cookie", "name": "Kinder Cookie", "price": 13, "category": "cookies", "desc": "The unique taste of Kinder chocolate in every bite.", "image": "assets/images/kinder-cookie.webp", "badge": "Monthly Special", "badgeStyle": "", "available": true, "sortOrder": 80, "tags": ["chocolate", "monthly special"]}, {"id": "lotus-cookie", "name": "Lotus Cookie", "price": 15, "category": "cookies", "desc": "Caramelized and crunchy sweetness with an irresistible taste.", "image": "assets/images/lotus-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 90, "tags": ["caramel"]}, {"id": "10-mini-cookies-box", "name": "10 Mini Cookies Box", "price": 15, "category": "boxes", "desc": "A perfect little sample box of our bite-sized favorites.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 100, "tags": ["box"]}, {"id": "15-mini-cookies-box", "name": "15 Mini Cookies Box", "price": 20, "category": "boxes", "desc": "Our highly requested bite-sized mix. Perfect for gifts or personal cravings.", "image": "assets/images/mini-box.webp", "badge": "Best Choice", "badgeStyle": "box-badge", "available": true, "sortOrder": 110, "tags": ["box", "best seller"]}, {"id": "20-mini-cookies-box", "name": "20 Mini Cookies Box", "price": 27, "category": "boxes", "desc": "Great for sharing with friends, family, or keeping all to yourself!", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 120, "tags": ["box"]}, {"id": "30-mini-cookies-box", "name": "30 Mini Cookies Box", "price": 40, "category": "boxes", "desc": "The ultimate party box. Enough sweet treats for everyone.", "image": "assets/images/mini-box.webp", "badge": "Party Size", "badgeStyle": "box-badge", "available": true, "sortOrder": 130, "tags": ["box", "party"]}, {"id": "build-box-5", "name": "Little Box - 5 cookies", "price": 55, "category": "boxes", "desc": "Pick any 5 cookies and we pack them in a cute gift box.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 101, "nameFr": "Petite box - 5 cookies", "nameAr": "علبة صغيرة - 5 بسكويت", "tags": []}, {"id": "build-box-9", "name": "Cozy Box - 9 cookies", "price": 95, "category": "boxes", "desc": "Pick any 9 cookies and we pack them in a cute gift box.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 102, "nameFr": "Box cosy - 9 cookies", "nameAr": "علبة دافئة - 9 بسكويت", "tags": []}, {"id": "build-box-12", "name": "Big Box - 12 cookies", "price": 120, "category": "boxes", "desc": "Pick any 12 cookies and we pack them in a cute gift box.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 103, "nameFr": "Grande box - 12 cookies", "nameAr": "علبة كبيرة - 12 بسكويت", "tags": []}];
+const DEFAULT_MENU = [{"id": "classic-cookie", "name": "Classic Cookie", "price": 7, "category": "cookies", "desc": "The authentic taste that everyone loves. Simple, good, and comforting.", "image": "assets/images/classic-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 10, "tags": ["classic", "chocolate"]}, {"id": "classic-brownie", "name": "Classic Brownie", "price": 10, "category": "cookies", "desc": "A rich, ultra-fudgy brownie topped with crushed Oreo and Lotus for the ultimate indulgence.", "image": "assets/images/classic-brownie.webp", "badge": "New Treat", "badgeStyle": "", "available": true, "sortOrder": 20, "tags": ["chocolate", "new"]}, {"id": "monster-cookie", "name": "Monster Cookie", "price": 15, "category": "cookies", "desc": "A playful, bright blue treat packed with sweet surprises and topped with a whole Oreo.", "image": "assets/images/monster-cookie.webp", "badge": "New Flavor", "badgeStyle": "", "available": true, "sortOrder": 30, "tags": ["new"]}, {"id": "kitkat-cookie", "name": "KitKat Cookie", "price": 15, "category": "cookies", "desc": "Our classic thick dough crowned with crispy, melting KitKat bars.", "image": "assets/images/kitkat-cookie.webp", "badge": "New Flavor", "badgeStyle": "", "available": true, "sortOrder": 40, "tags": ["chocolate", "new"]}, {"id": "extra-chocolate", "name": "Extra Chocolate", "price": 10, "category": "cookies", "desc": "For true chocolate lovers. Rich, intense, and super indulgent.", "image": "assets/images/extra-chocolate.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 50, "tags": ["chocolate"]}, {"id": "oreo-cookie", "name": "Oreo Cookie", "price": 12, "category": "cookies", "desc": "Crushed Oreo chunks for a 100% indulgent treat.", "image": "assets/images/oreo-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 60, "tags": ["chocolate"]}, {"id": "red-velvet", "name": "Red Velvet", "price": 12, "category": "cookies", "desc": "Soft, melt-in-your-mouth, and irresistible. The sweetness of red velvet in every bite.", "image": "assets/images/red-velvet.webp", "badge": "Monthly Special", "badgeStyle": "", "available": true, "sortOrder": 70, "tags": ["monthly special"]}, {"id": "kinder-cookie", "name": "Kinder Cookie", "price": 13, "category": "cookies", "desc": "The unique taste of Kinder chocolate in every bite.", "image": "assets/images/kinder-cookie.webp", "badge": "Monthly Special", "badgeStyle": "", "available": true, "sortOrder": 80, "tags": ["chocolate", "monthly special"]}, {"id": "lotus-cookie", "name": "Lotus Cookie", "price": 15, "category": "cookies", "desc": "Caramelized and crunchy sweetness with an irresistible taste.", "image": "assets/images/lotus-cookie.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 90, "tags": ["caramel"]}, {"id": "10-mini-cookies-box", "name": "10 Mini Cookies Box", "price": 15, "category": "boxes", "desc": "A perfect little sample box of our bite-sized favorites.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 100, "tags": ["box"]}, {"id": "15-mini-cookies-box", "name": "15 Mini Cookies Box", "price": 20, "category": "boxes", "desc": "Our highly requested bite-sized mix. Perfect for gifts or personal cravings.", "image": "assets/images/mini-box.webp", "badge": "Best Choice", "badgeStyle": "box-badge", "available": true, "sortOrder": 110, "tags": ["box", "best seller"]}, {"id": "20-mini-cookies-box", "name": "20 Mini Cookies Box", "price": 27, "category": "boxes", "desc": "Great for sharing with friends, family, or keeping all to yourself!", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 120, "tags": ["box"]}, {"id": "30-mini-cookies-box", "name": "30 Mini Cookies Box", "price": 40, "category": "boxes", "desc": "The ultimate party box. Enough sweet treats for everyone.", "image": "assets/images/mini-box.webp", "badge": "Party Size", "badgeStyle": "box-badge", "available": true, "sortOrder": 130, "tags": ["box", "party"]}, {"id": "build-box-5", "name": "Little Box - 5 cookies", "price": 55, "category": "boxes", "desc": "Pick any 5 cookies and we pack them in a cute gift box.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 101, "nameFr": "Petite box - 5 cookies", "nameAr": "علبة صغيرة - 5 بسكويت", "tags": [], "boxSize": 5, "pricing": "fixed"}, {"id": "build-box-9", "name": "Cozy Box - 9 cookies", "price": 95, "category": "boxes", "desc": "Pick any 9 cookies and we pack them in a cute gift box.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 102, "nameFr": "Box cosy - 9 cookies", "nameAr": "علبة دافئة - 9 بسكويت", "tags": [], "boxSize": 9, "pricing": "fixed"}, {"id": "build-box-12", "name": "Big Box - 12 cookies", "price": 120, "category": "boxes", "desc": "Pick any 12 cookies and we pack them in a cute gift box.", "image": "assets/images/mini-box.webp", "badge": "", "badgeStyle": "", "available": true, "sortOrder": 103, "nameFr": "Grande box - 12 cookies", "nameAr": "علبة كبيرة - 12 بسكويت", "tags": [], "boxSize": 12, "pricing": "fixed"}];
 
 const MENU_PROJECT = 'youyous-cookies';
 const MENU_KEY = 'AIzaSyCeiG19dex8wZ6TGSjSNe9U2JkqhP0Lbpk'; // public Firebase web key (not a secret)
@@ -274,6 +274,11 @@ function menuFromRest(doc) {
     badge: val(f.badge) || '', badgeStyle: val(f.badgeStyle) === 'box-badge' ? 'box-badge' : '',
     available: val(f.available) !== false,
     tags: list(f.tags).slice(0, 8),
+    boxSize: Number(val(f.boxSize)) || 0,
+    pricing: val(f.pricing) === 'percent' ? 'percent' : 'fixed',
+    percent: Number(val(f.percent)) || 0,
+    minPrice: Number(val(f.minPrice)) || 0,
+    maxPrice: Number(val(f.maxPrice)) || 0,
     sortOrder: Number(val(f.sortOrder)) || 0
   };
 }
@@ -336,7 +341,7 @@ function renderMenuFilter(L) {
   if (!bar) return;
   if (menuFilterOff()) menuTag = '';   // the filter is switched off in the dashboard: show everything
   const counts = {};
-  const listable = YYMenu.items.filter((it) => !buildBoxSize(it.id));
+  const listable = YYMenu.items.filter((it) => !isBuildBoxId(it.id));
   listable.forEach((it) => menuTagsOf(it).forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
   const tags = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
   if (menuTag && !counts[menuTag]) menuTag = '';
@@ -411,7 +416,7 @@ function renderMenuPage() {
       '<div class="card-info"><div class="card-header">' + title + '<span class="price">' + menuEsc(it.price) + ' DH</span></div>' +
       descHtml + tagsHtml + btn + '</div></div>';
   };
-  const listableAll = YYMenu.items.filter((i) => !buildBoxSize(i.id));
+  const listableAll = YYMenu.items.filter((i) => !isBuildBoxId(i.id));
   const shown = menuTag ? listableAll.filter((i) => menuTagsOf(i).indexOf(menuTag) !== -1) : listableAll;
   const cookieList = shown.filter((i) => i.category === 'cookies');
   const boxList = shown.filter((i) => i.category === 'boxes');
@@ -508,8 +513,27 @@ window.YYMenuDefaults = DEFAULT_MENU;
 
 // ---- BUILD-A-BOX: "build-box-5 / -9 / -12" are normal menu items (price editable in the dashboard);
 //      the cookies the customer picks travel with the cart line (line.box.picks) and are written into the order line's name ----
-const BUILD_BOX_RE = /^build-box-(\d{1,2})$/;
-function buildBoxSize(id) { const m = BUILD_BOX_RE.exec(String(id || '')); return m ? parseInt(m[1], 10) : 0; }
+const BUILD_BOX_ID = /^build-box-[A-Za-z0-9_-]{1,40}$/;
+function isBuildBoxId(id) { return BUILD_BOX_ID.test(String(id || '')); }
+// how many cookies fit in this box: the "boxSize" saved by the admin (old items: the number in the id)
+function buildBoxSize(id) {
+  if (!isBuildBoxId(id)) return 0;
+  const it = YYMenu.byId[id];
+  if (it && it.boxSize > 0) return it.boxSize;
+  const m = /^build-box-(\d{1,2})$/.exec(String(id));
+  return m ? parseInt(m[1], 10) : 0;
+}
+// "fixed" boxes cost the price set in the dashboard; "percent" boxes cost (price of the picked cookies) x percent
+function boxUsable(it) { return !!it && (it.pricing !== 'percent' || (it.percent > 0 && it.minPrice > 0 && it.maxPrice >= it.minPrice)); }
+function boxPrice(it, picks) {
+  if (!it) return 0;
+  if (it.pricing !== 'percent') return it.price;
+  let sum = 0;
+  (picks || []).forEach((p) => { const c = YYMenu.byId[p.id]; if (c) sum += c.price * p.qty; });
+  return Math.round(sum * it.percent / 100);
+}
+window.YYBoxUsable = boxUsable;
+window.YYBoxPrice = boxPrice;
 window.YYBuildBoxSize = buildBoxSize;
 function cleanBoxPicks(picks, size) {
   if (!Array.isArray(picks) || !size) return null;
@@ -550,10 +574,10 @@ function sanitizeCart(raw) {
     const bsize = buildBoxSize(m.id);
     if (bsize) {   // a custom box: keep it only if its picks are still valid, and never merge boxes with different picks
       const picks = cleanBoxPicks(item.box && item.box.picks, bsize);
-      if (!picks) return;
+      if (!picks || !boxUsable(m)) return;
       const same = out.find((i) => i.id === m.id && i.box && boxSig(i.box.picks) === boxSig(picks));
-      if (same) same.quantity = Math.min(99, same.quantity + qty);
-      else if (out.length < MAX_CART_LINES) out.push({ id: m.id, name: m.name, price: m.price, quantity: qty, box: { picks: picks } });
+      if (same) { same.quantity = Math.min(99, same.quantity + qty); same.price = boxPrice(m, picks); }
+      else if (out.length < MAX_CART_LINES) out.push({ id: m.id, name: m.name, price: boxPrice(m, picks), quantity: qty, box: { picks: picks } });
       return;
     }
     const existing = out.find((i) => i.id === m.id);
@@ -665,7 +689,7 @@ function initCart() {
   window.YYAddBoxToCart = function (boxId, picks) {
     const m = YYMenu.byId[boxId];
     const size = buildBoxSize(boxId);
-    if (!m || m.available === false || !size) return false;
+    if (!m || m.available === false || !size || !boxUsable(m)) return false;
     const clean = cleanBoxPicks(picks, size);
     if (!clean) return false;
     const existing = cart.find((i) => i.id === m.id && i.box && boxSig(i.box.picks) === boxSig(clean));
@@ -676,7 +700,7 @@ function initCart() {
         alert('You can order up to ' + MAX_CART_LINES + ' different items at a time. Please place a second order for the rest, thank you!');
         return false;
       }
-      cart.push({ id: m.id, name: m.name, price: m.price, quantity: 1, box: { picks: clean } });
+      cart.push({ id: m.id, name: m.name, price: boxPrice(m, clean), quantity: 1, box: { picks: clean } });
     }
     saveCart();
     return true;
