@@ -28,6 +28,7 @@ service cloud.firestore {
       return items.size() <= i || (
         items[i].keys().hasOnly(['id', 'name', 'price', 'quantity'])
         && items[i].id is string && items[i].id.size() > 0 && items[i].id.size() <= 80
+        && items[i].name is string && items[i].name.size() <= 300
         && items[i].quantity is int && items[i].quantity >= 1 && items[i].quantity <= 99
         && items[i].price is number
         && menuMatches(items[i])
@@ -173,17 +174,34 @@ service cloud.firestore {
                   || d.image.matches('data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+'))));
     }
 
-    // Privacy Policy text (public read, admin-only write; edited in the dashboard > Privacy Policy tab)
+    // Public page content (public read, admin-only write):
+    //   privacy        = Privacy Policy text (dashboard > Privacy Policy tab)
+    //   menu_features  = on/off switches for parts of the menu page (dashboard > Menu tab > Menu features)
     match /site_content/{id} {
       allow read: if true;
-      allow create, update: if isAdmin() && id == 'privacy'
-        && request.resource.data.keys().hasOnly(['en', 'fr', 'ar', 'version', 'updatedAt'])
-        && request.resource.data.keys().hasAll(['en', 'version', 'updatedAt'])
-        && request.resource.data.en is string && request.resource.data.en.size() > 0 && request.resource.data.en.size() <= 30000
-        && (!('fr' in request.resource.data) || (request.resource.data.fr is string && request.resource.data.fr.size() <= 30000))
-        && (!('ar' in request.resource.data) || (request.resource.data.ar is string && request.resource.data.ar.size() <= 30000))
-        && request.resource.data.version is string && request.resource.data.version.size() <= 40;
+      allow create, update: if isAdmin() && (
+        (id == 'privacy' && validPrivacy(request.resource.data))
+        || (id == 'menu_features' && validMenuFeatures(request.resource.data))
+      );
       allow delete: if false;
+    }
+    function validPrivacy(d) {
+      return d.keys().hasOnly(['en', 'fr', 'ar', 'version', 'updatedAt'])
+        && d.keys().hasAll(['en', 'version', 'updatedAt'])
+        && d.en is string && d.en.size() > 0 && d.en.size() <= 30000
+        && (!('fr' in d) || (d.fr is string && d.fr.size() <= 30000))
+        && (!('ar' in d) || (d.ar is string && d.ar.size() <= 30000))
+        && d.version is string && d.version.size() <= 40;
+    }
+    function validMenuFeatures(d) {
+      return d.keys().hasOnly(['boxBuilder', 'filter', 'cardTags', 'miniBoxes', 'extras', 'sidebar', 'quiz', 'updatedAt'])
+        && (!('boxBuilder' in d) || d.boxBuilder is bool)
+        && (!('filter' in d) || d.filter is bool)
+        && (!('cardTags' in d) || d.cardTags is bool)
+        && (!('miniBoxes' in d) || d.miniBoxes is bool)
+        && (!('extras' in d) || d.extras is bool)
+        && (!('sidebar' in d) || d.sidebar is bool)
+        && (!('quiz' in d) || d.quiz is bool);
     }
 
     // Admin settings (menu lock switch)
