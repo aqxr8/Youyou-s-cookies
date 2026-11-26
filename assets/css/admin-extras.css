@@ -154,3 +154,57 @@
 
 .an-grid .an-card{display:flex;flex-direction:column}
 #an-status{flex:1;display:flex;align-items:center;justify-content:center}
+
+/* ---- Build-a-Box prices panel (admin > Menu) ---- */
+.boxprices{background:var(--panel,#fff);border:1px solid var(--line,#ecd3cd);border-radius:14px;padding:18px 20px;margin-bottom:22px}
+.boxprices[hidden]{display:none}
+.bp-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.bp-head h4{margin:0;font-size:1.15rem;color:var(--ink,#3b1d17)}
+.bp-lock{font-size:.8rem;font-weight:700;padding:4px 12px;border-radius:999px}
+.bp-lock.on{background:rgba(46,125,50,.12);color:#2e7d32}
+.bp-lock.off{background:rgba(179,38,30,.12);color:#b3261e}
+.bp-rows{display:flex;flex-direction:column;gap:10px}
+.bp-row{display:grid;grid-template-columns:minmax(130px,1.2fr) auto minmax(120px,1fr) auto;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line,#ecd3cd);border-radius:12px;transition:border-color .15s,background .15s}
+.bp-row.changed{border-color:var(--accent,#b85f58);background:rgba(184,95,88,.06)}
+.bp-name{display:flex;flex-direction:column}
+.bp-name small{color:var(--muted,#8a6a63)}
+.bp-price{display:flex;align-items:center;gap:8px;font-weight:700}
+.bp-price input{width:110px;padding:9px 12px;border:1px solid var(--line,#ecd3cd);border-radius:10px;font:inherit;font-weight:700;background:var(--bg,#fff);color:inherit}
+.bp-price input:focus{outline:2px solid var(--accent,#b85f58);outline-offset:1px}
+.bp-per{font-size:.82rem;color:var(--muted,#8a6a63)}
+.bp-avail{display:flex;align-items:center;gap:7px;font-size:.88rem;cursor:pointer;white-space:nowrap}
+.bp-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px}
+.bp-save:disabled{opacity:.45;cursor:not-allowed}
+.bp-msg{font-size:.86rem;font-weight:600}
+@media (max-width:640px){
+  .bp-row{grid-template-columns:1fr auto;gap:8px 12px}
+  .bp-per{grid-column:1}
+  .bp-avail{grid-column:2;justify-self:end}
+}
+.bp-save:not(:disabled){background:var(--accent,#b85f58);border-color:transparent;color:#fff}
+
+/* ---- Menu features panel (admin > Menu) ---- */
+.mfpanel{background:var(--panel,#fff);border:1px solid var(--line,#ecd3cd);border-radius:14px;padding:18px 20px;margin-bottom:22px}
+.mf-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.mf-head h4{margin:0;font-size:1.15rem;color:var(--ink,#3b1d17)}
+.mf-view{font-size:.84rem;font-weight:700;color:var(--accent,#b85f58);text-decoration:none}
+.mf-view:hover{text-decoration:underline}
+.mf-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mf-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line,#ecd3cd);border-radius:12px;cursor:pointer;transition:background .15s,border-color .15s}
+.mf-row:hover{border-color:var(--accent,#b85f58)}
+.mf-row.off{background:rgba(120,120,120,.07)}
+.mf-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mf-text b{color:var(--ink,#3b1d17)}
+.mf-text small{color:var(--muted,#8a6a63);line-height:1.35}
+.mf-state{font-size:.74rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#2e7d32}
+.mf-row.off .mf-state{color:var(--muted,#8a6a63)}
+.mf-switch{position:relative;display:inline-block;width:44px;height:26px;flex:none}
+.mf-switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.mf-switch i{position:absolute;inset:0;border-radius:999px;background:#c9bdb9;transition:background .2s}
+.mf-switch i::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.mf-switch input:checked + i{background:var(--accent,#b85f58)}
+.mf-switch input:checked + i::after{transform:translateX(18px)}
+.mf-switch input:focus-visible + i{outline:2px solid var(--accent,#b85f58);outline-offset:2px}
+.mf-switch input:disabled{cursor:wait}
+.mf-msg{min-height:1.2em;margin:12px 0 0;font-size:.86rem;font-weight:600}
+@media (max-width:760px){.mf-list{grid-template-columns:1fr}}

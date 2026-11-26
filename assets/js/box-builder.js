@@ -144,7 +144,7 @@
   }
 
   function open(idx) {
-    if (!sizes().length) return;
+    if (!sizes().length || document.documentElement.classList.contains('mf-off-boxBuilder')) return;
     if (!root) build();
     if (typeof idx === 'number') state.idx = idx;
     lastFocus = document.activeElement;

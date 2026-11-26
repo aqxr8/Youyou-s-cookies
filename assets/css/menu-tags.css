@@ -37,3 +37,15 @@ html[dir="rtl"] .tag-chip{padding:9px 18px 9px 12px}
 /* keep the Add to Box buttons aligned when cards have different amounts of text */
 .new-menu-card .card-info{flex:1}
 .new-menu-card .card-info .add-to-box-btn{margin-top:auto}
+
+/* ===== Menu features: parts of the menu page the admin can switch off (dashboard > Menu > Menu features).
+   features.js puts "mf-off-<name>" on <html>; menu.html also does it from the last saved state before first paint. ===== */
+.mf-off-boxBuilder #bb-banner,
+.mf-off-filter #menu-filter,.mf-off-filter #menu-filter-empty,
+.mf-off-cardTags .card-tags,
+.mf-off-miniBoxes #mini-boxes,.mf-off-miniBoxes #boxes-grid,
+.mf-off-extras #extras-head,.mf-off-extras #extras-grid,
+.mf-off-sidebar .menu-side,
+.mf-off-quiz #quiz-section{display:none!important}
+.mf-off-sidebar .menu-wrap{grid-template-columns:1fr}
+.mf-off-filter .card-tag{pointer-events:none;cursor:default}

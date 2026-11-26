@@ -2144,6 +2144,8 @@ function initAdminDashboard(db) {
     menuTagsRender();
     menuTagsFillBtn();
     menuBoxesBtn();
+    boxPanel();
+    featPanel();
   };
 
   // ---- tags: customers sort the menu with them ----
@@ -2181,6 +2183,142 @@ function initAdminDashboard(db) {
     const n = menuRows.length ? menuBoxesMissing().length : 0;   // an empty menu gets them with "Import current menu"
     b.style.display = n ? "" : "none";
     b.textContent = "🎁 Add the Build-a-Box sizes (5 / 9 / 12)";
+  };
+
+  // ---- Menu features: on/off switches for parts of the menu page. Saved in site_content/menu_features (public read, only the admin can write) ----
+  const MENU_FEATURES = [
+    { k: "boxBuilder", t: "Build-a-Box", d: "The \"Build your own box\" banner and the box builder pop-up." },
+    { k: "filter", t: "Filter buttons", d: "The row of tag buttons (Chocolate, Classic, New...) above the menu." },
+    { k: "cardTags", t: "Tags on cookie cards", d: "The small tag labels under each cookie description." },
+    { k: "miniBoxes", t: "Mini cookies boxes", d: "The section with the 10 / 15 / 20 / 30 mini cookies boxes." },
+    { k: "extras", t: "Flavours & Extras", d: "The Mix & Match and Chocolate Sauce section." },
+    { k: "sidebar", t: "Info sidebar", d: "Delivery hours, order info and contact details on the right." },
+    { k: "quiz", t: "Cookie quiz", d: "The \"Which cookie are you?\" quiz at the bottom of the page." }
+  ];
+  let menuFeat = {};   // {key: false} for the things that are switched off; everything else is on
+
+  const featPanel = async () => {
+    const host = menuEl("menu-features");
+    if (!host) return;
+    try {
+      const snap = await getDoc(doc(db, "site_content", "menu_features"));
+      menuFeat = snap.exists() ? snap.data() : {};
+    } catch (e) { console.warn("Could not read the menu features:", e); }
+    host.innerHTML = `
+      <div class="mf-head"><h4>Menu features</h4><a class="mf-view" href="menu.html" target="_blank" rel="noopener">View the menu page ↗</a></div>
+      <p class="news-hint" style="margin:0 0 12px;">Switch parts of the menu page on or off. A change is saved at once and customers see it the next time the page loads.</p>
+      <div class="mf-list">${MENU_FEATURES.map((f) => {
+        const on = menuFeat[f.k] !== false;
+        return `<label class="mf-row ${on ? "" : "off"}" data-key="${f.k}">
+          <span class="mf-text"><b>${esc(f.t)}</b><small>${esc(f.d)}</small></span>
+          <span class="mf-state">${on ? "On" : "Off"}</span>
+          <span class="mf-switch"><input type="checkbox" data-feat="${f.k}" ${on ? "checked" : ""} aria-label="${esc(f.t)}"><i></i></span>
+        </label>`;
+      }).join("")}</div>
+      <p class="mf-msg" role="status"></p>`;
+  };
+
+  const featChange = async (e) => {
+    const inp = e.target.closest && e.target.closest("input[data-feat]");
+    if (!inp) return;
+    const host = menuEl("menu-features");
+    const msg = host.querySelector(".mf-msg");
+    const row = inp.closest(".mf-row");
+    const say = (t, bad) => { msg.textContent = t; msg.style.color = bad ? "#b3261e" : "#2e7d32"; };
+    const next = { ...menuFeat };
+    MENU_FEATURES.forEach((f) => { if (next[f.k] === undefined) next[f.k] = true; });
+    next[inp.dataset.feat] = inp.checked;
+    inp.disabled = true;
+    say("Saving...");
+    try {
+      const out = {};
+      MENU_FEATURES.forEach((f) => { out[f.k] = next[f.k] !== false; });
+      await setDoc(doc(db, "site_content", "menu_features"), { ...out, updatedAt: serverTimestamp() });
+      menuFeat = out;
+      row.classList.toggle("off", !inp.checked);
+      row.querySelector(".mf-state").textContent = inp.checked ? "On" : "Off";
+      say("Saved. " + (MENU_FEATURES.find((f) => f.k === inp.dataset.feat) || {}).t + " is now " + (inp.checked ? "on" : "off") + ".");
+    } catch (err) {
+      console.error("Saving the menu features failed:", err);
+      inp.checked = !inp.checked;
+      say("Could not save. Check you are signed in as the admin and that the new firestore.rules are published.", true);
+    } finally { inp.disabled = false; }
+  };
+
+  // ---- Build-a-Box prices: one small panel to change the three box prices. Saved in /menu_items (only the admin can write there) ----
+  const BOX_NAMES = { 5: "Little Box", 9: "Cozy Box", 12: "Big Box" };
+  const boxNum = (id) => parseInt(String(id).slice(10), 10) || 0;
+  const boxRows = () => menuRows.filter((r) => /^build-box-\d+$/.test(r.id)).sort((a, b) => boxNum(a.id) - boxNum(b.id));
+
+  const boxPanel = () => {
+    const host = menuEl("box-prices");
+    if (!host) return;
+    const rows = boxRows();
+    if (!rows.length) { host.hidden = true; host.innerHTML = ""; return; }
+    host.hidden = false;
+    host.innerHTML = `
+      <div class="bp-head"><h4>Build-a-Box prices</h4>
+        <span class="bp-lock ${menuLocked ? "on" : "off"}">${menuLocked ? "🔒 Locked: checkout refuses any other price" : "🔓 Price lock is OFF: turn it on in the bar above"}</span></div>
+      <p class="news-hint" style="margin:0 0 12px;">One fixed price per box, whatever cookies the customer picks. The prices live in the database and only your admin account can change them.</p>
+      <div class="bp-rows">${rows.map((r) => {
+        const n = boxNum(r.id), on = r.data.available !== false;
+        return `<div class="bp-row" data-id="${esc(r.id)}">
+          <div class="bp-name"><b>${esc(BOX_NAMES[n] || r.data.name)}</b><small>${n} cookies</small></div>
+          <label class="bp-price"><input type="number" min="1" max="1000" step="0.5" value="${esc(r.data.price)}" data-orig="${esc(r.data.price)}" aria-label="Price of the ${n}-cookie box in DH"><span>DH</span></label>
+          <span class="bp-per"></span>
+          <label class="bp-avail"><input type="checkbox" ${on ? "checked" : ""} data-orig="${on}"> On sale</label>
+        </div>`;
+      }).join("")}</div>
+      <div class="bp-foot"><button type="button" class="filter-btn bp-save" disabled>Save box prices</button><span class="bp-msg" role="status"></span></div>`;
+    boxDirty();
+  };
+
+  const boxDirty = () => {
+    const host = menuEl("box-prices");
+    if (!host) return;
+    let dirty = false;
+    host.querySelectorAll(".bp-row").forEach((row) => {
+      const p = row.querySelector("input[type=number]"), a = row.querySelector("input[type=checkbox]");
+      const v = Number(p.value);
+      row.querySelector(".bp-per").textContent = v > 0 ? "≈ " + (Math.round(v / boxNum(row.dataset.id) * 10) / 10) + " DH per cookie" : "";
+      const changed = v !== Number(p.dataset.orig) || String(a.checked) !== a.dataset.orig;
+      row.classList.toggle("changed", changed);
+      if (changed) dirty = true;
+    });
+    const save = host.querySelector(".bp-save");
+    if (save) save.disabled = !dirty;
+    const m = host.querySelector(".bp-msg");
+    if (m && dirty) m.textContent = "";
+  };
+
+  const boxSave = async () => {
+    const host = menuEl("box-prices");
+    const msg = host.querySelector(".bp-msg"), save = host.querySelector(".bp-save");
+    const say = (t, bad) => { msg.textContent = t; msg.style.color = bad ? "#b3261e" : "#2e7d32"; };
+    const changes = [];
+    for (const row of host.querySelectorAll(".bp-row.changed")) {
+      const p = row.querySelector("input[type=number]"), a = row.querySelector("input[type=checkbox]");
+      const price = Number(p.value);
+      if (!Number.isFinite(price) || price < 1 || price > 1000 || Math.round(price * 2) !== price * 2) { say("Prices must be between 1 and 1000 DH, in steps of 0.5.", true); p.focus(); return; }
+      changes.push({ id: row.dataset.id, n: boxNum(row.dataset.id), price, oldPrice: Number(p.dataset.orig), avail: a.checked, oldAvail: a.dataset.orig === "true" });
+    }
+    if (!changes.length) return;
+    const lines = changes.map((c) => `${BOX_NAMES[c.n] || c.id}: ${c.oldPrice !== c.price ? c.oldPrice + " → " + c.price + " DH" : ""}${c.avail !== c.oldAvail ? (c.oldPrice !== c.price ? ", " : "") + (c.avail ? "back on sale" : "hidden from customers") : ""}`).join(" · ");
+    const ok = await askConfirm({ title: "Save the box prices?", message: lines + ". Customers see the new prices right away.", confirmText: "Save", cancelText: "Cancel" });
+    if (!ok) return;
+    save.disabled = true;
+    try {
+      const batch = writeBatch(db);
+      changes.forEach((c) => batch.update(doc(db, "menu_items", c.id), { price: c.price, available: c.avail, updatedAt: serverTimestamp() }));
+      await batch.commit();
+      await menuLoad();
+      const m2 = menuEl("box-prices").querySelector(".bp-msg");
+      if (m2) { m2.textContent = "Saved. The new prices are live."; m2.style.color = "#2e7d32"; }
+    } catch (err) {
+      console.error("Saving box prices failed:", err);
+      say("Could not save. Only the admin account can change prices (check you are signed in and the firestore.rules are published).", true);
+      save.disabled = false;
+    }
   };
 
   const menuTagsFillBtn = () => {
@@ -2234,6 +2372,13 @@ function initAdminDashboard(db) {
         const a = e.target.closest("[data-tag-add]");
         if (a) menuTagAdd(a.getAttribute("data-tag-add"));
       });
+      const mfHost = menuEl("menu-features");
+      if (mfHost) mfHost.addEventListener("change", featChange);
+      const bpHost = menuEl("box-prices");
+      if (bpHost) {
+        bpHost.addEventListener("input", boxDirty);
+        bpHost.addEventListener("click", (e) => { if (e.target.closest(".bp-save")) boxSave(); });
+      }
       menuEl("menu-boxes-add").addEventListener("click", async () => {
         const todo = menuBoxesMissing();
         if (!todo.length) return;
@@ -2410,6 +2555,7 @@ function initAdminDashboard(db) {
             await setDoc(doc(db, "settings", "menu_lock"), { on: true, at: serverTimestamp() });
           }
           await menuReadLock();
+          boxPanel();
         } catch (err) { console.error(err); menuSay("Could not change the lock.", true); }
         finally { btn.disabled = false; }
       });

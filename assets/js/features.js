@@ -334,6 +334,7 @@ const menuTagLabel = (t, L) => (TAG_I18N[t] && TAG_I18N[t][L]) || t;
 function renderMenuFilter(L) {
   const bar = document.getElementById('menu-filter');
   if (!bar) return;
+  if (menuFilterOff()) menuTag = '';   // the filter is switched off in the dashboard: show everything
   const counts = {};
   const listable = YYMenu.items.filter((it) => !buildBoxSize(it.id));
   listable.forEach((it) => menuTagsOf(it).forEach((t) => { counts[t] = (counts[t] || 0) + 1; }));
@@ -348,8 +349,10 @@ function renderMenuFilter(L) {
   if (act && bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, act.offsetLeft - 16);
 }
 
+function menuFilterOff() { return document.documentElement.classList.contains('mf-off-filter'); }
+
 function menuSetTag(tag, scrollToBar) {
-  menuTag = String(tag || '').toLowerCase().slice(0, 20);
+  menuTag = menuFilterOff() ? '' : String(tag || '').toLowerCase().slice(0, 20);
   try {
     const u = new URL(location.href);
     if (menuTag) u.searchParams.set('tag', menuTag); else u.searchParams.delete('tag');
@@ -363,6 +366,26 @@ document.addEventListener('click', (e) => {
   if (!t) return;
   menuSetTag(t.getAttribute('data-tag') || '', !!t.classList.contains('card-tag'));
 });
+
+
+// ---- MENU FEATURES: the admin switches parts of the menu page on/off (database: site_content/menu_features, public read) ----
+const MENU_FEATURE_KEYS = ['boxBuilder', 'filter', 'cardTags', 'miniBoxes', 'extras', 'sidebar', 'quiz'];
+function applyMenuFeatures(flags) {
+  const root = document.documentElement;
+  MENU_FEATURE_KEYS.forEach((k) => root.classList.toggle('mf-off-' + k, flags && flags[k] === false));
+  if (typeof renderMenuPage === 'function' && document.getElementById('cookies')) renderMenuPage();
+}
+function loadMenuFeatures() {
+  if (!document.getElementById('cookies')) return;   // only the menu page uses them
+  const url = 'https://firestore.googleapis.com/v1/projects/' + MENU_PROJECT + '/databases/(default)/documents/site_content/menu_features?key=' + MENU_KEY;
+  fetch(url).then((r) => (r.status === 404 ? { fields: {} } : r.ok ? r.json() : Promise.reject(r.status))).then((doc) => {
+    const flags = {};
+    MENU_FEATURE_KEYS.forEach((k) => { const v = doc.fields && doc.fields[k]; flags[k] = !(v && v.booleanValue === false); });
+    try { localStorage.setItem('yy_menu_features_v1', JSON.stringify(flags)); } catch (e) { /* ignore */ }
+    applyMenuFeatures(flags);
+  }).catch(() => { /* offline: keep the last known state */ });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadMenuFeatures); else loadMenuFeatures();
 
 function renderMenuPage() {
   const cookiesGrid = document.getElementById('cookies');
