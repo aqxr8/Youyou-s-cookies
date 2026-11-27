@@ -348,8 +348,8 @@ function renderMenuFilter(L) {
   if (!tags.length) { bar.hidden = true; bar.innerHTML = ''; return; }
   bar.hidden = false;
   bar.setAttribute('aria-label', TAG_TXT.label[L] || TAG_TXT.label.en);
-  const chip = (tag, label, n) => '<button type="button" class="tag-chip' + ((menuTag === tag) ? ' active' : '') + '" data-tag="' + menuEsc(tag) + '" aria-pressed="' + (menuTag === tag) + '">' + menuEsc(label) + '<span class="n">' + n + '</span></button>';
-  bar.innerHTML = chip('', TAG_TXT.all[L] || TAG_TXT.all.en, listable.length) + tags.map((t) => chip(t, menuTagLabel(t, L), counts[t])).join('');
+  const chip = (tag, label) => '<button type="button" class="tag-chip' + ((menuTag === tag) ? ' active' : '') + '" data-tag="' + menuEsc(tag) + '" aria-pressed="' + (menuTag === tag) + '">' + menuEsc(label) + '</button>';
+  bar.innerHTML = chip('', TAG_TXT.all[L] || TAG_TXT.all.en) + tags.map((t) => chip(t, menuTagLabel(t, L))).join('');
   const act = bar.querySelector('.tag-chip.active');   // phones: keep the selected chip visible in the swipe row
   if (act && bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, act.offsetLeft - 16);
 }
@@ -372,6 +372,57 @@ document.addEventListener('click', (e) => {
   menuSetTag(t.getAttribute('data-tag') || '', !!t.classList.contains('card-tag'));
 });
 
+
+// ---- ANNOUNCEMENT LINE: the moving text under the header on the home page. Edited in the dashboard (Announcement tab),
+//      stored in site_content/announcement (public read). Used by the home page and by the dashboard preview. ----
+const TICKER_SPEEDS = { slow: 35, normal: 60, fast: 95 };   // pixels per second
+function renderTicker(track, lines, speed) {
+  const clean = (lines || []).map((s) => String(s || '').trim()).filter(Boolean);
+  if (!track || !clean.length) return false;
+  const li = (t) => '<li>' + menuEsc(t) + '</li>';
+  const one = clean.map(li).join('');
+  track.style.animation = 'none';
+  track.innerHTML = one;
+  const box = (track.parentElement && track.parentElement.clientWidth) || window.innerWidth || 1200;
+  const reps = Math.max(1, Math.ceil(box / Math.max(1, track.scrollWidth)));
+  const half = new Array(reps + 1).join(one);          // enough copies to fill the width ...
+  track.innerHTML = half + half;                        // ... twice, so the loop is seamless (the CSS moves it by -50%)
+  const px = TICKER_SPEEDS[speed] || TICKER_SPEEDS.normal;
+  track.style.animation = '';
+  track.style.animationDuration = Math.max(8, (track.scrollWidth / 2) / px) + 's';
+  return true;
+}
+window.YYTicker = { render: renderTicker, speeds: TICKER_SPEEDS };
+
+function applyAnnouncement(a) {
+  const bar = document.querySelector('.ticker');
+  if (!bar || !a) return;
+  const track = bar.querySelector('.ticker-track');
+  if (a.enabled === false) { bar.hidden = true; return; }
+  bar.hidden = false;
+  if (!renderTicker(track, a.items, a.speed) && !(a.items && a.items.length)) bar.hidden = true;   // no lines at all -> no bar
+}
+function loadAnnouncement() {
+  const bar = document.querySelector('.ticker');
+  if (!bar) return;
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem('yy_announce_v1') || 'null'); } catch (e) { /* ignore */ }
+  const fallback = Array.from(bar.querySelectorAll('.ticker-track li')).map((li) => li.textContent);
+  applyAnnouncement(cached || { enabled: true, speed: 'normal', items: fallback });
+  const url = 'https://firestore.googleapis.com/v1/projects/' + MENU_PROJECT + '/databases/(default)/documents/site_content/announcement?key=' + MENU_KEY;
+  fetch(url).then((r) => (r.status === 404 ? null : r.ok ? r.json() : Promise.reject(r.status))).then((doc) => {
+    if (!doc || !doc.fields) return;   // nothing saved yet: keep the default lines
+    const fl = doc.fields;
+    const a = {
+      enabled: !(fl.enabled && fl.enabled.booleanValue === false),
+      speed: fl.speed && fl.speed.stringValue,
+      items: ((fl.items && fl.items.arrayValue && fl.items.arrayValue.values) || []).map((v) => v.stringValue).filter((t) => typeof t === 'string')
+    };
+    try { localStorage.setItem('yy_announce_v1', JSON.stringify(a)); } catch (e) { /* ignore */ }
+    applyAnnouncement(a);
+  }).catch(() => { /* offline: keep what is shown */ });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadAnnouncement); else loadAnnouncement();
 
 // ---- MENU FEATURES: the admin switches parts of the menu page on/off (database: site_content/menu_features, public read) ----
 const MENU_FEATURE_KEYS = ['boxBuilder', 'filter', 'cardTags', 'miniBoxes', 'extras', 'sidebar', 'quiz'];
@@ -709,7 +760,6 @@ function initCart() {
   function flyCookie(startX, startY) {
     const cookie = document.createElement('div');
     cookie.className = 'flying-cookie';
-    cookie.textContent = '🍪';
     cookie.style.left = startX + 'px';
     cookie.style.top = startY + 'px';
     document.body.appendChild(cookie);
@@ -816,7 +866,7 @@ function initCart() {
           if(discountAmountEl) discountAmountEl.textContent = "-" + totalDiscount.toFixed(2) + " DH";
         } else if (window.activePromo.type === 'free_item') {
           freeItemText = window.activePromo.value;
-          if(discountAmountEl) discountAmountEl.textContent = "🎁 " + freeItemText;
+          if(discountAmountEl) discountAmountEl.textContent = "" + freeItemText;
         }
       }
     } else {
@@ -847,7 +897,7 @@ function initCart() {
         
         if (subtotal >= FREE_SHIPPING_THRESHOLD) {
           tracker.innerHTML = `
-            <div class="shipping-text shipping-success">🎉 Congratulations! Free delivery unlocked.</div>
+            <div class="shipping-text shipping-success">Congratulations! Free delivery unlocked.</div>
             <div class="shipping-bar-bg">
               <div class="shipping-bar-fill success" style="width: 100%;"></div>
             </div>
@@ -868,7 +918,7 @@ function initCart() {
     if (cart.length === 0) {
       cartItemsList.innerHTML = `
         <div class="cart-empty">
-          <div class="cart-empty-icon">🍪</div>
+          <div class="cart-empty-icon"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg></div>
           <h4 style="color: var(--brown); font-size: 1.4rem; margin-bottom: 10px; font-family: 'Cormorant Garamond', serif; font-weight: 700;">Your box is empty!</h4>
           <p>It looks like you haven't added any sweet treats yet.</p>
           <button onclick="window.openBoxModal(); window.location.href='menu.html'" class="btn btn-dark" style="margin-top: 20px;">Explore Menu</button>
@@ -1026,7 +1076,7 @@ function initCart() {
       if (confirmPromoSummary) {
         if (window.activePromo) {
           confirmPromoSummary.style.display = "block";
-          if(freeItemText) confirmPromoSummary.textContent = `Promo Code Used: ${window.activePromo.code} (🎁 Gift: ${freeItemText})`;
+          if(freeItemText) confirmPromoSummary.textContent = `Promo Code Used: ${window.activePromo.code} (Gift: ${freeItemText})`;
           else confirmPromoSummary.textContent = `Promo Code Used: ${window.activePromo.code} (-${totalDiscount.toFixed(2)} DH)`;
         } else {
           confirmPromoSummary.style.display = "block";
@@ -1265,7 +1315,7 @@ function initCart() {
         '</div>';
     m.innerHTML = `
       <div style="background:var(--cream);padding:30px 26px;border-radius:18px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.25);">
-        <div style="font-size:3rem;line-height:1;margin-bottom:10px;">🍪</div>
+        <div style="line-height:0;margin-bottom:12px;color:var(--caramel);"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg></div>
         <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--brown);margin:0 0 8px;">Order received!</h3>
         <p style="color:var(--brown-soft);margin:0 0 6px;font-weight:600;">Order ${orderRef}</p>
         <p style="color:var(--brown);margin:0 0 18px;line-height:1.5;">Thank you! Aya has your order and will bake it fresh. We deliver between 15:00 and 20:00 and you pay in cash on delivery.</p>
@@ -1631,7 +1681,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const hrs = Math.floor(diffMs / (1000 * 60 * 60));
           const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
           const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
-          timerString = `⏳ Timer: ${hrs}h ${mins}m ${secs}s remaining`;
+          timerString = `Timer: ${hrs}h ${mins}m ${secs}s remaining`;
         }
       }
 
@@ -1659,7 +1709,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const details = document.createElement("p");
       const minAmount = Math.max(0, Number(promo.minAmount) || 0);
       let conditionText = minAmount > 0 ? `Orders over ${minAmount} DH` : "No minimum amount";
-      let usageText = `👥 Used by: ${usedCount} ${usedCount === 1 ? 'user' : 'users'}`;
+      let usageText = `Used by: ${usedCount} ${usedCount === 1 ? 'user' : 'users'}`;
 
       details.textContent = `Reward: ${formatReward(promo)} | Condition: ${conditionText} | ${usageText}`;
       if (timerString) {
@@ -1740,7 +1790,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const hrs = Math.floor(diff / 3600000);
       const mins = Math.floor((diff % 3600000) / 60000);
       const secs = Math.floor((diff % 60000) / 1000);
-      el.textContent = `⏳ Timer: ${hrs}h ${mins}m ${secs}s remaining`;
+      el.textContent = `Timer: ${hrs}h ${mins}m ${secs}s remaining`;
     });
   }, 1000);
 

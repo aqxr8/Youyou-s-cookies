@@ -11,7 +11,6 @@ html[data-christmas][data-theme="dark"]{
   color-scheme:dark;
 }
 html[data-christmas] body{background:var(--cream-light)}
-html[data-christmas][data-theme="dark"] body{background:radial-gradient(ellipse at 50% -10%,#1d4a35 0%,#12281d 50%,#0a1812 100%) fixed}
 
 /* festive headings */
 html[data-christmas] h1,
@@ -27,16 +26,9 @@ html[data-christmas][data-theme="dark"] .section-title{color:#ffd978!important;t
 html[data-christmas] .brand-text b{font-family:"Mountains of Christmas",Georgia,serif!important;font-weight:700!important;color:#b3122a!important;letter-spacing:.02em!important}
 html[data-christmas][data-theme="dark"] .brand-text b{color:#ffd978!important}
 
-/* header: candy-cane edge + ticker in red & green */
-html[data-christmas] .site-header,
-html[data-christmas] .site-header.scrolled{overflow:visible!important;border-bottom:0!important}
-html[data-christmas] .site-header::after{
-  content:"";position:absolute;left:0;right:0;bottom:-1px;height:7px;pointer-events:none;
-  background:repeating-linear-gradient(-45deg,#c8102e 0 10px,#fff 10px 20px)}
-html[data-christmas] .ticker{background:linear-gradient(90deg,#b3122a,#165b33,#b3122a)!important;color:#fff!important}
+/* header + footer */
 html[data-christmas] .site-footer{border-top:4px solid #c8102e}
 html[data-christmas][data-theme="dark"] .site-footer{background:#08130d!important}
-.xm-strip{text-align:center;padding:14px 8px 4px;font-size:1.4rem;letter-spacing:.3em;overflow:hidden;white-space:nowrap}
 
 /* header logo: the Christmas badge replaces the default logo videos (light + dark). Default logos are untouched when the theme is off. */
 html[data-christmas] body .site-header .brand-logo-wrapper{
@@ -48,17 +40,13 @@ html[data-christmas] body .site-header .brand-logo-wrapper > video.brand-logo.br
 @media (max-width:860px){html[data-christmas] body .site-header .brand-logo-wrapper{width:58px!important;height:58px!important}}
 @media (max-width:560px){html[data-christmas] body .site-header .brand-logo-wrapper{width:52px!important;height:52px!important}}
 
-/* hero: snowy shade */
-html[data-christmas] .hero-slide::after{
-  content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
-  background:linear-gradient(180deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,0) 40%,rgba(179,18,42,.18) 100%)}
+/* hero */
 html[data-christmas] .hero-tag{background:#fff!important;color:#b3122a!important;border-color:#c8102e!important}
 html[data-christmas][data-theme="dark"] .hero-tag{background:rgba(8,19,13,.85)!important;color:#ffd978!important;border-color:#ffd978!important}
 
 /* buttons, cards, inputs */
 html[data-christmas] .btn,html[data-christmas] .btn-dark,html[data-christmas] button.btn{
-  background:linear-gradient(135deg,#d71a37,#a30f27)!important;border-color:#a30f27!important;color:#fff!important;
-  box-shadow:0 6px 16px rgba(179,18,42,.3)}
+  background:#c8102e!important;border-color:#c8102e!important;color:#fff!important;box-shadow:none}
 html[data-christmas] .btn-outline,html[data-christmas] .btn-ghost,html[data-christmas] .btn-light{
   background:transparent!important;color:#165b33!important;border:2px solid #165b33!important;box-shadow:none}
 html[data-christmas][data-theme="dark"] .btn-outline,
@@ -77,25 +65,28 @@ html[data-christmas][data-theme="dark"] input,html[data-christmas][data-theme="d
 html[data-christmas] .lang-switch .lang-btn.active{background:#c8102e;color:#fff}
 html[data-christmas] #install-bar{border-color:rgba(200,16,46,.4)}
 
-/* decorations */
+/* ---- decorations: snow, string lights, ornaments, footer row (all drawn: no emoji, no gradients) ---- */
 #xm-snow{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:40}
-#xm-snow span{position:absolute;top:-6vh;font-size:var(--size);color:#fff;opacity:.9;text-shadow:0 0 4px rgba(120,160,200,.7);
-  animation:xmFall var(--dur) linear var(--delay) infinite}
+#xm-snow span{position:absolute;top:-6vh;width:var(--size);height:var(--size);opacity:.92;animation:xmFall var(--dur) linear var(--delay) infinite}
+#xm-snow .fl{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M12 2v20M3.3 7l17.4 10M3.3 17l17.4-10'/%3E%3Cpath d='M9 4l3 2 3-2M9 20l3-2 3 2M4 9.5l3.2.5.6-3.2M20 14.5l-3.2-.5-.6 3.2M4 14.5l3.2-.5.6 3.2M20 9.5l-3.2.5-.6-3.2'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 0 2px rgba(110,150,200,.85))}
+#xm-snow .dot{width:calc(var(--size) * .42);height:calc(var(--size) * .42);border-radius:50%;background:#fff;box-shadow:0 0 5px rgba(110,150,200,.8)}
 @keyframes xmFall{0%{transform:translate(0,-6vh) rotate(0)}100%{transform:translate(var(--drift),108vh) rotate(360deg)}}
 .xm-lights{position:absolute;left:0;right:0;top:-6px;height:22px;pointer-events:none;z-index:55}
 .xm-lights i{position:absolute;inset:0;background-repeat:repeat-x;background-size:96px 22px;animation:xmTwinkle 1.6s ease-in-out infinite alternate}
-.xm-lights .a{background-image:radial-gradient(circle at 12px 14px,#ff3b3b 5px,transparent 6px);background-position:0 0}
-.xm-lights .b{background-image:radial-gradient(circle at 36px 14px,#ffd23b 5px,transparent 6px);animation-delay:.4s}
-.xm-lights .c{background-image:radial-gradient(circle at 60px 14px,#35d26a 5px,transparent 6px);animation-delay:.8s}
-.xm-lights .d{background-image:radial-gradient(circle at 84px 14px,#46a8ff 5px,transparent 6px);animation-delay:1.2s}
-@keyframes xmTwinkle{0%{opacity:.35;filter:drop-shadow(0 0 0 transparent)}100%{opacity:1;filter:drop-shadow(0 0 6px currentColor)}}
-.xm-bell{position:absolute;top:calc(100% + 46px);display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:60;
-  transform-origin:top center;animation:xmSwing 3.6s ease-in-out infinite}
+.xm-lights .a{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='22'%3E%3Ccircle cx='12' cy='14' r='5' fill='%23ff3b3b'/%3E%3C/svg%3E")}
+.xm-lights .b{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='22'%3E%3Ccircle cx='36' cy='14' r='5' fill='%23ffd23b'/%3E%3C/svg%3E");animation-delay:.4s}
+.xm-lights .c{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='22'%3E%3Ccircle cx='60' cy='14' r='5' fill='%2335d26a'/%3E%3C/svg%3E");animation-delay:.8s}
+.xm-lights .d{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='22'%3E%3Ccircle cx='84' cy='14' r='5' fill='%2346a8ff'/%3E%3C/svg%3E");animation-delay:1.2s}
+@keyframes xmTwinkle{0%{opacity:.4}100%{opacity:1}}
+.xm-bell{position:absolute;top:calc(100% + 40px);display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:60;transform-origin:top center;animation:xmSwing 3.6s ease-in-out infinite}
 .xm-bell-left{left:11%}.xm-bell-right{right:11%;animation-delay:-1.4s}
-.xm-bell i{display:block;width:1px;height:34px;background:rgba(120,90,60,.7)}
-.xm-bell span{font-size:1.7rem;line-height:1;margin-top:-3px}
+.xm-bell i{display:block;width:1px;height:30px;background:rgba(120,90,60,.7)}
+.xm-bell span{display:block;line-height:0;margin-top:-2px}
 @keyframes xmSwing{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
-@media (max-width:860px){.xm-bell-left{left:6%}.xm-bell-right{right:6%}.xm-strip{font-size:1.1rem}.xm-lights{height:18px}}
+.xm-strip{display:flex;justify-content:center;align-items:center;gap:20px;padding:18px 8px 6px;width:100%;box-sizing:border-box;grid-column:1/-1;flex:0 0 100%;order:-1;margin-bottom:22px}
+html[data-christmas] .site-footer{padding-top:30px}
+.xm-strip svg{width:26px;height:26px;display:block}
+@media (max-width:860px){.xm-bell-left{left:6%}.xm-bell-right{right:6%}.xm-lights{height:18px}}
 @media (prefers-reduced-motion:reduce){#xm-snow span,.xm-bell,.xm-lights i{animation:none!important}}
 
 /* ---- cursor: christmas ---- */

@@ -1375,9 +1375,9 @@ function initAdminDashboard(db) {
 
   const PRESETS = {
     flavor: {
-      en: { subject: "A new flavor just landed 🍪", title: "A new flavor is here!", body: "Hi {name},\n\nWe just baked something new: [FLAVOR NAME]. [One line about how it tastes.]\n\nBe the first to try it. Fresh batches are baked every day.", cta: "Order now" },
-      fr: { subject: "Une nouvelle saveur vient d'arriver 🍪", title: "Une nouvelle saveur est là !", body: "Bonjour {name},\n\nNous venons de cuire quelque chose de nouveau : [NOM DE LA SAVEUR]. [Une phrase sur le goût.]\n\nSoyez les premiers à la goûter. Des fournées fraîches sont cuites chaque jour.", cta: "Commander" },
-      ar: { subject: "نكهة جديدة وصلت للتو 🍪", title: "نكهة جديدة بين يديك!", body: "مرحباً {name}،\n\nخبزنا للتو شيئاً جديداً: [اسم النكهة]. [جملة عن المذاق.]\n\nكن أول من يجرّبها. نخبز دفعات طازجة كل يوم.", cta: "اطلب الآن" }
+      en: { subject: "A new flavor just landed ", title: "A new flavor is here!", body: "Hi {name},\n\nWe just baked something new: [FLAVOR NAME]. [One line about how it tastes.]\n\nBe the first to try it. Fresh batches are baked every day.", cta: "Order now" },
+      fr: { subject: "Une nouvelle saveur vient d'arriver ", title: "Une nouvelle saveur est là !", body: "Bonjour {name},\n\nNous venons de cuire quelque chose de nouveau : [NOM DE LA SAVEUR]. [Une phrase sur le goût.]\n\nSoyez les premiers à la goûter. Des fournées fraîches sont cuites chaque jour.", cta: "Commander" },
+      ar: { subject: "نكهة جديدة وصلت للتو ", title: "نكهة جديدة بين يديك!", body: "مرحباً {name}،\n\nخبزنا للتو شيئاً جديداً: [اسم النكهة]. [جملة عن المذاق.]\n\nكن أول من يجرّبها. نخبز دفعات طازجة كل يوم.", cta: "اطلب الآن" }
     },
     item: {
       en: { subject: "Something new on our menu", title: "New on the menu", body: "Hi {name},\n\nMeet our newest treat: [ITEM NAME]. [One line about it.]\n\nIt is on the menu now, baked fresh in small batches.", cta: "See the menu" },
@@ -1385,9 +1385,9 @@ function initAdminDashboard(db) {
       ar: { subject: "جديد في قائمتنا", title: "جديد في القائمة", body: "مرحباً {name}،\n\nتعرّف على أحدث حلوياتنا: [اسم المنتج]. [جملة عنه.]\n\nأصبحت الآن في القائمة، مخبوزة طازجة بكميات صغيرة.", cta: "شاهد القائمة" }
     },
     coupon: {
-      en: { subject: "A little gift for you 🎁", title: "Your coupon is here", body: "Hi {name},\n\nHere is a coupon just for you. Use the code below at checkout.\n\nIt is valid while it lasts, so don't wait too long!", cta: "Order now" },
-      fr: { subject: "Un petit cadeau pour vous 🎁", title: "Votre code promo est arrivé", body: "Bonjour {name},\n\nVoici un code promo rien que pour vous. Utilisez le code ci-dessous au moment de commander.\n\nIl est valable tant qu'il dure, ne tardez pas !", cta: "Commander" },
-      ar: { subject: "هدية صغيرة لك 🎁", title: "رمز الخصم وصل", body: "مرحباً {name}،\n\nإليك رمز خصم خاص بك. استعمل الرمز أدناه عند إتمام الطلب.\n\nصالح ما دام متاحاً، فلا تتأخر!", cta: "اطلب الآن" }
+      en: { subject: "A little gift for you ", title: "Your coupon is here", body: "Hi {name},\n\nHere is a coupon just for you. Use the code below at checkout.\n\nIt is valid while it lasts, so don't wait too long!", cta: "Order now" },
+      fr: { subject: "Un petit cadeau pour vous ", title: "Votre code promo est arrivé", body: "Bonjour {name},\n\nVoici un code promo rien que pour vous. Utilisez le code ci-dessous au moment de commander.\n\nIl est valable tant qu'il dure, ne tardez pas !", cta: "Commander" },
+      ar: { subject: "هدية صغيرة لك ", title: "رمز الخصم وصل", body: "مرحباً {name}،\n\nإليك رمز خصم خاص بك. استعمل الرمز أدناه عند إتمام الطلب.\n\nصالح ما دام متاحاً، فلا تتأخر!", cta: "اطلب الآن" }
     }
   };
 
@@ -1737,7 +1737,7 @@ function initAdminDashboard(db) {
     overlay.style.cssText = "position:fixed; inset:0; z-index:5000; display:grid; place-items:center; padding:16px; background:rgba(0,0,0,.6); backdrop-filter:blur(4px);";
     const row = (id, label, checked, disabled) => `<label style="display:flex; gap:10px; align-items:flex-start; margin:8px 0; font-weight:600; cursor:${disabled ? "not-allowed" : "pointer"}; opacity:${disabled ? ".5" : "1"};"><input type="checkbox" id="${id}" ${checked ? "checked" : ""} ${disabled ? "disabled" : ""} style="margin-top:4px;"><span>${label}</span></label>`;
     overlay.innerHTML = `<div style="background:var(--cream-light,#fff); color:var(--brown,#333); width:100%; max-width:440px; padding:24px; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,.3);">
-      <h3 style="margin:0 0 6px; font-size:1.3rem;">🚫 Block this customer?</h3>
+      <h3 style="margin:0 0 6px; font-size:1.3rem;">Block this customer?</h3>
       <p style="margin:0 0 12px; font-size:.9rem; opacity:.85;">${esc(d.customerName || "Guest")} · order #${esc(orderNumber(entry.id, d))}. They will not be able to place new orders with what you tick below.</p>
       ${row("bd-phone", "Phone: " + esc(d.phone || "—"), Boolean(pk), !pk)}
       ${row("bd-account", "Account (logged-in orders)", Boolean(hasAccount), !hasAccount)}
@@ -1852,15 +1852,15 @@ function initAdminDashboard(db) {
             <span class="status-pill-badge ${status === "Delivered" ? "delivered" : status === "Cancelled" ? "cancelled" : status === "Returned" ? "returned" : "processing"}">${esc(statusLabel(status))}</span>
           </div>
           <div style="margin-bottom:8px;"><strong>${esc(data.customerName || "Guest")}</strong>
-            <span style="color: var(--brown-soft); font-size:.85rem;"> · ${esc(data.userEmail || "Guest")}</span>${returnedBefore > 0 ? `<span class="admin-warn-chip">⚠ ${returnedBefore} returned before</span>` : ""}</div>
+            <span style="color: var(--brown-soft); font-size:.85rem;"> · ${esc(data.userEmail || "Guest")}</span>${returnedBefore > 0 ? `<span class="admin-warn-chip">${returnedBefore} returned before</span>` : ""}</div>
           <div style="margin-bottom:8px;">${phoneHtml}</div>
-          <div style="margin-bottom:8px; font-size:.9rem;">📍 ${esc(data.address || "—")}</div>
+          <div style="margin-bottom:8px; font-size:.9rem;">${esc(data.address || "—")}</div>
           <div style="margin-bottom:10px; font-size:.9rem; color: var(--brown-soft);">${items}</div>
           ${promoLine}
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:8px;">
             <strong style="color: var(--caramel); font-size:1.1rem;">${total.toFixed(2)} DH</strong>
-            <button type="button" class="admin-slip-btn" data-id="${esc(id)}" title="Print order slip">🖨 Slip</button>
-            ${blocked ? '<span class="admin-blocked-badge">🚫 Blocked</span>' : `<button type="button" class="admin-block-btn" data-id="${esc(id)}" title="Stop this customer from ordering again">🚫 Block</button>`}
+            <button type="button" class="admin-slip-btn" data-id="${esc(id)}" title="Print order slip">Slip</button>
+            ${blocked ? '<span class="admin-blocked-badge">Blocked</span>' : `<button type="button" class="admin-block-btn" data-id="${esc(id)}" title="Stop this customer from ordering again">Block</button>`}
             <div class="admin-status-group" role="group" aria-label="Order status" style="display:flex; gap:6px; flex-wrap:wrap;">
               ${statusBtn("Processing", "#f0ad4e")}
               ${statusBtn("Delivered", "#57a05f")}
@@ -2063,7 +2063,7 @@ function initAdminDashboard(db) {
     catch (e) { menuLocked = false; console.warn("Could not read the menu lock (publish the new firestore.rules):", e); }
     const st = menuEl("menu-lock-state");
     const tg = menuEl("menu-lock-toggle");
-    if (st) st.textContent = menuLocked ? "🔒 Price lock is ON - the database refuses orders that do not match this menu." : "🔓 Price lock is OFF - orders are not checked against this menu.";
+    if (st) st.textContent = menuLocked ? "Price lock is ON - the database refuses orders that do not match this menu." : "Price lock is OFF - orders are not checked against this menu.";
     if (tg) { tg.style.display = menuRows.length ? "" : "none"; tg.textContent = menuLocked ? "Turn lock OFF" : "Turn lock ON"; }
   };
 
@@ -2184,7 +2184,7 @@ function initAdminDashboard(db) {
     if (!b) return;
     const n = menuRows.length ? menuBoxesMissing().length : 0;   // an empty menu gets them with "Import current menu"
     b.style.display = n ? "" : "none";
-    b.textContent = "🎁 Add the Build-a-Box sizes (5 / 9 / 12)";
+    b.textContent = "Add the Build-a-Box sizes (5 / 9 / 12)";
   };
 
   // ---- Menu features: on/off switches for parts of the menu page. Saved in site_content/menu_features (public read, only the admin can write) ----
@@ -2288,7 +2288,7 @@ function initAdminDashboard(db) {
     const rows = boxDbRows();
     host.innerHTML = `
       <div class="bp-head"><h4>Box options</h4>
-        <span class="bp-lock ${menuLocked ? "on" : "off"}">${menuLocked ? "🔒 Locked: checkout refuses a price outside what you set" : "🔓 Price lock is OFF: turn it on in the bar above"}</span></div>
+        <span class="bp-lock ${menuLocked ? "on" : "off"}">${menuLocked ? "Locked: checkout refuses a price outside what you set" : "Price lock is OFF: turn it on in the bar above"}</span></div>
       <p class="news-hint" style="margin:0 0 12px;">The "Build your own box" options customers can choose. Set how many cookies each box holds and how it is priced: a <b>fixed price</b>, or a <b>percentage of the picked cookies' prices</b> (90% = 10% off, 100% = same as buying them one by one).</p>
       <div class="bo-list">${rows.map((r) => boxRowHtml(r.id, boxState(r), false)).join("")}</div>
       <p class="bo-empty news-hint"${rows.length ? " hidden" : ""}>No box options yet. Add the first one below.</p>
@@ -2461,7 +2461,7 @@ function initAdminDashboard(db) {
     if (!b) return;
     const n = menuRows.filter((r) => !menuHasTags(r.data) && menuSuggestedFor(r.id).length).length;
     b.style.display = n ? "" : "none";
-    b.textContent = "🏷 Add suggested tags to " + n + " item" + (n > 1 ? "s" : "") + " without tags";
+    b.textContent = "Add suggested tags to " + n + " item" + (n > 1 ? "s" : "") + " without tags";
   };
 
   const menuResetForm = () => {
@@ -2733,7 +2733,7 @@ function initAdminDashboard(db) {
     const pv = pEl("policy-preview");
     if (pv) pv.style.display = policyPreviewing ? "block" : "none";
     const pb = pEl("policy-preview-btn");
-    if (pb) pb.textContent = policyPreviewing ? "✎ Back to editing" : "👁 Preview";
+    if (pb) pb.textContent = policyPreviewing ? "Back to editing" : "Preview";
     if (policyPreviewing) policyPreview();
   };
   const policyShowLang = (l) => { policyLang = l; policyApplyView(); };
@@ -2755,6 +2755,102 @@ function initAdminDashboard(db) {
       policySay("Could not read the saved policy. Publish the new firestore.rules.", true);
     }
     policyFill();
+  };
+
+  // ---- Announcement line: the moving text on the home page. Saved in site_content/announcement (public read, admin-only write) ----
+  const ANN_DEFAULT = ["Today's Special #CookieOfTheDay: Kinder Cookie · Freshly Baked", "Weekend exclusive flavors now available to pre-order", "Freshly baked in small batches daily"];
+  const initAnnouncement = async () => {
+    const pane = document.getElementById("announcement-pane");
+    if (!pane || pane.dataset.bound) return;
+    pane.dataset.bound = "1";
+    const $ = (id) => document.getElementById(id);
+    let state = { enabled: true, speed: "normal", items: ANN_DEFAULT.slice() };
+    try {
+      const snap = await getDoc(doc(db, "site_content", "announcement"));
+      if (snap.exists()) {
+        const d = snap.data();
+        state = {
+          enabled: d.enabled !== false,
+          speed: ["slow", "normal", "fast"].includes(d.speed) ? d.speed : "normal",
+          items: Array.isArray(d.items) ? d.items.filter((x) => typeof x === "string").slice(0, 8) : ANN_DEFAULT.slice()
+        };
+      }
+    } catch (e) { console.warn("Could not read the announcement:", e); }
+
+    const say = (t, bad) => { const m = $("ann-msg"); m.textContent = t; m.style.color = bad ? "#b3261e" : "#2e7d32"; };
+    const markDirty = () => { $("ann-save").disabled = false; $("ann-msg").textContent = ""; };
+
+    const preview = () => {
+      const bar = $("ann-preview");
+      bar.classList.toggle("off", !state.enabled);
+      const lines = state.items.map((t) => t.trim()).filter(Boolean);
+      if (window.YYTicker && lines.length) window.YYTicker.render($("ann-preview-track"), lines, state.speed);
+      else $("ann-preview-track").innerHTML = "<li>Add a line to see the preview</li>";
+    };
+    const rows = () => {
+      $("ann-lines").innerHTML = state.items.length ? state.items.map((t, i) => `
+        <div class="ann-row" data-i="${i}">
+          <span class="ann-n">${i + 1}</span>
+          <input type="text" maxlength="120" value="${esc(t)}" placeholder="Write an announcement..." aria-label="Line ${i + 1}">
+          <button type="button" class="ann-btn" data-act="up" ${i === 0 ? "disabled" : ""} aria-label="Move up">▲</button>
+          <button type="button" class="ann-btn" data-act="down" ${i === state.items.length - 1 ? "disabled" : ""} aria-label="Move down">▼</button>
+          <button type="button" class="ann-btn del" data-act="del">Remove</button>
+        </div>`).join("") : '<p class="news-hint">No lines yet. Add one below.</p>';
+      $("ann-add").disabled = state.items.length >= 8;
+      $("ann-count").textContent = "(" + state.items.length + " of 8)";
+    };
+    const sync = () => {
+      $("ann-enabled").checked = state.enabled;
+      $("ann-state").textContent = state.enabled ? "On" : "Off";
+      $("ann-switch-row").classList.toggle("off", !state.enabled);
+      pane.querySelectorAll("#ann-speed button").forEach((b) => b.classList.toggle("active", b.dataset.speed === state.speed));
+    };
+    sync(); rows(); preview();
+
+    $("ann-enabled").addEventListener("change", (e) => { state.enabled = e.target.checked; sync(); preview(); markDirty(); });
+    $("ann-speed").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-speed]");
+      if (!b) return;
+      state.speed = b.dataset.speed; sync(); preview(); markDirty();
+    });
+    let timer;
+    $("ann-lines").addEventListener("input", (e) => {
+      const row = e.target.closest(".ann-row");
+      if (!row) return;
+      state.items[Number(row.dataset.i)] = e.target.value;
+      markDirty();
+      clearTimeout(timer); timer = setTimeout(preview, 350);
+    });
+    $("ann-lines").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-act]");
+      const row = e.target.closest(".ann-row");
+      if (!b || !row) return;
+      const i = Number(row.dataset.i), act = b.dataset.act;
+      if (act === "del") state.items.splice(i, 1);
+      else { const j = act === "up" ? i - 1 : i + 1; [state.items[i], state.items[j]] = [state.items[j], state.items[i]]; }
+      rows(); preview(); markDirty();
+    });
+    $("ann-add").addEventListener("click", () => {
+      if (state.items.length >= 8) return;
+      state.items.push(""); rows(); markDirty();
+      const last = $("ann-lines").querySelector(".ann-row:last-child input");
+      if (last) last.focus();
+    });
+    $("ann-save").addEventListener("click", async () => {
+      const items = state.items.map((t) => t.trim()).filter(Boolean).slice(0, 8);
+      if (state.enabled && !items.length) { say("Add at least one line, or turn the announcement off.", true); return; }
+      const btn = $("ann-save");
+      btn.disabled = true;
+      try {
+        await setDoc(doc(db, "site_content", "announcement"), { enabled: state.enabled, speed: state.speed, items, updatedAt: serverTimestamp() });
+        state.items = items; rows(); preview();
+        say("Saved. The home page shows it the next time it loads.");
+      } catch (err) {
+        console.error("Saving the announcement failed:", err);
+        say("Could not save. Check you are signed in as the admin and that the new firestore.rules are published.", true);
+        btn.disabled = false;
+      }
+    });
   };
 
   const initPolicyEditor = () => {
@@ -2816,6 +2912,7 @@ function initAdminDashboard(db) {
     }
     initNewsletter();
     initMenuManager();
+    initAnnouncement();
     initPolicyEditor();
     loadBlacklist();
     recomputeStats();

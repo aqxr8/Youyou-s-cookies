@@ -56,7 +56,7 @@
     [/^Total: (.+) DH$/, function (m) { return "Total : " + m[1] + " DH"; }, function (m) { return "المجموع: " + m[1] + " درهم"; }],
     [/^Promo: (.+) \(-(.+) DH\)$/, function (m) { return "Promo : " + m[1] + " (-" + m[2] + " DH)"; }, function (m) { return "خصم: " + m[1] + " (-" + m[2] + " درهم)"; }],
     [/^Promo Code Used: (.+) \(-(.+) DH\)$/, function (m) { return "Code promo utilisé : " + m[1] + " (-" + m[2] + " DH)"; }, function (m) { return "رمز الخصم المستعمل: " + m[1] + " (-" + m[2] + " درهم)"; }],
-    [/^Promo Code Used: (.+) \(🎁 Gift: (.+)\)$/, function (m) { return "Code promo utilisé : " + m[1] + " (🎁 Cadeau : " + m[2] + ")"; }, function (m) { return "رمز الخصم المستعمل: " + m[1] + " (🎁 هدية: " + m[2] + ")"; }],
+    [/^Promo Code Used: (.+) \(Gift: (.+)\)$/, function (m) { return "Code promo utilisé : " + m[1] + " (Cadeau : " + m[2] + ")"; }, function (m) { return "رمز الخصم المستعمل: " + m[1] + " (هدية: " + m[2] + ")"; }],
     [/^Coupon (.+) applied successfully!$/, function (m) { return "Coupon " + m[1] + " appliqué avec succès !"; }, function (m) { return "تم تطبيق القسيمة " + m[1] + " بنجاح!"; }],
     [/^This coupon requires an order of at least (\d+) DH\.$/, function (m) { return "Ce coupon nécessite une commande d'au moins " + m[1] + " DH."; }, function (m) { return "تتطلب هذه القسيمة طلباً لا تقل قيمته عن " + m[1] + " درهم."; }],
     [/^Orders over (\d+) DH$/, function (m) { return "Commandes de plus de " + m[1] + " DH"; }, function (m) { return "الطلبات التي تزيد عن " + m[1] + " درهم"; }],

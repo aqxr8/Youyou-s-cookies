@@ -1,0 +1,102 @@
+/* =========================================================
+   clean.css - the "clean" upgrade. Loads LAST on every page.
+   - one slim header row (logo + name | links | language, account, theme, cart)
+   - slim announcement bar (edited in the dashboard > Announcement)
+   - small drawn icons where emoji used to be
+   No gradients, no emoji.
+   ========================================================= */
+
+/* ============================ HEADER ============================ */
+html body header.site-header,
+html body header.site-header.scrolled{
+  background:rgba(255,249,244,.86)!important;                 /* semi-transparent, content shows through */
+  border-bottom:1px solid rgba(74,55,40,.08)!important;
+  box-shadow:none!important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.1)!important;backdrop-filter:blur(14px) saturate(1.1)!important;
+  overflow:visible!important;
+}
+html[data-theme="dark"] body header.site-header,
+html[data-theme="dark"] body header.site-header.scrolled{background:rgba(26,20,18,.86)!important;border-bottom-color:rgba(255,255,255,.06)!important}
+html body header.site-header::after{display:none!important}
+/* Christmas: candy-cane edge under the header (an SVG stripe pattern, no gradient) */
+html[data-christmas] body header.site-header,
+html[data-christmas] body header.site-header.scrolled{border-bottom:0!important}
+html[data-christmas] body header.site-header::after{
+  display:block!important;content:"";position:absolute;left:0;right:0;bottom:-1px;height:7px;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='7' viewBox='0 0 20 7'%3E%3Crect width='20' height='7' fill='%23fff'/%3E%3Cpath d='M-2 7L5 0h5L3 7zM8 7l7-7h5l-7 7z' fill='%23c8102e'/%3E%3C/svg%3E") repeat-x;
+}
+html body header.site-header .header-inner{
+  display:flex!important;align-items:center;gap:24px;
+  min-height:0!important;height:66px;padding-top:0!important;padding-bottom:0!important;
+}
+
+/* brand: small round logo + the name on one line */
+html body header.site-header a.brand{display:flex;align-items:center;gap:10px;flex:none;text-decoration:none}
+html body header.site-header a.brand .brand-logo-wrapper{
+  width:42px!important;height:42px!important;flex:none;border-radius:50%!important;overflow:hidden!important;
+  filter:none!important;box-shadow:none!important;
+}
+html[data-christmas] body header.site-header a.brand .brand-logo-wrapper{border-radius:0!important;overflow:visible!important}
+html body header.site-header a.brand .brand-text{display:flex;flex-direction:column;line-height:1.1}
+html body header.site-header a.brand .brand-text b{font-size:1.35rem!important;line-height:1.1;white-space:nowrap}
+html body header.site-header a.brand .desktop-only-text{display:none!important}
+
+/* status: just a dot and a word */
+html body header.site-header .status-pill{
+  border:0!important;background:none!important;box-shadow:none!important;padding:0!important;
+  font-size:.8rem;font-weight:600;gap:6px;flex:none;
+}
+
+/* ============================ DESKTOP ============================ */
+@media (min-width:861px){
+  html body header.site-header .main-nav{display:flex;align-items:center;gap:2px;margin-inline:auto;flex:1;justify-content:center;white-space:nowrap}
+  html body header.site-header .main-nav>a{
+    padding:9px 14px;border-radius:8px;font-size:.95rem;font-weight:500;white-space:nowrap;line-height:1.2;
+    background:none!important;color:var(--brown)!important;border:0!important;box-shadow:none!important;
+    transition:color .15s,background .15s;
+  }
+  html body header.site-header .main-nav>a:hover{background:var(--pink)!important}
+  html body header.site-header .main-nav>a.active,
+  html body header.site-header .main-nav>a[aria-current="page"]{color:var(--caramel)!important;box-shadow:inset 0 -2px 0 var(--caramel)!important;border-radius:0!important}
+  html body header.site-header .main-nav .nav-icon{display:none}
+}
+html body header.site-header .header-actions{display:flex;align-items:center;gap:4px;flex:none}
+html body header.site-header .header-action-btn,
+html body header.site-header #theme-toggle{
+  width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;padding:0;
+  border:0!important;background:none!important;box-shadow:none!important;border-radius:8px;color:var(--brown);
+}
+html body header.site-header .header-action-btn:hover,
+html body header.site-header #theme-toggle:hover{background:var(--pink)!important}
+html body header.site-header #user-icon-link{display:inline-flex;align-items:center}
+html body header.site-header #user-icon-wrapper{border:0!important;background:none!important;box-shadow:none!important;width:auto;height:auto}
+
+/* language: three small text buttons, separated from the icons by a thin line */
+html body header.site-header .lang-switch{
+  border:0!important;background:none!important;box-shadow:none!important;padding:0 12px 0 0;margin-inline-end:6px;gap:0;
+  border-inline-end:1px solid var(--pink)!important;border-radius:0;
+}
+html body header.site-header .lang-switch .lang-btn{padding:6px 8px;border-radius:6px;font-size:.8rem;background:none!important;color:var(--brown-soft)}
+html body header.site-header .lang-switch .lang-btn:hover{color:var(--brown);background:var(--pink)!important}
+html body header.site-header .lang-switch .lang-btn.active{background:none!important;color:var(--caramel)!important;box-shadow:inset 0 -2px 0 var(--caramel);border-radius:0}
+
+/* ============================ PHONES ============================ */
+@media (max-width:860px){
+  html body header.site-header .header-inner{height:58px;gap:12px}
+  html body header.site-header a.brand .brand-logo-wrapper{width:36px!important;height:36px!important}
+  html body header.site-header a.brand .brand-text b{font-size:1.15rem!important}
+  html body header.site-header .header-actions{margin-inline-start:auto}
+}
+
+/* ============================ ANNOUNCEMENT LINE ============================ */
+.ticker[hidden]{display:none!important}
+html body .ticker{border:0;color:#fff;background:var(--caramel)}
+html body .ticker .ticker-track{gap:0;padding:8px 0;font-size:.82rem;letter-spacing:.04em}
+html body .ticker .ticker-track li{display:inline-flex;align-items:center;gap:44px;padding-inline-end:44px}
+html body .ticker .ticker-track li::after{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.55;flex:none}
+html body .ticker .ticker-sep{display:none}
+
+/* ============================ ICONS THAT USED TO BE EMOJI ============================ */
+.flying-cookie{position:fixed;width:26px;height:26px;font-size:0;border-radius:50%;background:#d9a066;border:2px solid #b07a42;box-sizing:border-box}
+.flying-cookie::before{content:"";position:absolute;left:4px;top:5px;width:4px;height:4px;border-radius:50%;background:#5a3420;box-shadow:9px 3px 0 #5a3420,3px 9px 0 #5a3420}
+.cart-empty-icon{font-size:0;color:var(--caramel);line-height:0}

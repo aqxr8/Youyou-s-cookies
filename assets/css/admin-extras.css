@@ -34,7 +34,7 @@
 .news-actions{display:flex;gap:10px;flex-wrap:wrap}
 .news-progress{margin-top:14px;font-weight:600;color:var(--brown)}
 .news-progress .bar{height:10px;border-radius:999px;background:rgba(127,127,127,.25);overflow:hidden;margin:8px 0}
-.news-progress .bar i{display:block;height:100%;background:linear-gradient(90deg,#57a05f,#8fd19a);width:0;transition:width .3s}
+.news-progress .bar i{display:block;height:100%;background:#57a05f;width:0;transition:width .3s}
 .news-progress .err{color:#c62828}
 .news-h3{margin:26px 0 10px;font-size:1.1rem;color:var(--brown)}
 .news-history .row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid rgba(127,127,127,.2);border-radius:10px;margin-bottom:8px;background:var(--white,#fff);font-size:.9rem}
@@ -234,3 +234,24 @@
   .bo-name,.bo-mode{grid-column:1/-1}
   .bo-avail{padding-bottom:0}
 }
+
+/* ---- Announcement tab (admin) ---- */
+.ann-card{background:var(--panel,#fff);border:1px solid var(--line,#ecd3cd);border-radius:14px;padding:20px 22px;max-width:900px}
+.ann-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.ann-head h3{margin:0;font-size:1.2rem;color:var(--ink,#3b1d17)}
+.ann-switch{margin-bottom:18px}
+.ann-block{margin-bottom:18px}
+.ann-label{display:block;font-size:.78rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#8a6a63);margin-bottom:8px}
+.ann-label small{font-weight:600;text-transform:none;letter-spacing:0}
+.ann-row{display:grid;grid-template-columns:26px 1fr auto auto auto;align-items:center;gap:8px;margin-bottom:8px}
+.ann-n{font-weight:800;color:var(--muted,#8a6a63);text-align:center}
+.ann-row input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line,#ecd3cd);border-radius:10px;font:inherit;background:var(--bg,#fff);color:inherit}
+.ann-row input:focus{outline:2px solid var(--accent,#b85f58);outline-offset:1px}
+.ann-btn{border:1px solid var(--line,#ecd3cd);background:transparent;color:inherit;border-radius:10px;padding:8px 12px;font:inherit;font-size:.84rem;font-weight:700;cursor:pointer}
+.ann-btn:hover:not(:disabled){border-color:var(--accent,#b85f58);color:var(--accent,#b85f58)}
+.ann-btn:disabled{opacity:.35;cursor:not-allowed}
+.ann-btn.del{border-color:#b3261e;color:#b3261e}
+.ann-btn.del:hover{background:#b3261e;color:#fff}
+.ann-preview{border-radius:10px;overflow:hidden}
+.ann-preview.off{opacity:.35}
+@media (max-width:640px){.ann-row{grid-template-columns:22px 1fr auto auto}.ann-btn.del{grid-column:2/-1}}

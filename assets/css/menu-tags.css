@@ -4,16 +4,13 @@
 .tag-chip{
   display:inline-flex;align-items:center;gap:9px;cursor:pointer;
   font-family:var(--f-body,inherit);font-weight:700;font-size:.95rem;letter-spacing:.03em;text-transform:capitalize;line-height:1.2;
-  padding:9px 12px 9px 18px;border-radius:999px;
+  padding:9px 18px;border-radius:999px;
   border:2px solid var(--pink-deep);background:var(--white);color:var(--brown);
   transition:background .2s,color .2s,border-color .2s,transform .2s;
 }
-.tag-chip .n{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;font-size:.75rem;background:var(--pink);color:var(--brown)}
 .tag-chip:hover{transform:translateY(-2px);border-color:var(--caramel)}
 .tag-chip.active{background:var(--caramel);border-color:var(--caramel);color:#fff8f4;box-shadow:0 8px 18px rgba(0,0,0,.14)}
-.tag-chip.active .n{background:rgba(255,255,255,.26);color:#fff}
 .tag-chip:focus-visible,.card-tag:focus-visible{outline:3px solid var(--caramel);outline-offset:3px}
-html[dir="rtl"] .tag-chip{padding:9px 18px 9px 12px}
 
 /* little tag pills on every card (click one = filter by it) */
 .card-tags{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 14px}
