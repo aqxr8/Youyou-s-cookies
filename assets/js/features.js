@@ -394,14 +394,34 @@ function renderTicker(track, lines, speed) {
 }
 window.YYTicker = { render: renderTicker, speeds: TICKER_SPEEDS };
 
+let lastAnnouncement = null;
 function applyAnnouncement(a) {
   const bar = document.querySelector('.ticker');
   if (!bar || !a) return;
+  lastAnnouncement = a;
   const track = bar.querySelector('.ticker-track');
-  if (a.enabled === false) { bar.hidden = true; return; }
-  bar.hidden = false;
-  if (!renderTicker(track, a.items, a.speed) && !(a.items && a.items.length)) bar.hidden = true;   // no lines at all -> no bar
+  const admin = !!window.YYIsAdmin;
+  bar.classList.remove('ticker-off');
+  if (a.enabled === false) {
+    if (!admin) { bar.hidden = true; return; }
+    // the admin still sees a slim bar so the Edit button stays reachable
+    bar.hidden = false; bar.classList.add('ticker-off');
+    track.style.animation = 'none'; track.innerHTML = '<li>The announcement bar is switched off (visitors do not see it)</li>';
+  } else {
+    bar.hidden = false;
+    if (!renderTicker(track, a.items, a.speed) && !(a.items && a.items.length)) { if (!admin) { bar.hidden = true; return; } }
+  }
+  // admin only: a small Edit button that opens the dashboard on the Announcement tab
+  if (admin && !bar.querySelector('.ticker-edit')) {
+    const link = document.createElement('a');
+    link.className = 'ticker-edit';
+    link.href = 'admin.html#announcement';
+    link.textContent = 'Edit';
+    link.setAttribute('data-i18n-skip', '');
+    bar.appendChild(link);
+  }
 }
+window.addEventListener('yy:admin', () => { if (lastAnnouncement) applyAnnouncement(lastAnnouncement); });
 function loadAnnouncement() {
   const bar = document.querySelector('.ticker');
   if (!bar) return;

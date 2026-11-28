@@ -100,3 +100,10 @@ html body .ticker .ticker-sep{display:none}
 .flying-cookie{position:fixed;width:26px;height:26px;font-size:0;border-radius:50%;background:#d9a066;border:2px solid #b07a42;box-sizing:border-box}
 .flying-cookie::before{content:"";position:absolute;left:4px;top:5px;width:4px;height:4px;border-radius:50%;background:#5a3420;box-shadow:9px 3px 0 #5a3420,3px 9px 0 #5a3420}
 .cart-empty-icon{font-size:0;color:var(--caramel);line-height:0}
+
+/* admin only: Edit button on the announcement bar */
+html body .ticker{position:relative}
+.ticker-edit{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);z-index:3;background:#fff;color:var(--caramel);font-weight:800;font-size:.74rem;letter-spacing:.03em;padding:3px 14px;border-radius:999px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.22)}
+.ticker-edit:hover{background:var(--cream-light)}
+html body .ticker.ticker-off{background:#6b5a55}
+html body .ticker.ticker-off .ticker-track{animation:none!important;transform:none;justify-content:center;width:100%}

@@ -7,10 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | YouYou's Cookies</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261126b">
+  <link rel="stylesheet" href="assets/css/style.css?v=20261129a">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Pinyon+Script&family=Playfair+Display:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/theme.css?v=20261126b">
-  <link rel="stylesheet" href="assets/css/pro.css?v=20261126b">
+  <link rel="stylesheet" href="assets/css/theme.css?v=20261129a">
+  <link rel="stylesheet" href="assets/css/pro.css?v=20261129a">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style id="boot-style">
@@ -71,7 +71,7 @@
     }
 
     [data-theme="dark"] .admin-hero-banner {
-      background: linear-gradient(135deg, #241915 0%, #3a2620 60%, #4a2d24 100%);
+      background: #2f211c;
       border-color: rgba(255, 255, 255, 0.12);
       box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3);
     }
@@ -449,11 +449,11 @@
     }
   </style>
 <script>try{if(localStorage.getItem('youyou_theme_v2')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
-<link rel="stylesheet" href="assets/css/mobile.css?v=20261126b">
-<link rel="stylesheet" href="assets/css/i18n.css?v=20261126b">
-<script src="assets/js/i18n-dict-1.js?v=20261126b"></script>
-<script src="assets/js/i18n-dict-2.js?v=20261126b"></script>
-<script src="assets/js/i18n.js?v=20261126b"></script>
+<link rel="stylesheet" href="assets/css/mobile.css?v=20261129a">
+<link rel="stylesheet" href="assets/css/i18n.css?v=20261129a">
+<script src="assets/js/i18n-dict-1.js?v=20261129a"></script>
+<script src="assets/js/i18n-dict-2.js?v=20261129a"></script>
+<script src="assets/js/i18n.js?v=20261129a"></script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#c0716a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -461,10 +461,11 @@
 <meta name="apple-mobile-web-app-title" content="Youyou's">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/images/logo.webp">
-<link rel="stylesheet" href="assets/css/pwa.css?v=20261126b">
-<script src="assets/js/pwa.js?v=20261126b" defer></script>
-<link rel="stylesheet" href="assets/css/cursors.css?v=20261126b">
-<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261126b">
+<link rel="stylesheet" href="assets/css/pwa.css?v=20261129a">
+<script src="assets/js/pwa.js?v=20261129a" defer></script>
+<link rel="stylesheet" href="assets/css/cursors.css?v=20261129a">
+<link rel="stylesheet" href="assets/css/admin-extras.css?v=20261129a">
+<link rel="stylesheet" href="assets/css/clean.css?v=20261129a">
 </head>
 <body class="page-pro">
   <div id="boot-overlay" role="status" aria-live="polite">
@@ -509,7 +510,6 @@
         </div>
         <span class="brand-text">
           <b>Youyou's Cookies</b>
-          <span class="desktop-only-text">MADE WITH LOVE</span>
         </span>
       </a>
 
@@ -522,7 +522,7 @@
         <button class="nav-close" id="nav-close" aria-label="Close Menu">&times;</button>
         <a href="index.html"><span class="nav-icon"></span> Home</a>
         <a href="menu.html"><span class="nav-icon"></span> Menu</a>
-        <a href="reviews.html"><span class="nav-icon"></span> Reviews</a>
+        <a href="reviews.html"><span class="nav-icon"></span> Messages</a>
         <a href="contact.html"><span class="nav-icon"></span> Contact Us</a>
         
         <div class="mobile-nav-actions">
@@ -660,6 +660,10 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01M16 15.5v.01M12 12v.01M11 17v.01M7 14v.01"/></svg>
         Menu
       </button>
+      <button class="tab-btn" data-tab="announcement-pane">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>
+        Announcement
+      </button>
       <button class="tab-btn" data-tab="blacklist-pane">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
         Blacklist
@@ -691,8 +695,8 @@
           <div class="os-top">
             <label class="os-date">Day <input type="date" id="os-date"></label>
             <div class="os-actions">
-              <button type="button" class="filter-btn" id="os-print-bake">🖨 Baking list</button>
-              <button type="button" class="filter-btn" id="os-print-slips">🖨 All slips</button>
+              <button type="button" class="filter-btn" id="os-print-bake">Baking list</button>
+              <button type="button" class="filter-btn" id="os-print-slips">All slips</button>
               <button type="button" class="filter-btn" id="os-csv-day">⬇ CSV (this day)</button>
               <button type="button" class="filter-btn" id="os-csv-all">⬇ CSV (all orders)</button>
             </div>
@@ -760,6 +764,45 @@
       </div>
     </div>
 
+    <!-- Announcement: the moving line under the header on the home page (assets/js/auth.js > initAnnouncement) -->
+    <div id="announcement-pane" class="admin-section-pane" data-i18n-skip>
+      <div class="ann-card">
+        <div class="ann-head"><h3>Announcement line</h3><a class="mf-view" href="index.html" target="_blank" rel="noopener">View the home page ↗</a></div>
+        <p class="news-hint" style="margin:0 0 14px;">The moving text under the header on the home page. Customers see your changes the next time the page loads.</p>
+
+        <label class="mf-row ann-switch" id="ann-switch-row">
+          <span class="mf-text"><b>Show the announcement line</b><small>Turn it off to hide the whole bar.</small></span>
+          <span class="mf-state" id="ann-state">On</span>
+          <span class="mf-switch"><input type="checkbox" id="ann-enabled" checked aria-label="Show the announcement line"><i></i></span>
+        </label>
+
+        <div class="ann-block">
+          <span class="ann-label">Speed</span>
+          <div class="an-seg" id="ann-speed" role="group" aria-label="Speed">
+            <button type="button" data-speed="slow">Slow</button>
+            <button type="button" data-speed="normal" class="active">Normal</button>
+            <button type="button" data-speed="fast">Fast</button>
+          </div>
+        </div>
+
+        <div class="ann-block">
+          <span class="ann-label">Lines <small id="ann-count"></small></span>
+          <div id="ann-lines"></div>
+          <button type="button" class="filter-btn" id="ann-add">+ Add a line</button>
+        </div>
+
+        <div class="ann-block">
+          <span class="ann-label">Preview</span>
+          <div class="ticker ann-preview" id="ann-preview"><ul class="ticker-track" id="ann-preview-track"></ul></div>
+        </div>
+
+        <div class="bp-foot">
+          <button type="button" class="filter-btn bp-save" id="ann-save" disabled>Save announcement</button>
+          <span class="bp-msg" id="ann-msg" role="status"></span>
+        </div>
+      </div>
+    </div>
+
     <div id="users-pane" class="admin-section-pane">
       <div class="admin-card-container">
         <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--brown); margin-bottom: 20px;">Registered Customers & Ranks</h3>
@@ -815,7 +858,7 @@
             </select>
           </label>
           <label>Note (optional) <input type="text" id="bl-note" maxlength="200" placeholder="Name, what happened..."></label>
-          <button type="button" class="filter-btn active" id="bl-add-btn">🚫 Add to blacklist</button>
+          <button type="button" class="filter-btn active" id="bl-add-btn">Add to blacklist</button>
         </div>
         <div id="bl-msg" class="news-progress" role="status" aria-live="polite"></div>
 
@@ -888,8 +931,8 @@
           <p class="news-hint">Tip: write <b>{name}</b> and it becomes the customer's first name. Only English is required: subscribers whose language is French or Arabic get that version if you filled it in, otherwise English.</p>
 
           <div class="news-actions">
-            <button type="button" class="filter-btn" id="news-test">✉ Send a test to me (shows the language tab you are on)</button>
-            <button type="button" class="filter-btn active" id="news-send">🚀 Send to all accounts</button>
+            <button type="button" class="filter-btn" id="news-test">Send a test to me (shows the language tab you are on)</button>
+            <button type="button" class="filter-btn active" id="news-send">Send to all accounts</button>
           </div>
           <div id="news-progress" class="news-progress" role="status" aria-live="polite"></div>
         </div>
@@ -1052,7 +1095,7 @@
           <button type="button" class="filter-btn active" data-policy-lang="en">English</button>
           <button type="button" class="filter-btn" data-policy-lang="fr">Français</button>
           <button type="button" class="filter-btn" data-policy-lang="ar">العربية</button>
-          <button type="button" class="filter-btn" id="policy-preview-btn" style="margin-inline-start:auto;">👁 Preview</button>
+          <button type="button" class="filter-btn" id="policy-preview-btn" style="margin-inline-start:auto;">Preview</button>
         </div>
 
         <textarea id="policy-text-en" class="auth-input pro-input policy-edit" rows="22" spellcheck="true" style="font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.9rem; line-height:1.55;"></textarea>
@@ -1076,11 +1119,11 @@
     </div>
   </main>
 
-  <script src="assets/js/policy-render.js?v=20261126b"></script>
-  <script src="assets/js/main.js?v=20261126b"></script>
-  <script type="module" src="assets/js/auth.js?v=20261126b"></script>
-  <script src="assets/js/features.js?v=20261126b"></script>
-  <script src="assets/js/admin-analytics.js?v=20261126b"></script>
+  <script src="assets/js/policy-render.js?v=20261129a"></script>
+  <script src="assets/js/main.js?v=20261129a"></script>
+  <script type="module" src="assets/js/auth.js?v=20261129a"></script>
+  <script src="assets/js/features.js?v=20261129a"></script>
+  <script src="assets/js/admin-analytics.js?v=20261129a"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -1097,6 +1140,16 @@
           if (targetPane) targetPane.classList.add("active");
         });
       });
+
+      // deep links: admin.html#announcement opens the Announcement tab (any tab id works: #menu, #analytics ...)
+      const openFromHash = () => {
+        const id = (location.hash || "").replace("#", "");
+        if (!id) return;
+        const t = document.querySelector('[data-tab="' + id + '-pane"]') || document.querySelector('[data-tab="' + id + '"]');
+        if (t) t.click();
+      };
+      openFromHash();
+      window.addEventListener("hashchange", openFromHash);
 
       // Order Filtering interaction
       document.querySelectorAll("[data-order-filter]").forEach(btn => {

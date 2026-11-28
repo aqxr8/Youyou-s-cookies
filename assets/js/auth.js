@@ -517,6 +517,7 @@ onAuthStateChanged(auth, async (user) => {
 
     if (userIconLink && userIconWrapper) {
       userIconLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
+      if (user.email === ADMIN_EMAIL) { window.YYIsAdmin = true; window.dispatchEvent(new Event("yy:admin")); }   // lets the home page show "Edit" on the announcement bar
       
       if (mobileUserLink) {
         mobileUserLink.href = user.email === ADMIN_EMAIL ? "admin.html" : "profile.html";
